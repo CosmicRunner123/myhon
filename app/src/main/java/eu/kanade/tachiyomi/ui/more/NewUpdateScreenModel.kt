@@ -13,7 +13,6 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import eu.kanade.domain.base.BasePreferences
-import eu.kanade.tachiyomi.extension.util.ExtensionInstaller
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.ProgressListener
@@ -105,7 +104,7 @@ class NewUpdateScreenModel(
 
     fun installUpdate() {
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(apkFile.getUriCompat(context), ExtensionInstaller.APK_MIME)
+            setDataAndType(apkFile.getUriCompat(context), "application/vnd.android.package-archive")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
         }
         context.startActivity(intent)

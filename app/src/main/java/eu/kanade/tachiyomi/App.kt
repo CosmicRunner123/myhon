@@ -32,15 +32,11 @@ import eu.kanade.tachiyomi.crash.GlobalExceptionHandler
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.coil.BufferedSourceFetcher
 import eu.kanade.tachiyomi.data.coil.CoverRequestInterceptor
-import eu.kanade.tachiyomi.data.coil.ExtensionIconFetcher
 import eu.kanade.tachiyomi.data.coil.ImageDecoder
-import eu.kanade.tachiyomi.data.coil.InstalledExtensionIconKeyer
-import eu.kanade.tachiyomi.data.coil.InstalledSourceIconKeyer
 import eu.kanade.tachiyomi.data.coil.MangaCoverFetcher
 import eu.kanade.tachiyomi.data.coil.MangaCoverKeyer
 import eu.kanade.tachiyomi.data.coil.MangaKeyer
 import eu.kanade.tachiyomi.data.notification.Notifications
-import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import eu.kanade.tachiyomi.ui.base.delegate.SecureActivityDelegate
@@ -58,7 +54,6 @@ import logcat.AndroidLogcatLogger
 import logcat.LogPriority
 import logcat.LogcatLogger
 import mihon.app.di.AppGraph
-import mihon.app.di.injekt.MetroInjektRegistrar
 import mihon.core.metro.AppCoroutineScope
 import mihon.core.metro.GraphProvider
 import mihon.core.migration.Migration
@@ -72,8 +67,6 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.widget.WidgetManager
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.InjektScope
 import java.security.Security
 import kotlin.concurrent.thread
 import mihon.icons.materialsymbols.R as MaterialSymbolsR
@@ -101,8 +94,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
     @Inject private lateinit var sourceManager: Lazy<SourceManager>
 
-    @Inject private lateinit var extensionManager: Lazy<ExtensionManager>
-
     @Inject private lateinit var widgetManager: WidgetManager
 
     @Inject private lateinit var migrations: Set<Migration>
@@ -129,7 +120,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         // The first use of Dispatchers.Main finds its factory with a ServiceLoader, which reads the APK
         thread(name = "MainDispatcherPreload") { Dispatchers.Main }
 
-        Injekt = InjektScope(MetroInjektRegistrar(application = this, graphProvider = this))
         graph.inject(this)
 
         TelemetryConfig.init(applicationContext)
@@ -232,13 +222,9 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
                 add(BufferedSourceFetcher.Factory())
                 add(MangaCoverFetcher.MangaCoverFactory(callFactoryLazy, coverCache, sourceManager))
                 add(MangaCoverFetcher.MangaFactory(callFactoryLazy, coverCache, sourceManager))
-                add(ExtensionIconFetcher.ExtensionFactory(context))
-                add(ExtensionIconFetcher.SourceFactory(context, extensionManager))
                 // Keyer
                 add(MangaCoverKeyer(coverCache))
                 add(MangaKeyer(coverCache))
-                add(InstalledExtensionIconKeyer())
-                add(InstalledSourceIconKeyer())
                 // Interceptor
                 add(CoverRequestInterceptor())
             }

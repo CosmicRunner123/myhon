@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.data.backup.models.LongPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.StringPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.StringSetPreferenceValue
 import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
-import eu.kanade.tachiyomi.source.sourcePreferences
 import tachiyomi.core.common.preference.AndroidPreferenceStore
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.plusAssign
@@ -45,7 +44,9 @@ class PreferenceRestorer(
 
     suspend fun restoreSource(preferences: List<BackupSourcePreferences>) {
         preferences.forEach {
-            val sourcePrefs = AndroidPreferenceStore(sourcePreferences(it.sourceKey))
+            val sourcePrefs = AndroidPreferenceStore(
+                context.getSharedPreferences(it.sourceKey, Context.MODE_PRIVATE),
+            )
             restorePreferences(it.prefs, sourcePrefs)
         }
     }

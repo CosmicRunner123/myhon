@@ -332,32 +332,6 @@ class DownloadManager(
     }
 
     /**
-     * Renames source download folder
-     *
-     * @param oldSource the old source.
-     * @param newSource the new source.
-     */
-    suspend fun renameSource(oldSource: Source, newSource: Source) = withContext(Dispatchers.IO) {
-        val oldFolder = provider.findSourceDir(oldSource) ?: return@withContext
-        val newName = provider.getSourceDirName(newSource)
-
-        if (oldFolder.name == newName) return@withContext
-
-        val capitalizationChanged = oldFolder.name.equals(newName, ignoreCase = true)
-        if (capitalizationChanged) {
-            val tempName = newName + Downloader.TMP_DIR_SUFFIX
-            if (!oldFolder.renameTo(tempName)) {
-                logcat(LogPriority.ERROR) { "Failed to rename source download folder: ${oldFolder.name}" }
-                return@withContext
-            }
-        }
-
-        if (!oldFolder.renameTo(newName)) {
-            logcat(LogPriority.ERROR) { "Failed to rename source download folder: ${oldFolder.name}" }
-        }
-    }
-
-    /**
      * Renames manga download folder
      *
      * @param manga the manga

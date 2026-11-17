@@ -5,12 +5,10 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.tachiyomi.util.system.LocaleHelper
-import mihon.domain.extension.model.ContentWarning
 import mihon.domain.migration.models.MigrationFlag
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.getEnum
-import tachiyomi.core.common.preference.getEnumSet
 import tachiyomi.core.common.preference.getLongArray
 import tachiyomi.domain.library.model.LibraryDisplayMode
 
@@ -34,23 +32,11 @@ class SourcePreferences(
 
     val disabledSources: Preference<Set<String>> = preferenceStore.getStringSet("hidden_catalogues", emptySet())
 
-    val incognitoExtensions: Preference<Set<String>> = preferenceStore.getStringSet("incognito_extensions", emptySet())
-
     val pinnedSources: Preference<Set<String>> = preferenceStore.getStringSet("pinned_catalogues", emptySet())
 
     val lastUsedSource: Preference<Long> = preferenceStore.getLong(
         Preference.appStateKey("last_catalogue_source"),
         -1,
-    )
-
-    val enabledContentWarnings: Preference<Set<ContentWarning>> = preferenceStore.getEnumSet(
-        "enabled_content_warnings",
-        setOf(ContentWarning.SAFE, ContentWarning.MIXED, ContentWarning.NSFW),
-    )
-
-    val applyContentWarningsToInstalled: Preference<Boolean> = preferenceStore.getBoolean(
-        "apply_content_warnings_to_installed",
-        true,
     )
 
     val migrationSortingMode: Preference<SetMigrateSorting.Mode> = preferenceStore.getEnum(
@@ -64,15 +50,6 @@ class SourcePreferences(
     )
 
     val hideInLibraryItems: Preference<Boolean> = preferenceStore.getBoolean("browse_hide_in_library_items", false)
-
-    val extensionRepos: Preference<Set<String>> = preferenceStore.getStringSet("extension_repos", emptySet())
-
-    val extensionUpdatesCount: Preference<Int> = preferenceStore.getInt("ext_updates_count", 0)
-
-    val trustedExtensions: Preference<Set<String>> = preferenceStore.getStringSet(
-        Preference.appStateKey("trusted_extensions"),
-        emptySet(),
-    )
 
     val globalSearchFilterState: Preference<Boolean> = preferenceStore.getBoolean(
         Preference.appStateKey("has_filters_toggle_state"),

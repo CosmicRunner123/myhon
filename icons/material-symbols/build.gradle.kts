@@ -74,7 +74,6 @@ androidComponents {
                     "rounded/eyeglasses_2",
                     "rounded/refresh",
                     "rounded/share",
-                    "roundedFilled/extension",
                     "roundedFilled/folder",
                     "roundedFilled/pause",
                     "roundedFilled/photo",

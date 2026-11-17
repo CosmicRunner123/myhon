@@ -55,19 +55,16 @@ import cafe.adriel.voyager.navigator.NavigatorDisposeBehavior
 import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.zacsweers.metro.Inject
 import eu.kanade.domain.base.BasePreferences
-import eu.kanade.domain.source.interactor.GetIncognitoState
 import eu.kanade.presentation.components.AppStateBanners
 import eu.kanade.presentation.components.DownloadedOnlyBannerBackgroundColor
 import eu.kanade.presentation.components.IncognitoModeBannerBackgroundColor
 import eu.kanade.presentation.components.IndexingBannerBackgroundColor
 import eu.kanade.presentation.more.AppMigratingScreen
-import eu.kanade.presentation.more.settings.screen.browse.ExtensionStoresScreen
 import eu.kanade.presentation.more.settings.screen.data.RestoreBackupScreen
 import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.DefaultNavigatorScreenTransition
 import eu.kanade.tachiyomi.data.download.DownloadCache
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
-import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
@@ -126,10 +123,6 @@ class MainActivity : BaseActivity() {
 
     private val isAppMigrating = MutableStateFlow(Migrator.isRunning)
 
-    @Inject private lateinit var getIncognitoState: GetIncognitoState
-
-    @Inject private lateinit var extensionManager: ExtensionManager
-
     // To be checked by splash screen. If true then splash screen will be removed.
     var ready = false
 
@@ -186,7 +179,7 @@ class MainActivity : BaseActivity() {
 
             val context = LocalContext.current
 
-            var incognito by remember { mutableStateOf(false) }
+            val incognito by preferences.incognitoMode.collectAsState()
             val downloadOnly by preferences.downloadedOnly.collectAsState()
             val indexing by downloadCache.isInitializing.collectAsState()
 
@@ -221,11 +214,6 @@ class MainActivity : BaseActivity() {
                         // Reset Incognito Mode on relaunch
                         preferences.incognitoMode.set(false)
                     }
-                }
-                LaunchedEffect(navigator.lastItem) {
-                    (navigator.lastItem as? BrowseSourceScreen)?.sourceId
-                        .let(getIncognitoState::subscribe)
-                        .collectLatest { incognito = it }
                 }
 
                 val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)
@@ -373,15 +361,6 @@ class MainActivity : BaseActivity() {
                 }
             }
         }
-
-        // Extensions updates
-        LaunchedEffect(Unit) {
-            try {
-                extensionManager.checkForUpdates()
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e)
-            }
-        }
     }
 
     @Composable
@@ -458,8 +437,7 @@ class MainActivity : BaseActivity() {
             }
             Constants.SHORTCUT_UPDATES -> HomeScreen.Tab.Updates
             Constants.SHORTCUT_HISTORY -> HomeScreen.Tab.History
-            Constants.SHORTCUT_SOURCES -> HomeScreen.Tab.Browse(false)
-            Constants.SHORTCUT_EXTENSIONS -> HomeScreen.Tab.Browse(true)
+            Constants.SHORTCUT_SOURCES -> HomeScreen.Tab.Browse
             Constants.SHORTCUT_DOWNLOADS -> {
                 navigator.popUntilRoot()
                 HomeScreen.Tab.More(toDownloads = true)
@@ -484,9 +462,8 @@ class MainActivity : BaseActivity() {
             INTENT_SEARCH -> {
                 val query = intent.getStringExtra(INTENT_SEARCH_QUERY)
                 if (!query.isNullOrEmpty()) {
-                    val filter = intent.getStringExtra(INTENT_SEARCH_FILTER)
                     navigator.popUntilRoot()
-                    navigator.push(GlobalSearchScreen(query, filter))
+                    navigator.push(GlobalSearchScreen(query))
                 }
                 null
             }
@@ -495,13 +472,6 @@ class MainActivity : BaseActivity() {
                 if (intent.data.toString().endsWith(".tachibk")) {
                     navigator.popUntilRoot()
                     navigator.push(RestoreBackupScreen(intent.data.toString()))
-                }
-                // Deep link to add extension store
-                else if (intent.isAddExtensionStoreIntent()) {
-                    intent.data?.getQueryParameter("url")?.let { repoUrl ->
-                        navigator.popUntilRoot()
-                        navigator.push(ExtensionStoresScreen(repoUrl))
-                    }
                 }
                 null
             }
@@ -516,15 +486,9 @@ class MainActivity : BaseActivity() {
         return true
     }
 
-    private fun Intent.isAddExtensionStoreIntent(): Boolean {
-        return (scheme == "tachiyomi" && data?.host == "add-repo") ||
-            (scheme == "mihon" && data?.host == "extension-store")
-    }
-
     companion object {
         const val INTENT_SEARCH = "eu.kanade.tachiyomi.SEARCH"
         const val INTENT_SEARCH_QUERY = "query"
-        const val INTENT_SEARCH_FILTER = "filter"
     }
 }
 

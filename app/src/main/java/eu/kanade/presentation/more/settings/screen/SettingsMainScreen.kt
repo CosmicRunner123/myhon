@@ -203,7 +203,7 @@ object SettingsMainScreen : Screen() {
         ),
         Item(
             titleRes = MR.strings.browse,
-            subtitleRes = MR.strings.pref_browse_summary,
+            subtitleRes = MR.strings.pref_browse_sources_summary,
             icon = MaterialSymbols.Rounded.Explore,
             screen = SettingsBrowseScreen,
         ),

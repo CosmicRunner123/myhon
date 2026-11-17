@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -31,24 +30,16 @@ import tachiyomi.presentation.core.i18n.stringResource
 fun TabbedScreen(
     titleRes: StringResource,
     tabs: List<TabContent>,
-    state: PagerState = rememberPagerState { tabs.size },
-    searchQuery: String? = null,
-    onChangeSearchQuery: (String?) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
+    val state = rememberPagerState { tabs.size }
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
-            val tab = tabs[state.currentPage]
-            val searchEnabled = tab.searchEnabled
-
-            SearchToolbar(
+            AppBar(
                 titleContent = { AppBarTitle(stringResource(titleRes)) },
-                searchEnabled = searchEnabled,
-                searchQuery = if (searchEnabled) searchQuery else null,
-                onChangeSearchQuery = onChangeSearchQuery,
-                actions = { AppBarActions(tab.actions) },
+                actions = { AppBarActions(tabs[state.currentPage].actions) },
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -68,7 +59,7 @@ fun TabbedScreen(
                     Tab(
                         selected = state.currentPage == index,
                         onClick = { scope.launch { state.animateScrollToPage(index) } },
-                        text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
+                        text = { TabText(text = stringResource(tab.titleRes)) },
                         unselectedContentColor = MaterialTheme.colorScheme.onSurface,
                     )
                 }
@@ -90,8 +81,6 @@ fun TabbedScreen(
 
 data class TabContent(
     val titleRes: StringResource,
-    val badgeNumber: Int? = null,
-    val searchEnabled: Boolean = false,
     val actions: List<AppBar.AppBarAction> = listOf(),
     val content: @Composable (contentPadding: PaddingValues, snackbarHostState: SnackbarHostState) -> Unit,
 )

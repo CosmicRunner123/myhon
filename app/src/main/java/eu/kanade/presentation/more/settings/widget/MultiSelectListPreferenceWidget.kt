@@ -1,6 +1,5 @@
 package eu.kanade.presentation.more.settings.widget
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -11,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.window.DialogProperties
 import tachiyomi.i18n.MR
@@ -49,12 +47,11 @@ fun <T> MultiSelectListPreferenceWidget(
 
 @Composable
 fun <T> MultiSelectListPreferenceDialog(
-    title: String?,
+    title: String,
     values: Set<T>,
     entries: Map<out T, String>,
     onValuesChange: (Set<T>) -> Unit,
     onDismissRequest: () -> Unit,
-    message: String? = null,
 ) {
     val selected = remember {
         entries.keys
@@ -63,26 +60,23 @@ fun <T> MultiSelectListPreferenceDialog(
     }
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = title?.let { { Text(text = it) } },
+        title = { Text(text = title) },
         text = {
-            Column {
-                if (message != null) PreferenceDialogMessage(message)
-                LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
-                    entries.forEach { current ->
-                        item {
-                            val isSelected = selected.contains(current.key)
-                            LabeledCheckbox(
-                                label = current.value,
-                                checked = isSelected,
-                                onCheckedChange = {
-                                    if (it) {
-                                        selected.add(current.key)
-                                    } else {
-                                        selected.remove(current.key)
-                                    }
-                                },
-                            )
-                        }
+            LazyColumn {
+                entries.forEach { current ->
+                    item {
+                        val isSelected = selected.contains(current.key)
+                        LabeledCheckbox(
+                            label = current.value,
+                            checked = isSelected,
+                            onCheckedChange = {
+                                if (it) {
+                                    selected.add(current.key)
+                                } else {
+                                    selected.remove(current.key)
+                                }
+                            },
+                        )
                     }
                 }
             }

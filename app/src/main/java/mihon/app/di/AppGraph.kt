@@ -7,7 +7,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import eu.kanade.domain.base.BasePreferences
-import eu.kanade.domain.extension.interactor.TrustExtension
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.service.DelayedTrackingUpdateWorker
@@ -27,9 +26,6 @@ import eu.kanade.tachiyomi.data.library.MetadataUpdateWorker
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.updater.AppUpdateChecker
-import eu.kanade.tachiyomi.extension.ExtensionManager
-import eu.kanade.tachiyomi.extension.util.ExtensionInstallActivity
-import eu.kanade.tachiyomi.network.JavaScriptEngine
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import eu.kanade.tachiyomi.ui.base.delegate.SecureActivityDelegateImpl
@@ -39,13 +35,8 @@ import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.ui.setting.track.BaseOAuthLoginActivity
 import eu.kanade.tachiyomi.ui.webview.WebViewActivity
 import eu.kanade.tachiyomi.util.CrashLogUtil
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.protobuf.ProtoBuf
 import mihon.core.metro.IsDebugBuild
 import mihon.data.cache.ChapterCache
-import mihon.domain.extension.interactor.GetExtensionStoreCountAsFlow
-import mihon.domain.extension.repository.ExtensionStoreRepository
-import nl.adaptivity.xmlutil.serialization.XML
 import tachiyomi.domain.backup.service.BackupPreferences
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.interactor.ResetCategoryFlags
@@ -75,7 +66,6 @@ interface AppGraph : ViewModelGraph {
     fun inject(downloadWorker: DownloadWorker)
     fun inject(notificationReceiver: NotificationReceiver)
     fun inject(notificationReceiver: SecureActivityDelegateImpl)
-    fun inject(extensionInstallActivity: ExtensionInstallActivity)
 
     val context: Context
 
@@ -100,21 +90,13 @@ interface AppGraph : ViewModelGraph {
 
     val updateChecker: AppUpdateChecker
 
-    val trustExtension: TrustExtension
-    val extensionStoreRepository: ExtensionStoreRepository
-
     val sourceManager: SourceManager
     val trackerManager: TrackerManager
-    val extensionManager: ExtensionManager
     val chapterCache: ChapterCache
     val coverCache: CoverCache
     val downloadCache: DownloadCache
 
-    val json: Json
-    val protoBuf: ProtoBuf
-    val xml: XML
     val networkHelper: NetworkHelper
-    val javaScriptEngine: JavaScriptEngine
 
     val getFavorites: GetFavorites
     val getCategories: GetCategories
@@ -122,8 +104,6 @@ interface AppGraph : ViewModelGraph {
     val resetCategoryFlags: ResetCategoryFlags
     val addTracks: AddTracks
     val upsertTrack: UpsertTrack
-
-    val getExtensionStoreCountAsFlow: GetExtensionStoreCountAsFlow
 
     @DependencyGraph.Factory
     fun interface Factory {

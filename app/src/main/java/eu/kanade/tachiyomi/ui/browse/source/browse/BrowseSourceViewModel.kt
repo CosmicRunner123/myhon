@@ -21,8 +21,8 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import eu.kanade.core.preference.asState
+import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.manga.interactor.UpdateManga
-import eu.kanade.domain.source.interactor.GetIncognitoState
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.tachiyomi.data.cache.CoverCache
@@ -79,7 +79,7 @@ class BrowseSourceViewModel(
     private val getManga: GetManga,
     private val updateManga: UpdateManga,
     private val addTracks: AddTracks,
-    getIncognitoState: GetIncognitoState,
+    basePreferences: BasePreferences,
 ) : ViewModel() {
 
     val state: StateFlow<BrowseSourceViewModel.State>
@@ -117,7 +117,7 @@ class BrowseSourceViewModel(
                 )
             }
 
-            if (!getIncognitoState.await(source.id)) {
+            if (!basePreferences.incognitoMode.get()) {
                 sourcePreferences.lastUsedSource.set(source.id)
             }
         }

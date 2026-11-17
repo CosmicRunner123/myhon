@@ -1,23 +1,5 @@
 -dontobfuscate
 
-# Injekt reads the injected type from the generic superclass of its type tokens
--keepattributes Signature
--keep,allowshrinking class * extends uy.kohesive.injekt.api.FullTypeReference
-
-# Keep common dependencies used in extensions
--keep,allowoptimization class androidx.preference.** { public protected *; }
--keep,allowoptimization class kotlin.** { public protected *; }
--keep,allowoptimization class kotlinx.coroutines.** { public protected *; }
--keep,allowoptimization class kotlinx.serialization.** { public protected *; }
--keep,allowoptimization class kotlin.time.** { public protected *; }
--keep,allowoptimization class okhttp3.** { public protected *; }
--keep,allowoptimization class okio.** { public protected *; }
--keep,allowoptimization class org.jsoup.** { public protected *; }
--keep,allowoptimization class rx.** { public protected *; }
--keep,allowoptimization class app.cash.quickjs.** { public protected *; }
--keep,allowoptimization class uy.kohesive.injekt.** { public protected *; }
--keep,allowoptimization class com.squareup.zstd.** { public protected *; }
-
 -keepclassmembers class * implements java.io.Serializable {
     java.lang.Object writeReplace();
     java.lang.Object readResolve();
@@ -85,9 +67,3 @@
 
 # KotlinX Datetime
 -keep,allowoptimization class kotlinx.datetime.** { public protected *; }
-
-# Methods called by Shizuku only
--keepclassmembers class mihon.app.shizuku.ShellInterface {
-    public <init>();
-    public void destroy();
-}

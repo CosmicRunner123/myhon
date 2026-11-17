@@ -11,5 +11,6 @@ data class Backup(
     @ProtoNumber(101) var backupSources: List<BackupSource> = emptyList(),
     @ProtoNumber(104) var backupPreferences: List<BackupPreference> = emptyList(),
     @ProtoNumber(105) var backupSourcePreferences: List<BackupSourcePreferences> = emptyList(),
+    // Never written or restored: Mihon backups carry it, so the number stays taken
     @ProtoNumber(106) var backupExtensionStores: List<BackupExtensionStore> = emptyList(),
 )

@@ -10,11 +10,9 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
-import android.provider.Settings
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
-import com.hippo.unifile.UniFile
 import eu.kanade.domain.ui.model.ThemeMode
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.base.delegate.ThemingDelegate
@@ -22,8 +20,6 @@ import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.util.lang.truncateCenter
 import logcat.LogPriority
 import mihon.app.di.appGraph
-import rikka.shizuku.ShizukuProvider
-import rikka.sui.Sui
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.i18n.MR
@@ -63,7 +59,7 @@ fun Context.openInBrowser(url: String, forceDefaultBrowser: Boolean = false) {
 fun Context.openInBrowser(uri: Uri, forceDefaultBrowser: Boolean = false) {
     try {
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-            // Force default browser so that verified extensions don't re-open Tachiyomi
+            // Force default browser so that an app claiming the link doesn't open instead
             if (forceDefaultBrowser) {
                 defaultBrowserPackageName()?.let { setPackage(it) }
             }
@@ -145,43 +141,4 @@ fun Context.createReaderThemeContext(): Context {
         return wrappedContext
     }
     return this
-}
-
-/**
- * Gets document size of provided [Uri]
- *
- * @return document size of [uri] or null if size can't be obtained
- */
-fun Context.getUriSize(uri: Uri): Long? {
-    return UniFile.fromUri(this, uri)?.length()?.takeIf { it >= 0 }
-}
-
-/**
- * Returns true if [packageName] is installed.
- */
-fun Context.isPackageInstalled(packageName: String): Boolean {
-    return try {
-        packageManager.getApplicationInfo(packageName, 0)
-        true
-    } catch (e: PackageManager.NameNotFoundException) {
-        false
-    }
-}
-
-val Context.hasMiuiPackageInstaller get() = isPackageInstalled("com.miui.packageinstaller")
-
-val Context.isShizukuInstalled: Boolean
-    get() = Sui.isSui() ||
-        try {
-            packageManager.getPermissionInfo(ShizukuProvider.PERMISSION, 0)
-            true
-        } catch (e: PackageManager.NameNotFoundException) {
-            false
-        }
-
-fun Context.launchRequestPackageInstallsPermission() {
-    Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-        data = "package:$packageName".toUri()
-        startActivity(this)
-    }
 }

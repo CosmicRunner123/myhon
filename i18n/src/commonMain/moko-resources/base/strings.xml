@@ -33,8 +33,6 @@
     <string name="label_data_storage">Data and storage</string>
     <string name="label_stats">Statistics</string>
     <string name="label_migration">Migrate</string>
-    <string name="label_extensions">Extensions</string>
-    <string name="label_extension_info">Extension info</string>
     <string name="label_help">Help</string>
     <string name="label_default">Default</string>
     <string name="label_warning">Warning</string>
@@ -82,8 +80,6 @@
     <string name="action_remove_bookmark">Unbookmark chapter</string>
     <string name="action_delete">Delete</string>
     <string name="action_update_library">Update library</string>
-    <string name="action_enable_all">Enable all</string>
-    <string name="action_disable_all">Disable all</string>
     <string name="action_edit">Edit</string>
     <string name="action_add">Add</string>
     <string name="action_update_category">Update category</string>
@@ -182,8 +178,6 @@
     <string name="onboarding_storage_help_action">Storage guide</string>
     <string name="app_migrating_title">Finishing the update</string>
     <string name="app_migrating_summary">Getting things ready after the update. This can take a few minutes, so keep the app open.</string>
-    <string name="onboarding_permission_install_apps">Install apps permission</string>
-    <string name="onboarding_permission_install_apps_description">To install source extensions.</string>
     <string name="onboarding_permission_notifications">Notification permission</string>
     <string name="onboarding_permission_notifications_description">Get notified for library updates and more.</string>
     <string name="onboarding_permission_ignore_battery_opts">Background battery usage</string>
@@ -212,7 +206,7 @@
     <string name="pref_reader_summary">Reading mode, display, navigation</string>
     <string name="pref_downloads_summary">Automatic download, download ahead</string>
     <string name="pref_tracking_summary">One-way progress sync, enhanced sync</string>
-    <string name="pref_browse_summary">Sources, extensions, global search</string>
+    <string name="pref_browse_sources_summary">Sources, global search</string>
     <string name="pref_backup_summary">Manual &amp; automatic backups, storage space</string>
     <string name="pref_security_summary">App lock, secure screen</string>
     <string name="pref_advanced_summary">Dump crash logs, battery optimizations</string>
@@ -266,12 +260,6 @@
     <string name="secure_screen">Secure screen</string>
     <string name="secure_screen_summary">Secure screen hides app contents when switching apps and block screenshots</string>
     <string name="firebase_summary">Sending crash logs and analytics will allow us to identify and fix issues, improve performance, and make future updates more relevant to your needs</string>
-
-    <string name="pref_category_extensions">Extensions</string>
-    <string name="pref_allowed_content_warnings">Allowed content warnings</string>
-    <string name="pref_apply_content_warnings_to_installed">Also apply to installed extensions</string>
-    <string name="pref_apply_content_warnings_to_installed_summary">When off, extensions you already installed keep loading and updating regardless of their warning</string>
-    <string name="content_warnings_info">Installed extensions that aren\'t loaded stay listed without their sources; ones you haven\'t installed are hidden. This does not prevent unofficial or potentially incorrectly flagged extensions from surfacing 18+ content within the app.</string>
 
     <string name="relative_time_today">Today</string>
 
@@ -329,71 +317,8 @@
     <string name="pref_enable_chapter_name_hash">Enable chapter name hash suffix</string>
     <string name="pref_enable_chapter_name_hash_details">Ensures a unique hash suffix is added to chapter names to prevent naming conflicts. If disabled, chapters with identical names cannot be downloaded.</string>
 
-      <!-- Extension section -->
     <string name="multi_lang">Multi</string>
-    <string name="ext_updates_pending">Updates pending</string>
-    <string name="ext_update">Update</string>
-    <string name="ext_update_all">Update all</string>
-    <string name="ext_obsolete">Orphaned</string>
-    <string name="ext_install">Install</string>
-    <string name="ext_pending">Pending</string>
-    <string name="ext_downloading">Downloading</string>
-    <string name="ext_installing">Installing</string>
-    <string name="ext_installed">Installed</string>
-    <string name="ext_trust">Trust</string>
-    <string name="ext_untrusted">Untrusted</string>
-    <string name="ext_filtered">Filtered</string>
-    <string name="ext_not_loaded">Not loaded</string>
-    <string name="ext_not_loaded_dialog">Couldn\'t load</string>
-    <string name="ext_not_loaded_details">Why it isn\'t loaded</string>
-    <string name="ext_copy_stacktrace">Copy stack trace</string>
-    <string name="ext_filtered_message">This extension\'s content warning isn\'t one you chose to load, so its sources aren\'t available.</string>
-    <string name="ext_unsigned_message">This extension isn\'t signed, so there\'s no signature to check it against.</string>
-    <string name="ext_unsupported_message">This extension was built for a version of the extension library this app version can\'t load. Updating the app or the extension may help.</string>
-    <string name="ext_malformed_message">This extension is missing information the app needs to load it.</string>
-    <string name="ext_load_failed_message">This extension threw an error while loading, so none of its sources are available.</string>
-    <string name="ext_uninstall">Uninstall</string>
-    <string name="ext_remove">Remove</string>
-    <string name="ext_confirm_remove">Remove Extension?</string>
-    <string name="ext_app_info">App info</string>
-    <string name="untrusted_extension">Untrusted extension</string>
-    <string name="untrusted_extension_message">Malicious extensions can read any stored login credentials or execute arbitrary code.\n\nBy trusting this extension, you accept these risks.</string>
-    <string name="obsolete_extension_message">This extension is not associated with any store. It will not receive updates, may not function properly, and can cause issues with the app. Uninstalling it is recommended.</string>
-    <string name="remove_private_extension_message">Do you really want to remove \"%s\" extension?</string>
-    <string name="extension_api_error">Failed to fetch available extensions</string>
-    <string name="ext_info_version">Version</string>
-    <string name="ext_info_language">Language</string>
-    <string name="ext_info_warning">Warning</string>
-    <string name="ext_content_warning_safe">Safe</string>
-    <string name="ext_content_warning_mixed">Mixed</string>
-    <string name="ext_content_warning_nsfw">18+</string>
-    <string name="ext_content_warning_mixed_description">Sources from this extension might contain both safe and 18+ content.</string>
-    <string name="ext_content_warning_nsfw_description">Sources from this extension are primarily focused on 18+ content.</string>
-    <string name="ext_permission_install_apps_warning">Permissions are needed to install extensions. Tap here to grant.</string>
-    <string name="ext_install_service_notif">Installing extension…</string>
-    <string name="ext_installer_pref">Installer</string>
-    <string name="ext_installer_legacy">Legacy</string>
-    <string name="ext_installer_packageinstaller" translatable="false">PackageInstaller</string>
-    <string name="ext_installer_shizuku" translatable="false">Shizuku</string>
-    <string name="ext_installer_private" translatable="false">Private</string>
-    <string name="ext_installer_shizuku_stopped">Shizuku is not running</string>
-    <string name="ext_installer_shizuku_unavailable_dialog">Install and start Shizuku to use Shizuku as extension installer.</string>
-    <string name="ext_revoke_trust">Revoke trusted unknown extensions</string>
     <string name="downloading_with_progress">Downloading… (%d%%)</string>
-
-    <!-- Extension repos -->
-
-    <!-- Extension store -->
-    <string name="extensionStores">Extension stores</string>
-    <string name="action.addExtensionStore">Add extension store</string>
-    <string name="extensionStoresScreen.emptyLabel">You haven\'t added an extension store yet</string>
-    <string name="extensionStoresScreen.addStore.title">Add extension store</string>
-    <string name="extensionStoresScreen.addStore.alreadyExists">This extension store already exists</string>
-    <string name="extensionStoresScreen.addStore.processing">Processing…</string>
-    <string name="extensionStoresScreen.addStoreInput.inputLabel">Store index URL</string>
-    <string name="extensionStoresScreen.addStoreDeeplink.bodyText">Do you wish to add the extension store below?</string>
-    <string name="extensionStoresScreen.deleteStore.title">Remove extension store</string>
-    <string name="extensionStoresScreen.deleteStore.body">Do you wish to remove the extension store \"%1$s\" (%2$s)?</string>
 
       <!-- Reader section -->
     <string name="pref_fullscreen">Fullscreen</string>
@@ -616,7 +541,7 @@
     <string name="invalid_backup_file_unknown">Backup file is corrupted</string>
     <string name="backup_restore_missing_sources">Missing sources:</string>
     <string name="backup_restore_missing_trackers">Trackers not logged into:</string>
-    <string name="backup_restore_content_full">You may need to install any missing extensions and log in to tracking services afterwards to use them.</string>
+    <string name="backup_restore_content_trackers">You may need to log in to tracking services afterwards to use them.</string>
     <string name="restore_completed">Restore completed</string>
     <string name="restore_duration">%1$02d min, %2$02d sec</string>
     <string name="backup_in_progress">Backup is already in progress</string>
@@ -708,7 +633,6 @@
     <string name="label_downloaded_only">Downloaded only</string>
     <string name="pref_incognito_mode">Incognito mode</string>
     <string name="pref_incognito_mode_summary">Pauses reading history</string>
-    <string name="pref_incognito_mode_extension_summary">Pause reading history for extension</string>
     <string name="notification_incognito_text">Disable incognito mode</string>
     <string name="downloaded_only_summary">Filters all entries in your library</string>
 
@@ -1020,7 +944,6 @@
     <string name="channel_complete">Complete</string>
     <string name="channel_errors">Errors</string>
     <string name="channel_new_chapters">Chapter updates</string>
-    <string name="channel_ext_updates">Extension updates</string>
 
     <!-- S Pen actions -->
     <string name="spen_previous_page">Previous page</string>

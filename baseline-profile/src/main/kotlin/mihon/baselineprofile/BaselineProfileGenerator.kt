@@ -32,8 +32,6 @@ class BaselineProfileGenerator {
 
             device.waitAndClick(By.text("Browse"))
             device.waitForIdle()
-            device.waitAndClick(By.text("Extensions"))
-            device.waitForIdle()
 
             device.waitAndClick(By.text("More"))
             device.waitForIdle()

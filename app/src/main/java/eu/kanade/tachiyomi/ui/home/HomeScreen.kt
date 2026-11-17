@@ -144,12 +144,7 @@ object HomeScreen : Screen() {
                             is Tab.Library -> LibraryTab
                             Tab.Updates -> UpdatesTab
                             Tab.History -> HistoryTab
-                            is Tab.Browse -> {
-                                if (it.toExtensions) {
-                                    BrowseTab.showExtension()
-                                }
-                                BrowseTab
-                            }
+                            Tab.Browse -> BrowseTab
                             is Tab.More -> MoreTab
                         }
 
@@ -218,11 +213,6 @@ object HomeScreen : Screen() {
                         .collectLatest { value = it }
                 }
 
-                is BrowseTab -> {
-                    graph.sourcePreferences.extensionUpdatesCount.changes()
-                        .collectLatest { value = it }
-                }
-
                 else -> value = 0
             }
         }
@@ -232,12 +222,6 @@ object HomeScreen : Screen() {
                 val desc = when (tab) {
                     is UpdatesTab -> pluralStringResource(
                         MR.plurals.notification_chapters_generic,
-                        count = count,
-                        count,
-                    )
-
-                    is BrowseTab -> pluralStringResource(
-                        MR.plurals.update_check_notification_ext_updates,
                         count = count,
                         count,
                     )
@@ -270,7 +254,7 @@ object HomeScreen : Screen() {
         data class Library(val mangaIdToOpen: Long? = null) : Tab
         data object Updates : Tab
         data object History : Tab
-        data class Browse(val toExtensions: Boolean = false) : Tab
+        data object Browse : Tab
         data class More(val toDownloads: Boolean) : Tab
     }
 }

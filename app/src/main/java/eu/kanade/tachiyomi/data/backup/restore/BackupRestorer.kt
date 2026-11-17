@@ -8,12 +8,10 @@ import dev.zacsweers.metro.AssistedInject
 import eu.kanade.tachiyomi.data.backup.BackupDecoder
 import eu.kanade.tachiyomi.data.backup.BackupNotifier
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
-import eu.kanade.tachiyomi.data.backup.models.BackupExtensionStore
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
 import eu.kanade.tachiyomi.data.backup.models.BackupSource
 import eu.kanade.tachiyomi.data.backup.models.BackupSourcePreferences
 import eu.kanade.tachiyomi.data.backup.restore.restorers.CategoriesRestorer
-import eu.kanade.tachiyomi.data.backup.restore.restorers.ExtensionStoreRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.MangaRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.PreferenceRestorer
 import eu.kanade.tachiyomi.data.download.DownloadCache
@@ -48,7 +46,6 @@ class BackupRestorer(
     private val downloadCache: DownloadCache,
     private val categoriesRestorer: CategoriesRestorer,
     private val preferenceRestorer: PreferenceRestorer,
-    private val extensionStoreRestorer: ExtensionStoreRestorer,
     private val mangaRestorer: MangaRestorer,
     private val backupDecoder: BackupDecoder,
     private val sourceManager: SourceManager,
@@ -113,9 +110,6 @@ class BackupRestorer(
         if (options.appSettings) {
             restoreAmount += 1
         }
-        if (options.extensionStores) {
-            restoreAmount += backup.backupExtensionStores.size
-        }
         if (options.sourceSettings) {
             restoreAmount += 1
         }
@@ -142,9 +136,6 @@ class BackupRestorer(
                     if (options.categories) backup.backupCategories else emptyList(),
                     restoreCategoriesJob,
                 )
-            }
-            if (options.extensionStores) {
-                restoreExtensionStores(backup.backupExtensionStores)
             }
 
             // TODO: optionally trigger online library + tracker update
@@ -248,32 +239,6 @@ class BackupRestorer(
             restoreAmount,
             isSync,
         )
-    }
-
-    private fun CoroutineScope.restoreExtensionStores(
-        backupExtensionStores: List<BackupExtensionStore>,
-    ) = launch {
-        backupExtensionStores
-            .chunked(100)
-            .forEach { chunk ->
-                chunk.forEach {
-                    ensureActive()
-
-                    try {
-                        extensionStoreRestorer(it)
-                    } catch (e: Exception) {
-                        errors.add(Date() to "Error Adding Repo: ${it.name} : ${e.message}")
-                    }
-
-                    restoreProgress.incrementAndFetch()
-                }
-                notifier.showRestoreProgress(
-                    context.stringResource(MR.strings.extensionStores),
-                    restoreProgress.load(),
-                    restoreAmount,
-                    isSync,
-                )
-            }
     }
 
     private fun writeErrorLog(): File {

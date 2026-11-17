@@ -6,7 +6,6 @@ import androidx.compose.runtime.produceState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.Source
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,7 +31,6 @@ abstract class SearchViewModel(
     initialState: State = State(),
     sourcePreferences: SourcePreferences,
     private val sourceManager: SourceManager,
-    private val extensionManager: ExtensionManager,
     private val networkToLocalManga: NetworkToLocalManga,
     private val getManga: GetManga,
     private val preferences: SourcePreferences,
@@ -56,8 +54,6 @@ abstract class SearchViewModel(
 
     private var lastQuery: String? = null
     private var lastSourceFilter: SourceFilter? = null
-
-    protected var extensionFilter: String? = null
 
     open val sortComparator = { map: Map<Source, SearchItemResult> ->
         compareBy<Source>(
@@ -97,20 +93,6 @@ abstract class SearchViewModel(
             )
     }
 
-    private suspend fun getSelectedSources(): List<Source> {
-        val enabledSources = getEnabledSources()
-
-        val filter = extensionFilter
-        if (filter.isNullOrEmpty()) {
-            return enabledSources
-        }
-
-        return extensionManager.getLoadedExtensions()
-            .filter { it.pkgName == filter }
-            .flatMap { it.sources }
-            .filter { it in enabledSources }
-    }
-
     fun updateSearchQuery(query: String?) {
         state.update { it.copy(searchQuery = query) }
     }
@@ -139,7 +121,7 @@ abstract class SearchViewModel(
         searchJob?.cancel()
 
         searchJob = viewModelScope.launch(Dispatchers.IO) {
-            val sources = getSelectedSources()
+            val sources = getEnabledSources()
 
             // Reuse previous results if possible
             if (sameQuery) {

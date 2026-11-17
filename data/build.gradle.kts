@@ -22,12 +22,6 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        optIn.add("kotlinx.serialization.ExperimentalSerializationApi")
-    }
-}
-
 dependencies {
     implementation(projects.sourceApi)
     implementation(projects.domain)
@@ -36,8 +30,6 @@ dependencies {
 
     implementation(libs.metro.runtime)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.serialization.jsonOkio)
-    implementation(libs.kotlinx.serialization.protobuf)
 
     implementation(libs.kotlinx.datetime)
 

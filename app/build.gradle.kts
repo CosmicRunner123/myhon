@@ -168,7 +168,6 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
-        aidl = true
     }
 
     lint {
@@ -279,7 +278,6 @@ dependencies {
     implementation(libs.androidx.preference)
 
     // Dependency injection
-    implementation(libs.injekt)
     implementation(libs.metro.runtime)
     implementation(libs.metrox.viewmodel)
     implementation(libs.metrox.viewmodel.compose)
@@ -312,9 +310,6 @@ dependencies {
 
     // Logging
     implementation(libs.logcat)
-
-    // Shizuku
-    implementation(libs.bundles.shizuku)
 
     // String similarity
     implementation(libs.stringSimilarity)

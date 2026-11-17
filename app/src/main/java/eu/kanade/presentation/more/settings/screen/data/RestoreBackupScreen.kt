@@ -122,7 +122,7 @@ class RestoreBackupScreen(
                     val msg = buildAnnotatedString {
                         when (error) {
                             is MissingRestoreComponents -> {
-                                appendLine(stringResource(MR.strings.backup_restore_content_full))
+                                appendLine(stringResource(MR.strings.backup_restore_content_trackers))
                                 if (error.sources.isNotEmpty()) {
                                     appendLine()
                                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {

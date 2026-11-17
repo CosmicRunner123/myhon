@@ -85,17 +85,6 @@
         <item quantity="other">Chapters %1$s and %2$d more</item>
     </plurals>
 
-    <!--Extension Updates Notifications-->
-    <plurals name="update_check_notification_ext_updates">
-        <item quantity="one">Extension update available</item>
-        <item quantity="other">%d extension updates available</item>
-    </plurals>
-
-    <plurals name="num_repos">
-        <item quantity="one">%d store</item>
-        <item quantity="other">%d stores</item>
-    </plurals>
-
     <!--Migration-->
     <plurals name="migrationListScreen.migrateDialog.migrateTitle">
         <item quantity="one">Migrate %1$d entry?</item>

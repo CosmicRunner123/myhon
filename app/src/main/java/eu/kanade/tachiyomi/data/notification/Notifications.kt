@@ -65,14 +65,6 @@ object Notifications {
     const val CHANNEL_INCOGNITO_MODE = "incognito_mode_channel"
     const val ID_INCOGNITO_MODE = -701
 
-    /**
-     * Notification channel and ids used for extension updates.
-     */
-    private const val GROUP_APK_UPDATES = "group_apk_updates"
-    const val CHANNEL_EXTENSIONS_UPDATE = "ext_apk_update_channel"
-    const val ID_UPDATES_TO_EXTS = -401
-    const val ID_EXTENSION_INSTALLER = -402
-
     private val deprecatedChannels = listOf(
         "downloader_channel",
         "downloader_complete_channel",
@@ -108,9 +100,6 @@ object Notifications {
                 },
                 buildNotificationChannelGroup(GROUP_LIBRARY) {
                     setName(context.stringResource(MR.strings.label_library))
-                },
-                buildNotificationChannelGroup(GROUP_APK_UPDATES) {
-                    setName(context.stringResource(MR.strings.label_recent_updates))
                 },
             ),
         )
@@ -156,10 +145,6 @@ object Notifications {
                 },
                 buildNotificationChannel(CHANNEL_INCOGNITO_MODE, IMPORTANCE_LOW) {
                     setName(context.stringResource(MR.strings.pref_incognito_mode))
-                },
-                buildNotificationChannel(CHANNEL_EXTENSIONS_UPDATE, IMPORTANCE_DEFAULT) {
-                    setGroup(GROUP_APK_UPDATES)
-                    setName(context.stringResource(MR.strings.channel_ext_updates))
                 },
             ),
         )

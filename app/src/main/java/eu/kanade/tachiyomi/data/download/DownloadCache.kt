@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -393,13 +392,9 @@ class DownloadCache(
                 _isInitializing.emit(true)
             }
 
-            // Try to wait until extensions and sources have loaded
-            var sources = emptyList<Source>()
-            withTimeoutOrNull(30.seconds) {
-                sources = getSources()
-            }
+            val sources = sourceManager.getStubSources()
 
-            // A stored stub can share its name with an installed source, so a folder can belong to several ids
+            // Stored stubs can share a name, so a folder can belong to several ids
             val sourceIdsByDirName = sources.groupBy({ provider.getSourceDirName(it).lowercase() }, { it.id })
 
             rootDownloadsDirMutex.withLock {
@@ -458,10 +453,6 @@ class DownloadCache(
 
         // Mainly to notify the indexing notifier UI
         notifyChanges()
-    }
-
-    private suspend fun getSources(): List<Source> {
-        return sourceManager.getOnlineSources() + sourceManager.getStubSources()
     }
 
     private fun notifyChanges() {

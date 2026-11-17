@@ -21,7 +21,6 @@ import eu.kanade.domain.manga.interactor.SetMangaViewerFlags
 import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.domain.manga.model.readerOrientation
 import eu.kanade.domain.manga.model.readingMode
-import eu.kanade.domain.source.interactor.GetIncognitoState
 import eu.kanade.domain.track.interactor.TrackChapter
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.tachiyomi.data.cache.CoverCache
@@ -120,7 +119,6 @@ class ReaderViewModel(
     private val upsertHistory: UpsertHistory,
     private val updateChapter: UpdateChapter,
     private val setMangaViewerFlags: SetMangaViewerFlags,
-    private val getIncognitoState: GetIncognitoState,
     private val libraryPreferences: LibraryPreferences,
     private val coverManager: LocalCoverManager,
     private val updateManga: UpdateManga,
@@ -347,7 +345,7 @@ class ReaderViewModel(
             try {
                 val manga = getManga.await(mangaId) ?: error("Requested manga of id $mangaId not found")
                 val source = sourceManager.getOrStub(manga.source)
-                incognitoMode = getIncognitoState.await(manga.source)
+                incognitoMode = basePreferences.incognitoMode.get()
                 mutableState.update { it.copy(manga = manga, source = source) }
                 if (chapterId == -1L) chapterId = initialChapterId
 
