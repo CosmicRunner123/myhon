@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="accent_blue">#7EBBED</color>
-    <color name="icon_background">#2E3943</color>
+    <color name="accent">#8FD3C8</color>
+    <color name="icon_background">#3A3F47</color>
 </resources>
