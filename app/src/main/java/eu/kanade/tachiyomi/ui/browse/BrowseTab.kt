@@ -12,7 +12,6 @@ import eu.kanade.presentation.components.TabbedScreen
 import eu.kanade.presentation.util.Tab
 import eu.kanade.presentation.util.rememberAnimatedVectorPainter
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.browse.migration.sources.migrateSourceTab
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.browse.source.sourcesTab
 import eu.kanade.tachiyomi.ui.main.MainActivity
@@ -44,10 +43,7 @@ data object BrowseTab : Tab {
 
         TabbedScreen(
             titleRes = MR.strings.browse,
-            tabs = listOf(
-                sourcesTab(),
-                migrateSourceTab(),
-            ),
+            tabs = listOf(sourcesTab()),
         )
 
         LaunchedEffect(Unit) {

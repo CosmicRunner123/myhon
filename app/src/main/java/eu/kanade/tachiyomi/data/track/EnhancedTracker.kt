@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.data.track
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import eu.kanade.tachiyomi.source.Source
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.track.model.Track
 
 /**
  * A tracker that will never prompt the user to manually bind an entry.
@@ -29,14 +28,4 @@ interface EnhancedTracker {
      * Similar to [Tracker].search, but only returns zero or one match.
      */
     suspend fun match(manga: Manga): TrackSearch?
-
-    /**
-     * Checks whether the provided source/track/manga triplet is from this [Tracker]
-     */
-    fun isTrackFrom(track: Track, manga: Manga, source: Source?): Boolean
-
-    /**
-     * Migrates the given track for the manga to the newSource, if possible
-     */
-    fun migrateTrack(track: Track, manga: Manga, newSource: Source): Track?
 }

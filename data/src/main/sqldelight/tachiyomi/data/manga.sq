@@ -79,23 +79,6 @@ AND EXISTS (
     AND (user_read = 1 OR user_last_page_read != 0)
 );
 
-getSourceIdWithFavoriteCount:
-SELECT source_id, count(*)
-FROM manga
-WHERE user_favorite_at IS NOT NULL
-GROUP BY source_id;
-
-getFavoriteBySourceId:
-SELECT
-    id, source_id, remote_url, remote_title, remote_author, remote_artist, remote_description,
-    remote_genre, remote_status, remote_cover, remote_update_strategy, remote_memo,
-    user_favorite_at, user_notes, user_reader_flags, user_chapter_flags,
-    state_chapter_last_update, state_chapter_next_update, state_chapter_fetch_interval,
-    state_cover_last_modified, state_initialized
-FROM manga
-WHERE user_favorite_at IS NOT NULL
-AND source_id = :sourceId;
-
 getDuplicateLibraryManga:
 WITH
 track_dupes AS (

@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import tachiyomi.data.Database
 import tachiyomi.data.subscribeToList
@@ -45,24 +44,6 @@ class SourceRepositoryImpl(
                 .filterIsInstance<HttpSource>()
                 .map(::mapSourceToDomainSource)
         }
-    }
-
-    override fun getSourcesWithFavoriteCount(): Flow<List<Pair<DomainSource, Long>>> {
-        val sourceIdWithFavoriteCountFlow = database.mangaQueries
-            .getSourceIdWithFavoriteCount()
-            .subscribeToList()
-        return combine(sourceIdWithFavoriteCountFlow, sourceManager.sources) { sourceIdWithFavoriteCount, _ ->
-            sourceIdWithFavoriteCount
-        }
-            .map {
-                it.map { (sourceId, count) ->
-                    val source = sourceManager.getOrStub(sourceId)
-                    val domainSource = mapSourceToDomainSource(source).copy(
-                        isStub = source is StubSource,
-                    )
-                    domainSource to count
-                }
-            }
     }
 
     override fun getSourcesWithNonLibraryManga(): Flow<List<SourceWithCount>> {

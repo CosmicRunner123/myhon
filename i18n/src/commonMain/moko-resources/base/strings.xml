@@ -16,7 +16,6 @@
     <string name="manga">Library entries</string>
     <string name="chapters">Chapters</string>
     <string name="track">Tracking</string>
-    <string name="delete_downloaded">Delete downloaded</string>
     <string name="history">History</string>
     <string name="scanlator">Scanlator</string>
 
@@ -32,7 +31,6 @@
     <string name="label_backup">Backup and restore</string>
     <string name="label_data_storage">Data and storage</string>
     <string name="label_stats">Statistics</string>
-    <string name="label_migration">Migrate</string>
     <string name="label_help">Help</string>
     <string name="label_default">Default</string>
     <string name="label_warning">Warning</string>
@@ -56,7 +54,6 @@
     <string name="action_filter_interval_custom">Customized update frequency</string>
     <!-- reserved for #4048 -->
     <string name="action_sort_alpha">Alphabetically</string>
-    <string name="action_sort_count">Total entries</string>
     <string name="action_sort_total">Total chapters</string>
     <string name="action_sort_last_read">Last read</string>
     <string name="action_sort_last_manga_update">Last update check</string>
@@ -107,7 +104,6 @@
     <!-- Do not translate "WebView" -->
     <string name="action_open_in_web_view">Open in WebView</string>
     <string name="action_web_view" translatable="false">WebView</string>
-    <string name="action_migrate">Migrate</string>
     <string name="action_display_mode">Display mode</string>
     <string name="action_display">Display</string>
     <string name="action_display_grid">Compact grid</string>
@@ -693,7 +689,7 @@
     <!-- missing confirm menu after Compose rewrite #7901 -->
     <string name="unknown_title">Unknown title</string>
     <string name="possible_duplicates_title">Possible duplicates</string>
-    <string name="possible_duplicates_summary">You have entries in your library with a similar name.\n\nSelect an entry to migrate or add anyway.</string>
+    <string name="possible_duplicates_summary">You have entries in your library with a similar name.\n\nSelect an entry to open it or add anyway.</string>
     <string name="manga_info_expand">More</string>
     <string name="manga_info_collapse">Less</string>
     <string name="delete_downloads_for_manga">Delete downloaded chapters?</string>
@@ -721,7 +717,6 @@
     <string name="manga_download">Download</string>
     <string name="download_unread">Unread</string>
     <string name="download_bookmarked">Bookmarked</string>
-    <string name="custom_cover">Custom cover</string>
     <string name="manga_cover">Cover</string>
     <string name="cover_saved">Cover saved</string>
     <string name="error_saving_cover">Error saving cover</string>
@@ -837,15 +832,8 @@
     <!-- Source Filter Screen -->
     <string name="source_filter_empty_screen">No installed source found</string>
 
-    <!-- Source migration screen -->
-    <string name="migration_help_guide">Source migration guide</string>
     <string name="migration_dialog_what_to_include">Select data to include</string>
-    <string name="migration_selection_prompt">Select a source to migrate from</string>
-    <string name="migrate">Migrate</string>
-    <!-- Make a copy (noun) when migrating. Don't use for copying to clipboard. -->
-    <string name="copy">Copy</string>
     <string name="empty_screen">Well, this is awkward</string>
-    <string name="not_installed">Not installed</string>
 
     <!-- Crash screen -->
     <string name="crash_screen_title">Whoops!</string>
@@ -962,43 +950,4 @@
 
     <!-- Notes screen -->
     <string name="notes_placeholder">Enjoyed the part where…</string>
-
-    <string name="migrationConfigScreen.selectedHeader">Selected</string>
-    <string name="migrationConfigScreen.availableHeader">Available</string>
-    <string name="migrationConfigScreen.selectAllLabel">Select all</string>
-    <string name="migrationConfigScreen.selectNoneLabel">Select none</string>
-    <string name="migrationConfigScreen.selectEnabledLabel">Select enabled sources</string>
-    <string name="migrationConfigScreen.selectPinnedLabel">Select pinned sources</string>
-    <string name="migrationConfigScreen.continueButtonText">Continue</string>
-    <string name="migrationConfigScreen.dataToMigrateHeader">Data to migrate</string>
-    <string name="migrationConfigScreen.removeDownloadsTitle">Delete downloads of current entry after migration</string>
-    <string name="migrationConfigScreen.additionalSearchQueryLabel">Additional keywords (optional)</string>
-    <string name="migrationConfigScreen.additionalSearchQuerySupportingText">Helps narrow down search results by adding additional keywords</string>
-    <string name="migrationConfigScreen.hideUnmatchedTitle">Hide entries without a match</string>
-    <string name="migrationConfigScreen.hideWithoutUpdatesTitle">Hide entries without newer chapters</string>
-    <string name="migrationConfigScreen.hideWithoutUpdatesSubtitle">Only show entry if the match has additional chapters</string>
-    <string name="migrationConfigScreen.enhancedOptionsWarning">These options are slow and dangerous and may lead to restrictions from sources</string>
-    <string name="migrationConfigScreen.deepSearchModeTitle">Advanced search mode</string>
-    <string name="migrationConfigScreen.deepSearchModeSubtitle">Breaks down the title into keywords for a wider search</string>
-    <string name="migrationConfigScreen.prioritizeByChaptersTitle">Match based on chapter number</string>
-    <string name="migrationConfigScreen.prioritizeByChaptersSubtitle">If enabled, chooses the match furthest ahead. Otherwise, picks the first match by source priority.</string>
-    <string name="migrationListScreenTitle">Migration</string>
-    <string name="migrationListScreenTitleWithProgress">Migration (%1$d/%2$d)</string>
-    <string name="migrationListScreen.copyActionLabel">Copy</string>
-    <string name="migrationListScreen.migrateActionLabel">Migrate</string>
-    <string name="migrationListScreen.noMatchFoundText">No alternatives found</string>
-    <string name="migrationListScreen.latestChapterLabel">Latest: %1$s</string>
-    <string name="migrationListScreen.unknownLatestChapter">Unknown</string>
-    <string name="migrationListScreen.searchManuallyActionLabel">Search manually</string>
-    <string name="migrationListScreen.skipActionLabel">Don\'t migrate</string>
-    <string name="migrationListScreen.migrateNowActionLabel">Migrate now</string>
-    <string name="migrationListScreen.copyNowActionLabel">Copy now</string>
-    <string name="migrationListScreen.exitDialogTitle">Stop migrating?</string>
-    <string name="migrationListScreen.exitDialog.stopLabel">Stop</string>
-    <string name="migrationListScreen.exitDialog.cancelLabel">Cancel</string>
-    <string name="migrationListScreen.migrateDialog.copyLabel">Copy</string>
-    <string name="migrationListScreen.migrateDialog.migrateLabel">Migrate</string>
-    <string name="migrationListScreen.migrateDialog.cancelLabel">Cancel</string>
-    <string name="migrationListScreen.progressDialog.cancelLabel">Cancel</string>
-    <string name="migrationListScreen.matchWithoutChapterToast">No chapters found, this entry cannot be used for migration</string>
 </resources>

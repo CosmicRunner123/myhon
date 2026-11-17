@@ -311,9 +311,6 @@ dependencies {
     // Logging
     implementation(libs.logcat)
 
-    // String similarity
-    implementation(libs.stringSimilarity)
-
     // GraphQL generation
     implementation(libs.apollo)
     implementation(libs.apollo.adapters)

@@ -58,11 +58,6 @@ FROM chapter
 WHERE manga_id IN :mangaIds
 ORDER BY manga_id, remote_url;
 
-getChapterSummaryByMangaId:
-SELECT count(*) AS total, max(remote_chapter_number) AS latestChapterNumber
-FROM chapter
-WHERE manga_id = :mangaId;
-
 getScanlatorsByMangaId:
 SELECT DISTINCT remote_scanlator
 FROM chapter

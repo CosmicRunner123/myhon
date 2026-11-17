@@ -240,10 +240,6 @@ class HistoryViewModel(
         }
     }
 
-    fun showMigrateDialog(target: Manga, current: Manga) {
-        dialog.update { Dialog.Migrate(target = target, current = current) }
-    }
-
     fun showChangeCategoryDialog(manga: Manga) {
         viewModelScope.launch {
             val categories = getCategories()
@@ -272,7 +268,6 @@ class HistoryViewModel(
             val manga: Manga,
             val initialSelection: List<CheckboxState<Category>>,
         ) : Dialog
-        data class Migrate(val target: Manga, val current: Manga) : Dialog
     }
 
     sealed interface Event {

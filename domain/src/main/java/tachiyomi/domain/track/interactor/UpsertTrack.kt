@@ -18,12 +18,4 @@ class UpsertTrack(
             logcat(LogPriority.ERROR, e)
         }
     }
-
-    suspend fun awaitAll(tracks: List<Track>) {
-        try {
-            trackRepository.upsertAll(tracks)
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e)
-        }
-    }
 }

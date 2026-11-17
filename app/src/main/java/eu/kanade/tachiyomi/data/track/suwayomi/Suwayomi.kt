@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.data.track.BaseTracker
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerDependencies
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
-import eu.kanade.tachiyomi.source.Source
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import tachiyomi.domain.manga.model.Manga as DomainManga
@@ -99,18 +98,6 @@ class Suwayomi(
         return try {
             api.getTrackSearch(manga.url.getMangaId())
         } catch (_: Exception) {
-            null
-        }
-    }
-
-    override fun isTrackFrom(track: DomainTrack, manga: DomainManga, source: Source?): Boolean {
-        return track.remoteUrl == manga.url && source?.let { accept(it) } == true
-    }
-
-    override fun migrateTrack(track: DomainTrack, manga: DomainManga, newSource: Source): DomainTrack? {
-        return if (accept(newSource)) {
-            track.copy(remoteUrl = manga.url)
-        } else {
             null
         }
     }

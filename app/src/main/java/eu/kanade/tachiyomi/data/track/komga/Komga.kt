@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.data.track.BaseTracker
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerDependencies
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
-import eu.kanade.tachiyomi.source.Source
 import kotlinx.serialization.json.Json
 import okhttp3.Dns
 import okhttp3.OkHttpClient
@@ -106,16 +105,6 @@ class Komga(
         try {
             api.getTrackSearch(manga.url)
         } catch (_: Exception) {
-            null
-        }
-
-    override fun isTrackFrom(track: DomainTrack, manga: Manga, source: Source?): Boolean =
-        track.remoteUrl == manga.url && source?.let { accept(it) } == true
-
-    override fun migrateTrack(track: DomainTrack, manga: Manga, newSource: Source): DomainTrack? =
-        if (accept(newSource)) {
-            track.copy(remoteUrl = manga.url)
-        } else {
             null
         }
 

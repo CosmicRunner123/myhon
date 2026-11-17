@@ -25,8 +25,6 @@ interface MangaRepository {
 
     fun getLibraryMangaAsFlow(): Flow<List<LibraryManga>>
 
-    fun getFavoritesBySourceId(sourceId: Long): Flow<List<Manga>>
-
     suspend fun getDuplicateLibraryManga(id: Long, title: String): List<MangaWithChapterCount>
 
     suspend fun getUpcomingManga(

@@ -39,12 +39,6 @@ abstract class SearchViewModel(
     val state: StateFlow<State>
         field = MutableStateFlow<State>(initialState)
 
-    // Subclasses can't touch the backing field (Kotlin forbids a visibility modifier on one),
-    // so state writes from them go through here.
-    protected fun updateState(function: (State) -> State) {
-        state.update(function)
-    }
-
     private val coroutineDispatcher = Dispatchers.IO.limitedParallelism(5)
     private var searchJob: Job? = null
 
@@ -185,33 +179,16 @@ abstract class SearchViewModel(
         }
     }
 
-    fun setMigrateDialog(currentId: Long, target: Manga) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val current = getManga.await(currentId) ?: return@launch
-            state.update { it.copy(dialog = Dialog.Migrate(target, current)) }
-        }
-    }
-
-    fun clearDialog() {
-        state.update { it.copy(dialog = null) }
-    }
-
     @Immutable
     data class State(
-        val from: Manga? = null,
         val searchQuery: String? = null,
         val sourceFilter: SourceFilter = SourceFilter.PinnedOnly,
         val onlyShowHasResults: Boolean = false,
         val items: Map<Source, SearchItemResult> = mapOf(),
-        val dialog: Dialog? = null,
     ) {
         val progress: Int = items.count { it.value !is SearchItemResult.Loading }
         val total: Int = items.size
         val filteredItems = items.filter { (_, result) -> result.isVisible(onlyShowHasResults) }
-    }
-
-    sealed interface Dialog {
-        data class Migrate(val target: Manga, val current: Manga) : Dialog
     }
 }
 
