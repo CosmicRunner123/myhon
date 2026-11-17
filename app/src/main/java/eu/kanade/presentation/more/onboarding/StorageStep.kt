@@ -48,7 +48,7 @@ internal class StorageStep : OnboardingStep {
         ) {
             Text(
                 stringResource(
-                    MR.strings.onboarding_storage_info,
+                    MR.strings.onboarding_storage_folder_info,
                     stringResource(MR.strings.app_name),
                     SettingsDataScreen.storageLocationText(storagePref),
                 ),

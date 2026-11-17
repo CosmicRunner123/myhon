@@ -65,11 +65,6 @@ object ImageUtil {
         }
     }
 
-    fun getExtensionFromMimeType(mime: String?, openStream: () -> InputStream): String {
-        val type = mime?.let { ImageType.entries.find { it.mime == mime } } ?: findImageType(openStream)
-        return type?.extension ?: "jpg"
-    }
-
     fun isAnimatedAndSupported(source: BufferedSource): Boolean {
         return try {
             val type = findImageType(source.peek().inputStream()) ?: return false

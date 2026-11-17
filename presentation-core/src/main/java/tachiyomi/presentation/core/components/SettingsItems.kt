@@ -47,7 +47,6 @@ import mihon.icons.materialsymbols.roundedfilled.DisabledByDefault
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.TriState
 import tachiyomi.core.common.preference.toggle
-import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.Slider
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
@@ -260,18 +259,16 @@ fun SliderItemPreview() {
 fun TriStateItem(
     label: String,
     state: TriState,
-    enabled: Boolean = true,
-    onClick: ((TriState) -> Unit)?,
+    onClick: (TriState) -> Unit,
 ) {
     Row(
         modifier = Modifier
             .clickable(
-                enabled = enabled && onClick != null,
                 onClick = {
                     when (state) {
-                        TriState.DISABLED -> onClick?.invoke(TriState.ENABLED_IS)
-                        TriState.ENABLED_IS -> onClick?.invoke(TriState.ENABLED_NOT)
-                        TriState.ENABLED_NOT -> onClick?.invoke(TriState.DISABLED)
+                        TriState.DISABLED -> onClick(TriState.ENABLED_IS)
+                        TriState.ENABLED_IS -> onClick(TriState.ENABLED_NOT)
+                        TriState.ENABLED_NOT -> onClick(TriState.DISABLED)
                     }
                 },
             )
@@ -283,8 +280,6 @@ fun TriStateItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.large),
     ) {
-        val stateAlpha = if (enabled && onClick != null) 1f else DISABLED_ALPHA
-
         Icon(
             imageVector = when (state) {
                 TriState.DISABLED -> MaterialSymbols.Rounded.CheckBoxOutlineBlank
@@ -292,18 +287,15 @@ fun TriStateItem(
                 TriState.ENABLED_NOT -> MaterialSymbols.RoundedFilled.DisabledByDefault
             },
             contentDescription = null,
-            tint = if (!enabled || state == TriState.DISABLED) {
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = stateAlpha)
+            tint = if (state == TriState.DISABLED) {
+                MaterialTheme.colorScheme.onSurfaceVariant
             } else {
-                when (onClick) {
-                    null -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
-                    else -> MaterialTheme.colorScheme.primary
-                }
+                MaterialTheme.colorScheme.primary
             },
         )
         Text(
             text = label,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = stateAlpha),
+            color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodyMedium,
         )
     }

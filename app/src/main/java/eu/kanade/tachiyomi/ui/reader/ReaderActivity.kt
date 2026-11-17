@@ -434,11 +434,9 @@ class ReaderActivity : BaseActivity() {
     }
 
     /**
-     * Called when the user clicks the back key or the button on the toolbar. The call is
-     * delegated to the presenter.
+     * Called when the user clicks the back key or the button on the toolbar.
      */
     override fun finish() {
-        viewModel.onActivityFinish()
         super.finish()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             overrideActivityTransition(

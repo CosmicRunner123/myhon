@@ -6,7 +6,6 @@ import eu.kanade.domain.chapter.model.toSChapter
 import eu.kanade.domain.manga.model.hasCustomCover
 import eu.kanade.domain.manga.model.toSManga
 import eu.kanade.tachiyomi.data.cache.CoverCache
-import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +32,6 @@ class UpdateMangaFromRemote(
     private val syncChaptersWithSource: SyncChaptersWithSource,
     private val coverCache: CoverCache,
     private val libraryPreferences: LibraryPreferences,
-    private val downloadManager: DownloadManager,
 ) {
     suspend operator fun invoke(
         manga: Manga,
@@ -122,7 +120,7 @@ class UpdateMangaFromRemote(
 
         val thumbnailUrl = remoteManga.thumbnail_url?.takeIf { it.isNotEmpty() }
 
-        val success = mangaRepository.updateRemote(
+        return mangaRepository.updateRemote(
             MangaRemoteUpdate(
                 id = localManga.id,
                 title = title,
@@ -138,9 +136,5 @@ class UpdateMangaFromRemote(
                 memo = remoteManga.memo,
             ),
         )
-        if (success && title != null) {
-            downloadManager.renameManga(localManga, title)
-        }
-        return success
     }
 }

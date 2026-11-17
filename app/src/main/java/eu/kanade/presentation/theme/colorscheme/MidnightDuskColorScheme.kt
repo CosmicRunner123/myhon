@@ -27,8 +27,8 @@ internal object MidnightDuskColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF16151D), // Unread badge text
         secondaryContainer = Color(0xFF66183C), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFF02475), // Navigation bar selector icon
-        tertiary = Color(0xFF55971C), // Downloaded badge
-        onTertiary = Color(0xFF16151D), // Downloaded badge text
+        tertiary = Color(0xFF55971C), // Local/language badge
+        onTertiary = Color(0xFF16151D), // Local/language badge text
         tertiaryContainer = Color(0xFF386412),
         onTertiaryContainer = Color(0xFFE5E1E5),
         background = Color(0xFF16151D),
@@ -58,8 +58,8 @@ internal object MidnightDuskColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFFFFFFF), // Unread badge text
         secondaryContainer = Color(0xFFEFBAD4), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFD1377C), // Navigation bar selector icon
-        tertiary = Color(0xFF006638), // Downloaded badge
-        onTertiary = Color(0xFFFFFFFF), // Downloaded badge text
+        tertiary = Color(0xFF006638), // Local/language badge
+        onTertiary = Color(0xFFFFFFFF), // Local/language badge text
         tertiaryContainer = Color(0xFF00894b),
         onTertiaryContainer = Color(0xFF2D1600),
         background = Color(0xFFFFFBFF),

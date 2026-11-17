@@ -19,7 +19,6 @@ import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.plusAssign
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.model.Category
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.library.service.LibraryPreferences
 
 @Inject
@@ -121,8 +120,7 @@ class PreferenceRestorer(
         backupCategoriesById: Map<String, BackupCategory>,
         categoriesByName: Map<String, Category>,
     ): Boolean {
-        val categoryPreferences = LibraryPreferences.categoryPreferenceKeys + DownloadPreferences.categoryPreferenceKeys
-        if (key !in categoryPreferences) return false
+        if (key !in LibraryPreferences.categoryPreferenceKeys) return false
 
         val ids = value.mapNotNull {
             backupCategoriesById[it]?.name?.let { name ->

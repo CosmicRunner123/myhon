@@ -34,8 +34,8 @@ internal object CatppuccinColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF11111B), // Unread badge text
         secondaryContainer = Color(0xFF313244), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFCBA6F7), // Navigation bar selector icon
-        tertiary = Color(0xFFA6E3A1), // Volume and brightness bars, Downloaded badge
-        onTertiary = Color(0xFF11111B), // Downloaded badge text
+        tertiary = Color(0xFFA6E3A1), // Volume and brightness bars, Local/language badge
+        onTertiary = Color(0xFF11111B), // Local/language badge text
         tertiaryContainer = Color(0xFF1E1E2E),
         onTertiaryContainer = Color(0xFFCDD6F4),
         error = Color(0xFFF38BA8),
@@ -72,8 +72,8 @@ internal object CatppuccinColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFDCE0E8), // Unread badge text
         secondaryContainer = Color(0xFFCDD0DA), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF8839EF), // Navigation bar selector icon
-        tertiary = Color(0xFF40A02B), // Volume and brightness bars, Downloaded badge
-        onTertiary = Color(0xFFDCE0E8), // Downloaded badge text
+        tertiary = Color(0xFF40A02B), // Volume and brightness bars, Local/language badge
+        onTertiary = Color(0xFFDCE0E8), // Local/language badge text
         tertiaryContainer = Color(0xFFEFF1F5),
         onTertiaryContainer = Color(0xFF4C4F69),
         error = Color(0xFFD20F39),

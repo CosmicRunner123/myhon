@@ -6,7 +6,6 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderTransitionView
-import eu.kanade.tachiyomi.ui.reader.viewer.transitionDownloadState
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 
@@ -37,11 +36,6 @@ class PagerTransitionHolder(
 
         transitionView.bind(
             transition = transition,
-            downloadState = viewer.downloadManager.transitionDownloadState(
-                transition,
-                viewer.activity.viewModel.manga,
-                viewer.activity.viewModel.source,
-            ),
             onRetry = viewer.activity::requestPreloadChapter,
             onButtonPressChange = { pressed -> viewer.pager.setGestureDetectorEnabled(!pressed) },
         )

@@ -26,8 +26,8 @@ internal object StrawberryColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF201A1A), // Unread badge text
         secondaryContainer = Color(0xFF91002A), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFFFFFFF), // Navigation bar selector icon
-        tertiary = Color(0xFFE8C08E), // Downloaded badge
-        onTertiary = Color(0xFF201A1A), // Downloaded badge text
+        tertiary = Color(0xFFE8C08E), // Local/language badge
+        onTertiary = Color(0xFF201A1A), // Local/language badge text
         tertiaryContainer = Color(0xFF775930),
         onTertiaryContainer = Color(0xFFFFF7F1),
         error = Color(0xFFFFB4AB),
@@ -64,8 +64,8 @@ internal object StrawberryColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFFFFFFF), // Unread badge text
         secondaryContainer = Color(0xFFD53855), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFF6EAED), // Navigation bar selector icon
-        tertiary = Color(0xFF5F441D), // Downloaded badge
-        onTertiary = Color(0xFFFFFFFF), // Downloaded badge text
+        tertiary = Color(0xFF5F441D), // Local/language badge
+        onTertiary = Color(0xFFFFFFFF), // Local/language badge text
         tertiaryContainer = Color(0xFF87683D),
         onTertiaryContainer = Color(0xFFFFFFFF),
         error = Color(0xFFBA1A1A),

@@ -27,8 +27,8 @@ internal object TakoColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF38294E), // Unread badge text
         secondaryContainer = Color(0xFF5C4D4B), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFF3B375), // Navigation bar selector icon
-        tertiary = Color(0xFF66577E), // Downloaded badge
-        onTertiary = Color(0xFFF3B375), // Downloaded badge text
+        tertiary = Color(0xFF66577E), // Local/language badge
+        onTertiary = Color(0xFFF3B375), // Local/language badge text
         tertiaryContainer = Color(0xFF4E4065),
         onTertiaryContainer = Color(0xFFEDDCFF),
         background = Color(0xFF21212E),
@@ -58,8 +58,8 @@ internal object TakoColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFF3B375), // Unread badge text
         secondaryContainer = Color(0xFFC8BED0), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF66577E), // Navigation bar selector icon
-        tertiary = Color(0xFFF3B375), // Downloaded badge
-        onTertiary = Color(0xFF574360), // Downloaded badge text
+        tertiary = Color(0xFFF3B375), // Local/language badge
+        onTertiary = Color(0xFF574360), // Local/language badge text
         tertiaryContainer = Color(0xFFFDD6B0),
         onTertiaryContainer = Color(0xFF221437),
         background = Color(0xFFF7F5FF),

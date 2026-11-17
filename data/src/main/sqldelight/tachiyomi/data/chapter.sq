@@ -63,15 +63,6 @@ SELECT DISTINCT remote_scanlator
 FROM chapter
 WHERE manga_id = :mangaId;
 
-getBookmarkedChaptersByMangaId:
-SELECT
-    id, manga_id, remote_url, remote_name, remote_scanlator, remote_chapter_number,
-    remote_date_upload, remote_order, remote_memo, user_read, user_bookmark,
-    user_last_page_read, state_date_fetch
-FROM chapter
-WHERE manga_id = :mangaId
-AND user_bookmark;
-
 getChapterByUrlAndMangaId:
 SELECT
     id, manga_id, remote_url, remote_name, remote_scanlator, remote_chapter_number,

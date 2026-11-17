@@ -25,8 +25,8 @@ internal object LavenderColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFFFFFFF), // Unread badge text
         secondaryContainer = Color(0xFF423271), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFA177FF), // Navigation bar selected icon
-        tertiary = Color(0xFFCDBDFF), // Downloaded badge
-        onTertiary = Color(0xFF360096), // Downloaded badge text
+        tertiary = Color(0xFFCDBDFF), // Local/language badge
+        onTertiary = Color(0xFF360096), // Local/language badge text
         tertiaryContainer = Color(0xFF5512D8),
         onTertiaryContainer = Color(0xFFEFE6FF),
         error = Color(0xFFFFB4AB),
@@ -63,8 +63,8 @@ internal object LavenderColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFEDE2FF), // Unread badge text
         secondaryContainer = Color(0xFFC9B0E6), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF7B46AF), // Navigation bar selector icon
-        tertiary = Color(0xFFEDE2FF), // Downloaded badge
-        onTertiary = Color(0xFF7B46AF), // Downloaded badge text
+        tertiary = Color(0xFFEDE2FF), // Local/language badge
+        onTertiary = Color(0xFF7B46AF), // Local/language badge text
         tertiaryContainer = Color(0xFF6D3BF0),
         onTertiaryContainer = Color(0xFFFFFFFF),
         error = Color(0xFFBA1A1A),

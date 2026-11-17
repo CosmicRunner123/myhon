@@ -21,7 +21,6 @@ import eu.kanade.tachiyomi.ui.library.LibrarySettingsViewModel
 import eu.kanade.tachiyomi.util.system.isReleaseBuildType
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Refresh
-import tachiyomi.core.common.preference.TriState
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.library.model.LibrarySort
@@ -77,20 +76,8 @@ fun LibrarySettingsDialog(
 private fun ColumnScope.FilterPage(
     viewModel: LibrarySettingsViewModel,
 ) {
-    val filterDownloaded by viewModel.libraryPreferences.filterDownloaded.collectAsState()
-    val downloadedOnly by viewModel.preferences.downloadedOnly.collectAsState()
     val autoUpdateMangaRestrictions by viewModel.libraryPreferences.autoUpdateMangaRestrictions.collectAsState()
 
-    TriStateItem(
-        label = stringResource(MR.strings.label_downloaded),
-        state = if (downloadedOnly) {
-            TriState.ENABLED_IS
-        } else {
-            filterDownloaded
-        },
-        enabled = !downloadedOnly,
-        onClick = { viewModel.toggleFilter(LibraryPreferences::filterDownloaded) },
-    )
     val filterUnread by viewModel.libraryPreferences.filterUnread.collectAsState()
     TriStateItem(
         label = stringResource(MR.strings.action_filter_unread),
@@ -265,10 +252,6 @@ private fun ColumnScope.DisplayPage(
     }
 
     HeadingItem(MR.strings.overlay_header)
-    CheckboxItem(
-        label = stringResource(MR.strings.action_display_download_badge),
-        pref = viewModel.libraryPreferences.downloadBadge,
-    )
     CheckboxItem(
         label = stringResource(MR.strings.action_display_unread_badge),
         pref = viewModel.libraryPreferences.unreadBadge,

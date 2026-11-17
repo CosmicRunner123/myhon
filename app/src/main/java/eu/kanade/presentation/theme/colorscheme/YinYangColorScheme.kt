@@ -21,8 +21,8 @@ internal object YinYangColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF5A5A5A), // Unread badge text
         secondaryContainer = Color(0xFF717171), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFE4E4E4), // Navigation bar selector icon
-        tertiary = Color(0xFF000000), // Downloaded badge
-        onTertiary = Color(0xFFFFFFFF), // Downloaded badge text
+        tertiary = Color(0xFF000000), // Local/language badge
+        onTertiary = Color(0xFFFFFFFF), // Local/language badge text
         tertiaryContainer = Color(0xFF00419E),
         onTertiaryContainer = Color(0xFFD8E2FF),
         background = Color(0xFF1E1E1E),
@@ -52,8 +52,8 @@ internal object YinYangColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFFFFFFF), // Unread badge text
         secondaryContainer = Color(0xFFDDDDDD), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF0C0C0C), // Navigation bar selector icon
-        tertiary = Color(0xFFFFFFFF), // Downloaded badge
-        onTertiary = Color(0xFF000000), // Downloaded badge text
+        tertiary = Color(0xFFFFFFFF), // Local/language badge
+        onTertiary = Color(0xFF000000), // Local/language badge text
         tertiaryContainer = Color(0xFFD8E2FF),
         onTertiaryContainer = Color(0xFF001947),
         background = Color(0xFFFDFDFD),

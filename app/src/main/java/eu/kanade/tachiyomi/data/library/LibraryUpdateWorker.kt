@@ -20,7 +20,6 @@ import androidx.work.WorkQuery
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import dev.zacsweers.metro.Inject
-import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
@@ -46,7 +45,6 @@ import logcat.LogPriority
 import mihon.app.di.AppGraph
 import mihon.app.di.appGraph
 import mihon.core.metro.metroGraph
-import mihon.domain.chapter.interactor.FilterChaptersForDownload
 import mihon.domain.source.interactor.UpdateMangaFromRemote
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.getAndSet
@@ -73,7 +71,6 @@ import tachiyomi.i18n.MR
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
@@ -90,15 +87,11 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
 
     @Inject private lateinit var libraryPreferences: LibraryPreferences
 
-    @Inject private lateinit var downloadManager: DownloadManager
-
     @Inject private lateinit var getLibraryManga: GetLibraryManga
 
     @Inject private lateinit var getManga: GetManga
 
     @Inject private lateinit var fetchInterval: FetchInterval
-
-    @Inject private lateinit var filterChaptersForDownload: FilterChaptersForDownload
 
     @Inject private lateinit var updateMangaFromRemote: UpdateMangaFromRemote
 
@@ -254,7 +247,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
         val currentlyUpdatingManga = CopyOnWriteArrayList<Manga>()
         val newUpdates = CopyOnWriteArrayList<Pair<Manga, Array<Chapter>>>()
         val failedUpdates = CopyOnWriteArrayList<Pair<Manga, String?>>()
-        val hasDownloads = AtomicBoolean(false)
         val timeZone = TimeZone.currentSystemDefault()
         val fetchWindow = fetchInterval.getWindow(Clock.System.now().toLocalDateTime(timeZone).date, timeZone)
 
@@ -283,13 +275,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
                                             .sortedByDescending { it.sourceOrder }
 
                                         if (newChapters.isNotEmpty()) {
-                                            val chaptersToDownload = filterChaptersForDownload.await(manga, newChapters)
-
-                                            if (chaptersToDownload.isNotEmpty()) {
-                                                downloadChapters(manga, chaptersToDownload)
-                                                hasDownloads.store(true)
-                                            }
-
                                             // Sources update concurrently, and getAndSet is a separate read and write
                                             synchronized(libraryPreferences.newUpdatesCount) {
                                                 libraryPreferences.newUpdatesCount.getAndSet { it + newChapters.size }
@@ -323,9 +308,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
 
         if (newUpdates.isNotEmpty()) {
             notifier.showUpdateNotifications(newUpdates)
-            if (hasDownloads.load()) {
-                downloadManager.startDownloads()
-            }
         }
 
         if (failedUpdates.isNotEmpty()) {
@@ -335,12 +317,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
                 errorFile.getUriCompat(context),
             )
         }
-    }
-
-    private suspend fun downloadChapters(manga: Manga, chapters: List<Chapter>) {
-        // We don't want to start downloading while the library is updating, because websites
-        // may don't like it and they could ban the user.
-        downloadManager.downloadChapters(manga, chapters, false)
     }
 
     /**

@@ -29,7 +29,6 @@ import eu.kanade.presentation.manga.ChapterSettingsDialog
 import eu.kanade.presentation.manga.DuplicateMangaDialog
 import eu.kanade.presentation.manga.EditCoverAction
 import eu.kanade.presentation.manga.MangaScreen
-import eu.kanade.presentation.manga.components.DeleteChaptersDialog
 import eu.kanade.presentation.manga.components.MangaCoverDialog
 import eu.kanade.presentation.manga.components.ScanlatorFilterDialog
 import eu.kanade.presentation.manga.components.SetIntervalDialog
@@ -37,7 +36,6 @@ import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.source.Source
-import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
@@ -108,8 +106,6 @@ class MangaScreen(
             chapterSwipeEndAction = viewModel.chapterSwipeEndAction,
             navigateUp = navigator::pop,
             onChapterClicked = { openChapter(context, it) },
-            onDownloadChapter = viewModel::runChapterDownloadActions.takeIf { !successState.source.isLocalOrStub() },
-            downloadProgressProvider = viewModel::getDownloadProgress,
             onAddToLibraryClicked = {
                 if (successState.manga.favorite) {
                     viewModel.showRemoveFromLibraryDialog()
@@ -146,7 +142,6 @@ class MangaScreen(
             onSearch = { scope.launch { performSearch(navigator, it) } },
             onCoverClicked = viewModel::showCoverDialog,
             onShareClicked = { shareManga(context, viewModel.manga, viewModel.source) }.takeIf { isHttpSource },
-            onDownloadActionClicked = viewModel::runDownloadAction.takeIf { !successState.source.isLocalOrStub() },
             onEditCategoryClicked = viewModel::showChangeCategoryDialog.takeIf { successState.manga.favorite },
             onEditFetchIntervalClicked = viewModel::showSetFetchIntervalDialog.takeIf {
                 successState.manga.favorite
@@ -155,7 +150,6 @@ class MangaScreen(
             onMultiBookmarkClicked = viewModel::bookmarkChapters,
             onMultiMarkAsReadClicked = viewModel::markChaptersRead,
             onMarkPreviousAsReadClicked = viewModel::markPreviousChapterRead,
-            onMultiDeleteClicked = viewModel::showDeleteChapterDialog,
             onChapterSwipe = viewModel::chapterSwipe,
             onChapterSelected = viewModel::toggleSelection,
             onAllChapterSelected = viewModel::toggleAllSelection,
@@ -186,29 +180,18 @@ class MangaScreen(
                     },
                 )
             }
-            is MangaViewModel.Dialog.DeleteChapters -> {
-                DeleteChaptersDialog(
-                    onDismissRequest = onDismissRequest,
-                    onConfirm = {
-                        viewModel.toggleAllSelection(false)
-                        viewModel.deleteChapters(dialog.chapters)
-                    },
-                )
-            }
 
             is MangaViewModel.Dialog.DuplicateManga -> {
                 DuplicateMangaDialog(
                     duplicates = dialog.duplicates,
                     onDismissRequest = onDismissRequest,
-                    onConfirm = { viewModel.toggleFavorite(onRemoved = {}, checkDuplicate = false) },
+                    onConfirm = { viewModel.toggleFavorite(checkDuplicate = false) },
                     onOpenManga = { navigator.push(MangaScreen(it.id)) },
                 )
             }
             MangaViewModel.Dialog.SettingsSheet -> ChapterSettingsDialog(
                 onDismissRequest = onDismissRequest,
                 manga = successState.manga,
-                downloadedOnly = successState.downloadedOnly,
-                onDownloadFilterChanged = viewModel::setDownloadedFilter,
                 onUnreadFilterChanged = viewModel::setUnreadFilter,
                 onBookmarkedFilterChanged = viewModel::setBookmarkedFilter,
                 onSortModeChanged = viewModel::setSorting,

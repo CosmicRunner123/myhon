@@ -1,23 +1,14 @@
 package eu.kanade.presentation.components
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import mihon.icons.materialsymbols.MaterialSymbols
-import mihon.icons.materialsymbols.automirroredrounded.ArrowRight
 import androidx.compose.material3.DropdownMenu as ComposeDropdownMenu
 
 /**
@@ -43,35 +34,4 @@ fun DropdownMenu(
         properties = properties,
         content = content,
     )
-}
-
-@Composable
-fun NestedMenuItem(
-    text: @Composable () -> Unit,
-    children: @Composable ColumnScope.(() -> Unit) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var nestedExpanded by remember { mutableStateOf(false) }
-    val closeMenu = { nestedExpanded = false }
-
-    Box {
-        DropdownMenuItem(
-            text = text,
-            onClick = { nestedExpanded = true },
-            trailingIcon = {
-                Icon(
-                    imageVector = MaterialSymbols.AutoMirroredRounded.ArrowRight,
-                    contentDescription = null,
-                )
-            },
-        )
-
-        DropdownMenu(
-            expanded = nestedExpanded,
-            onDismissRequest = closeMenu,
-            modifier = modifier,
-        ) {
-            children(closeMenu)
-        }
-    }
 }

@@ -8,14 +8,12 @@ import kotlinx.coroutines.withContext
 import mihon.core.migration.Migration
 import mihon.core.migration.MigrationContext
 import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.library.service.LibraryPreferences
 
 @Inject
 @ContributesIntoSet(AppScope::class)
 class CategoryPreferencesCleanupMigration(
     private val libraryPreferences: LibraryPreferences,
-    private val downloadPreferences: DownloadPreferences,
     private val getCategories: GetCategories,
 ) : Migration {
     override val version: Float = 10f
@@ -31,9 +29,6 @@ class CategoryPreferencesCleanupMigration(
         val categoryPreferences = listOf(
             libraryPreferences.updateCategories,
             libraryPreferences.updateCategoriesExclude,
-            downloadPreferences.removeExcludeCategories,
-            downloadPreferences.downloadNewChapterCategories,
-            downloadPreferences.downloadNewChapterCategoriesExclude,
         )
         categoryPreferences.forEach { preference ->
             val ids = preference.get()

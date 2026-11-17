@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderTransitionView
-import eu.kanade.tachiyomi.ui.reader.viewer.transitionDownloadState
 import eu.kanade.tachiyomi.util.system.dpToPx
 
 /**
@@ -39,11 +38,6 @@ class WebtoonTransitionHolder(
     fun bind(transition: ChapterTransition) {
         transitionView.bind(
             transition = transition,
-            downloadState = viewer.downloadManager.transitionDownloadState(
-                transition,
-                viewer.activity.viewModel.manga,
-                viewer.activity.viewModel.source,
-            ),
             onRetry = viewer.activity::requestPreloadChapter,
             statusPadding = PaddingValues(vertical = 16.dp),
         )

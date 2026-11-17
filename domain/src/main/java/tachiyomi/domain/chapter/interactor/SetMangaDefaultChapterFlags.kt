@@ -26,7 +26,6 @@ class SetMangaDefaultChapterFlags(
             setMangaChapterFlags.awaitSetAllFlags(
                 mangaIds = mangaIds,
                 unreadFilter = filterChapterByRead.get(),
-                downloadedFilter = filterChapterByDownloaded.get(),
                 bookmarkedFilter = filterChapterByBookmarked.get(),
                 sortingMode = sortChapterBySourceOrNumber.get(),
                 sortingDirection = sortChapterByAscendingOrDescending.get(),

@@ -27,8 +27,8 @@ internal object YotsubaColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF5F1600), // Unread badge text
         secondaryContainer = Color(0xFF862200), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFFFDBCF), // Navigation bar selector icon
-        tertiary = Color(0xFFD7C68D), // Downloaded badge
-        onTertiary = Color(0xFF3A2F05), // Downloaded badge text
+        tertiary = Color(0xFFD7C68D), // Local/language badge
+        onTertiary = Color(0xFF3A2F05), // Local/language badge text
         tertiaryContainer = Color(0xFF524619),
         onTertiaryContainer = Color(0xFFF5E2A7),
         background = Color(0xFF211A18),
@@ -58,8 +58,8 @@ internal object YotsubaColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFFFFFFF), // Unread badge text
         secondaryContainer = Color(0xFFEBCDC2), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF3B0A00), // Navigation bar selector icon
-        tertiary = Color(0xFF6B5E2F), // Downloaded badge
-        onTertiary = Color(0xFFFFFFFF), // Downloaded badge text
+        tertiary = Color(0xFF6B5E2F), // Local/language badge
+        onTertiary = Color(0xFFFFFFFF), // Local/language badge text
         tertiaryContainer = Color(0xFFF5E2A7),
         onTertiaryContainer = Color(0xFF231B00),
         background = Color(0xFFFCFCFC),

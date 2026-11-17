@@ -25,8 +25,6 @@ interface ChapterRepository {
 
     fun getScanlatorsByMangaIdAsFlow(mangaId: Long): Flow<List<String>>
 
-    suspend fun getBookmarkedChaptersByMangaId(mangaId: Long): List<Chapter>
-
     suspend fun getChapterById(id: Long): Chapter?
 
     suspend fun getChapterByMangaIdAsFlow(mangaId: Long, applyScanlatorFilter: Boolean = false): Flow<List<Chapter>>

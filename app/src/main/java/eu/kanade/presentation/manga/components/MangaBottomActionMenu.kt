@@ -40,10 +40,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import eu.kanade.presentation.components.DownloadDropdownMenu
-import eu.kanade.presentation.manga.DownloadAction
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -56,7 +53,6 @@ import mihon.icons.materialsymbols.rounded.BookmarkAdd
 import mihon.icons.materialsymbols.rounded.BookmarkRemove
 import mihon.icons.materialsymbols.rounded.Delete
 import mihon.icons.materialsymbols.rounded.DoneAll
-import mihon.icons.materialsymbols.rounded.Download
 import mihon.icons.materialsymbols.rounded.RemoveDone
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
@@ -71,8 +67,6 @@ fun MangaBottomActionMenu(
     onMarkAsReadClicked: (() -> Unit)? = null,
     onMarkAsUnreadClicked: (() -> Unit)? = null,
     onMarkPreviousAsReadClicked: (() -> Unit)? = null,
-    onDownloadClicked: (() -> Unit)? = null,
-    onDeleteClicked: (() -> Unit)? = null,
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -86,7 +80,7 @@ fun MangaBottomActionMenu(
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             val haptic = LocalHapticFeedback.current
-            val confirm = remember { mutableStateListOf(false, false, false, false, false, false, false) }
+            val confirm = remember { mutableStateListOf(false, false, false, false, false) }
             var resetJob by remember { mutableStateOf<Job?>(null) }
             val onLongClickItem: (Int) -> Unit = { toConfirmIndex ->
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -151,24 +145,6 @@ fun MangaBottomActionMenu(
                         onClick = onMarkPreviousAsReadClicked,
                     )
                 }
-                if (onDownloadClicked != null) {
-                    Button(
-                        title = stringResource(MR.strings.action_download),
-                        icon = MaterialSymbols.Rounded.Download,
-                        toConfirm = confirm[5],
-                        onLongClick = { onLongClickItem(5) },
-                        onClick = onDownloadClicked,
-                    )
-                }
-                if (onDeleteClicked != null) {
-                    Button(
-                        title = stringResource(MR.strings.action_delete),
-                        icon = MaterialSymbols.Rounded.Delete,
-                        toConfirm = confirm[6],
-                        onLongClick = { onLongClickItem(6) },
-                        onClick = onDeleteClicked,
-                    )
-                }
             }
         }
     }
@@ -181,7 +157,6 @@ private fun RowScope.Button(
     toConfirm: Boolean,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
-    content: (@Composable () -> Unit)? = null,
 ) {
     val animatedWeight by animateFloatAsState(
         targetValue = if (toConfirm) 2f else 1f,
@@ -220,7 +195,6 @@ private fun RowScope.Button(
                 )
             }
         }
-        content?.invoke()
     }
 }
 
@@ -230,7 +204,6 @@ fun LibraryBottomActionMenu(
     onChangeCategoryClicked: () -> Unit,
     onMarkAsReadClicked: () -> Unit,
     onMarkAsUnreadClicked: () -> Unit,
-    onDownloadClicked: ((DownloadAction) -> Unit)?,
     onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -246,7 +219,7 @@ fun LibraryBottomActionMenu(
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             val haptic = LocalHapticFeedback.current
-            val confirm = remember { mutableStateListOf(false, false, false, false, false) }
+            val confirm = remember { mutableStateListOf(false, false, false, false) }
             var resetJob by remember { mutableStateOf<Job?>(null) }
             val onLongClickItem: (Int) -> Unit = { toConfirmIndex ->
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -286,33 +259,14 @@ fun LibraryBottomActionMenu(
                     onLongClick = { onLongClickItem(2) },
                     onClick = onMarkAsUnreadClicked,
                 )
-                if (onDownloadClicked != null) {
-                    var downloadExpanded by remember { mutableStateOf(false) }
-                    Button(
-                        title = stringResource(MR.strings.action_download),
-                        icon = MaterialSymbols.Rounded.Download,
-                        toConfirm = confirm[3],
-                        onLongClick = { onLongClickItem(3) },
-                        onClick = { downloadExpanded = !downloadExpanded },
-                    ) {
-                        DownloadDropdownMenu(
-                            expanded = downloadExpanded,
-                            onDismissRequest = { downloadExpanded = false },
-                            onDownloadClicked = onDownloadClicked,
-                            offset = BottomBarMenuDpOffset,
-                        )
-                    }
-                }
                 Button(
                     title = stringResource(MR.strings.action_delete),
                     icon = MaterialSymbols.Rounded.Delete,
-                    toConfirm = confirm[4],
-                    onLongClick = { onLongClickItem(4) },
+                    toConfirm = confirm[3],
+                    onLongClick = { onLongClickItem(3) },
                     onClick = onDeleteClicked,
                 )
             }
         }
     }
 }
-
-private val BottomBarMenuDpOffset = DpOffset(0.dp, 0.dp)

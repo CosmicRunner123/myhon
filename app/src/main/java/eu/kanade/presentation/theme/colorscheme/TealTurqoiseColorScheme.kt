@@ -19,8 +19,8 @@ internal object TealTurqoiseColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF000000), // Unread badge text
         secondaryContainer = Color(0xFF18544E), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF40E0D0), // Navigation bar selector icon
-        tertiary = Color(0xFFBF1F2F), // Downloaded badge
-        onTertiary = Color(0xFFFFFFFF), // Downloaded badge text
+        tertiary = Color(0xFFBF1F2F), // Local/language badge
+        onTertiary = Color(0xFFFFFFFF), // Local/language badge text
         tertiaryContainer = Color(0xFF200508),
         onTertiaryContainer = Color(0xFFBF1F2F),
         background = Color(0xFF202125),
@@ -50,8 +50,8 @@ internal object TealTurqoiseColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFFFFFFF), // Unread badge text
         secondaryContainer = Color(0xFFCFE5E4), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF008080), // Navigation bar selector icon
-        tertiary = Color(0xFFFF7F7F), // Downloaded badge
-        onTertiary = Color(0xFF000000), // Downloaded badge text
+        tertiary = Color(0xFFFF7F7F), // Local/language badge
+        onTertiary = Color(0xFF000000), // Local/language badge text
         tertiaryContainer = Color(0xFF2A1616),
         onTertiaryContainer = Color(0xFFFF7F7F),
         background = Color(0xFFFAFAFA),

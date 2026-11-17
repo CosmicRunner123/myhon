@@ -73,11 +73,6 @@ class LibraryPreferences(
 
     // region Filter
 
-    val filterDownloaded: Preference<TriState> = preferenceStore.getEnum(
-        "pref_filter_library_downloaded_v2",
-        TriState.DISABLED,
-    )
-
     val filterUnread: Preference<TriState> = preferenceStore.getEnum("pref_filter_library_unread_v2", TriState.DISABLED)
 
     val filterStarted: Preference<TriState> = preferenceStore.getEnum(
@@ -108,8 +103,6 @@ class LibraryPreferences(
     // endregion
 
     // region Badges
-
-    val downloadBadge: Preference<Boolean> = preferenceStore.getBoolean("display_download_badge", false)
 
     val unreadBadge: Preference<Boolean> = preferenceStore.getBoolean("display_unread_badge", true)
 
@@ -156,11 +149,6 @@ class LibraryPreferences(
         Manga.SHOW_ALL,
     )
 
-    val filterChapterByDownloaded: Preference<Long> = preferenceStore.getLong(
-        "default_chapter_filter_by_downloaded",
-        Manga.SHOW_ALL,
-    )
-
     val filterChapterByBookmarked: Preference<Long> = preferenceStore.getLong(
         "default_chapter_filter_by_bookmarked",
         Manga.SHOW_ALL,
@@ -184,7 +172,6 @@ class LibraryPreferences(
 
     fun setChapterSettingsDefault(manga: Manga) {
         filterChapterByRead.set(manga.unreadFilterRaw)
-        filterChapterByDownloaded.set(manga.downloadedFilterRaw)
         filterChapterByBookmarked.set(manga.bookmarkedFilterRaw)
         sortChapterBySourceOrNumber.set(manga.sorting)
         displayChapterByNameOrNumber.set(manga.displayMode)
@@ -215,21 +202,11 @@ class LibraryPreferences(
 
     val updateMangaTitles: Preference<Boolean> = preferenceStore.getBoolean("pref_update_library_manga_titles", false)
 
-    val disallowNonAsciiFilenames: Preference<Boolean> = preferenceStore.getBoolean(
-        "disallow_non_ascii_filenames",
-        false,
-    )
-    val enableChapterNameHash: Preference<Boolean> = preferenceStore.getBoolean(
-        "pref_enable_chapter_name_hash",
-        false,
-    )
-
     // endregion
 
     enum class ChapterSwipeAction {
         ToggleRead,
         ToggleBookmark,
-        Download,
         Disabled,
     }
 

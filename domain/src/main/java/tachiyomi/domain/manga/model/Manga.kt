@@ -55,9 +55,6 @@ data class Manga(
     val unreadFilterRaw: Long
         get() = chapterFlags and CHAPTER_UNREAD_MASK
 
-    val downloadedFilterRaw: Long
-        get() = chapterFlags and CHAPTER_DOWNLOADED_MASK
-
     val bookmarkedFilterRaw: Long
         get() = chapterFlags and CHAPTER_BOOKMARKED_MASK
 
@@ -91,9 +88,7 @@ data class Manga(
         const val CHAPTER_SHOW_READ = 0x00000004L
         const val CHAPTER_UNREAD_MASK = 0x00000006L
 
-        const val CHAPTER_SHOW_DOWNLOADED = 0x00000008L
-        const val CHAPTER_SHOW_NOT_DOWNLOADED = 0x00000010L
-        const val CHAPTER_DOWNLOADED_MASK = 0x00000018L
+        // 0x18 held Mihon's downloaded filter; flags restored from its backups can still carry those bits
 
         const val CHAPTER_SHOW_BOOKMARKED = 0x00000020L
         const val CHAPTER_SHOW_NOT_BOOKMARKED = 0x00000040L

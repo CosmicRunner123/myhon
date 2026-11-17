@@ -26,8 +26,8 @@ internal object TachiyomiColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF002D6E), // Unread badge text
         secondaryContainer = Color(0xFF00429B), // Navigation bar selector pill & pro
         onSecondaryContainer = Color(0xFFD9E2FF), // Navigation bar selector icon
-        tertiary = Color(0xFF7ADC77), // Downloaded badge
-        onTertiary = Color(0xFF003909), // Downloaded badge text
+        tertiary = Color(0xFF7ADC77), // Local/language badge
+        onTertiary = Color(0xFF003909), // Local/language badge text
         tertiaryContainer = Color(0xFF005312),
         onTertiaryContainer = Color(0xFF95F990),
         background = Color(0xFF1B1B1F),
@@ -62,8 +62,8 @@ internal object TachiyomiColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFFFFFFF), // Unread badge text
         secondaryContainer = Color(0xFFD9E2FF), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF001945), // Navigation bar selector icon
-        tertiary = Color(0xFF006E1B), // Downloaded badge
-        onTertiary = Color(0xFFFFFFFF), // Downloaded badge text
+        tertiary = Color(0xFF006E1B), // Local/language badge
+        onTertiary = Color(0xFFFFFFFF), // Local/language badge text
         tertiaryContainer = Color(0xFF95F990),
         onTertiaryContainer = Color(0xFF002203),
         background = Color(0xFFFEFBFF),

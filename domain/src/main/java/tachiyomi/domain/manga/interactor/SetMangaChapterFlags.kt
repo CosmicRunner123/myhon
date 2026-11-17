@@ -10,14 +10,6 @@ class SetMangaChapterFlags(
     private val mangaRepository: MangaRepository,
 ) {
 
-    suspend fun awaitSetDownloadedFilter(manga: Manga, flag: Long): Boolean {
-        return mangaRepository.update(
-            MangaUpdate(manga.id) {
-                chapterFlags = manga.chapterFlags.setFlag(flag, Manga.CHAPTER_DOWNLOADED_MASK)
-            },
-        )
-    }
-
     suspend fun awaitSetUnreadFilter(manga: Manga, flag: Long): Boolean {
         return mangaRepository.update(
             MangaUpdate(manga.id) {
@@ -69,14 +61,12 @@ class SetMangaChapterFlags(
     suspend fun awaitSetAllFlags(
         mangaIds: List<Long>,
         unreadFilter: Long,
-        downloadedFilter: Long,
         bookmarkedFilter: Long,
         sortingMode: Long,
         sortingDirection: Long,
         displayMode: Long,
     ): Boolean {
         val flags = 0L.setFlag(unreadFilter, Manga.CHAPTER_UNREAD_MASK)
-            .setFlag(downloadedFilter, Manga.CHAPTER_DOWNLOADED_MASK)
             .setFlag(bookmarkedFilter, Manga.CHAPTER_BOOKMARKED_MASK)
             .setFlag(sortingMode, Manga.CHAPTER_SORTING_MASK)
             .setFlag(sortingDirection, Manga.CHAPTER_SORT_DIR_MASK)

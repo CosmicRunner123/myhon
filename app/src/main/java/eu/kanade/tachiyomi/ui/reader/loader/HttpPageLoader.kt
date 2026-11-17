@@ -35,8 +35,6 @@ internal class HttpPageLoader(
     private var chunkProcessJob: Job? = null
     private val downloadJobs = ConcurrentHashMap<Int, Job>()
 
-    override var isLocal: Boolean = false
-
     /**
      * Returns the page list for a chapter. It tries to return the page list from the local cache,
      * otherwise fallbacks to network.

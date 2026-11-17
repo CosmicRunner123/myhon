@@ -93,7 +93,7 @@ internal class PermissionStep : OnboardingStep {
 
             PermissionCheckbox(
                 title = stringResource(MR.strings.onboarding_permission_ignore_battery_opts),
-                subtitle = stringResource(MR.strings.onboarding_permission_ignore_battery_opts_description),
+                subtitle = stringResource(MR.strings.onboarding_permission_ignore_battery_opts_reason),
                 granted = batteryGranted,
                 onButtonClick = {
                     @SuppressLint("BatteryLife")

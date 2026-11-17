@@ -36,7 +36,6 @@ import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.ChromeReaderMode
 import mihon.icons.materialsymbols.rounded.Code
 import mihon.icons.materialsymbols.rounded.CollectionsBookmark
-import mihon.icons.materialsymbols.rounded.Download
 import mihon.icons.materialsymbols.rounded.Info
 import mihon.icons.materialsymbols.rounded.Palette
 import mihon.icons.materialsymbols.rounded.Search
@@ -187,12 +186,6 @@ object SettingsMainScreen : Screen() {
             subtitleRes = MR.strings.pref_reader_summary,
             icon = MaterialSymbols.AutoMirroredRounded.ChromeReaderMode,
             screen = SettingsReaderScreen,
-        ),
-        Item(
-            titleRes = MR.strings.pref_category_downloads,
-            subtitleRes = MR.strings.pref_downloads_summary,
-            icon = MaterialSymbols.Rounded.Download,
-            screen = SettingsDownloadScreen,
         ),
         Item(
             titleRes = MR.strings.pref_category_tracking,

@@ -164,20 +164,11 @@ object SettingsAdvancedScreen : SearchableSettings {
 
     @Composable
     private fun getDataGroup(): Preference.PreferenceGroup {
-        val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.label_data),
             preferenceItems = listOf(
-                Preference.PreferenceItem.TextPreference(
-                    title = stringResource(MR.strings.pref_invalidate_download_cache),
-                    subtitle = stringResource(MR.strings.pref_invalidate_download_cache_summary),
-                    onClick = {
-                        context.appGraph.downloadCache.invalidateCache()
-                        context.toast(MR.strings.download_cache_invalidated)
-                    },
-                ),
                 Preference.PreferenceItem.TextPreference(
                     title = stringResource(MR.strings.pref_clear_database),
                     subtitle = stringResource(MR.strings.pref_clear_database_summary),
@@ -312,17 +303,6 @@ object SettingsAdvancedScreen : SearchableSettings {
                 Preference.PreferenceItem.SwitchPreference(
                     preference = libraryPreferences.updateMangaTitles,
                     title = stringResource(MR.strings.pref_update_library_manga_titles),
-                    subtitle = stringResource(MR.strings.pref_update_library_manga_titles_summary),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    preference = libraryPreferences.disallowNonAsciiFilenames,
-                    title = stringResource(MR.strings.pref_disallow_non_ascii_filenames),
-                    subtitle = stringResource(MR.strings.pref_disallow_non_ascii_filenames_details),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    preference = libraryPreferences.enableChapterNameHash,
-                    title = stringResource(MR.strings.pref_enable_chapter_name_hash),
-                    subtitle = stringResource(MR.strings.pref_enable_chapter_name_hash_details),
                 ),
             ),
         )

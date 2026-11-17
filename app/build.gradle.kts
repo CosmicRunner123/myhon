@@ -210,7 +210,6 @@ dependencies {
     implementation(projects.core.archive)
     implementation(projects.core.common)
     implementation(projects.core.metro)
-    implementation(projects.coreMetadata)
     implementation(projects.sourceApi)
     implementation(projects.sourceLocal)
     implementation(projects.data)

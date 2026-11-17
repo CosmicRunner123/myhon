@@ -1,6 +1,5 @@
 package eu.kanade.core.util
 
-import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastForEach
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -44,19 +43,6 @@ fun <E> HashSet<E>.addOrRemove(value: E, shouldAdd: Boolean) {
     } else {
         remove(value)
     }
-}
-
-/**
- * Returns a list containing all elements not matching the given [predicate].
- *
- * **Do not use for collections that come from public APIs**, since they may not support random
- * access in an efficient way, and this method may actually be a lot slower. Only use for
- * collections that are created by code we control and are known to support random access.
- */
-@OptIn(ExperimentalContracts::class)
-inline fun <T> List<T>.fastFilterNot(predicate: (T) -> Boolean): List<T> {
-    contract { callsInPlace(predicate) }
-    return fastFilter { !predicate(it) }
 }
 
 /**

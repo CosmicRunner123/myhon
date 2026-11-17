@@ -119,12 +119,12 @@ class HistoryViewModel(
     }
 
     suspend fun getNextChapter(): Chapter? {
-        return getNextChapters.await(onlyUnread = false).firstOrNull()
+        return getNextChapters.await().firstOrNull()
     }
 
     fun getNextChapterForManga(mangaId: Long, chapterId: Long) {
         viewModelScope.launch {
-            sendNextChapterEvent(getNextChapters.await(mangaId, chapterId, onlyUnread = false))
+            sendNextChapterEvent(getNextChapters.await(mangaId, chapterId))
         }
     }
 

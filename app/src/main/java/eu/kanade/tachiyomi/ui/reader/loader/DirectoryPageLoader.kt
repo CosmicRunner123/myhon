@@ -11,8 +11,6 @@ import tachiyomi.core.common.util.system.ImageUtil
  */
 internal class DirectoryPageLoader(val file: UniFile) : PageLoader() {
 
-    override var isLocal: Boolean = true
-
     override suspend fun getPages(): List<ReaderPage> {
         return file.listFiles()
             ?.filter { !it.isDirectory && ImageUtil.isImage(it.name) { it.openInputStream() } }

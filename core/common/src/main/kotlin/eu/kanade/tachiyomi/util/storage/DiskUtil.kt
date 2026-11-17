@@ -73,19 +73,7 @@ object DiskUtil {
     }
 
     /**
-     * Gets the available space for the disk that a file path points to, in bytes.
-     */
-    fun getAvailableStorageSpace(f: UniFile): Long {
-        return try {
-            val stat = StatFs(f.uri.path)
-            stat.availableBlocksLong * stat.blockSizeLong
-        } catch (_: Exception) {
-            -1L
-        }
-    }
-
-    /**
-     * Don't display downloaded chapters in gallery apps creating `.nomedia`.
+     * Don't display the images in [dir] in gallery apps creating `.nomedia`.
      */
     fun createNoMediaFile(dir: UniFile?, context: Context?) {
         if (dir != null && dir.exists()) {
@@ -123,24 +111,10 @@ object DiskUtil {
      * Leading periods are stripped, to avoid the creation of hidden
      * files by default. If a hidden file is desired, a period can be
      * prepended to the return value from this function.
-     *
-     * If the optional argument disallowNonAscii is set to true,
-     * then ANYTHING outside the ASCII range is replaced not with underscores,
-     * but with its hexadecimal encoding. This is to make it so that distinct
-     * non-English titles of things remain distinct, since not all
-     * places where this function is used also take care of
-     * disambiguation.
-     *
-     * We could instead replace only non-ASCII characters known to
-     * be problematic, but so far nobody with a non-Unicode-compliant
-     * device has been able to provide either directions to reproduce
-     * their issue nor any documentation or tests that would allow us
-     * to determine which characters are problems and which are not.
      */
     fun buildValidFilename(
         origName: String,
         maxBytes: Int = MAX_FILE_NAME_BYTES,
-        disallowNonAscii: Boolean = false,
     ): String {
         val name = origName.trim('.', ' ')
         if (name.isEmpty()) {
@@ -148,15 +122,7 @@ object DiskUtil {
         }
         val sb = StringBuilder(name.length)
         name.forEach { c ->
-            if (disallowNonAscii && c >= 0x80.toChar()) {
-                sb.append(
-                    c.toString().toByteArray(Charsets.UTF_8).toHexString(
-                        HexFormat {
-                            upperCase = false
-                        },
-                    ),
-                )
-            } else if (isValidFatFilenameChar(c)) {
+            if (isValidFatFilenameChar(c)) {
                 sb.append(c)
             } else {
                 sb.append('_')

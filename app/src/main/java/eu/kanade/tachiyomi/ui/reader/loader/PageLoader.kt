@@ -15,8 +15,6 @@ abstract class PageLoader {
     var isRecycled = false
         private set
 
-    abstract var isLocal: Boolean
-
     /**
      * Returns the list of pages of a chapter.
      */

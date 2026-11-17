@@ -131,12 +131,6 @@ class ChapterRepositoryImpl(
             .subscribeToList()
     }
 
-    override suspend fun getBookmarkedChaptersByMangaId(mangaId: Long): List<Chapter> {
-        return database.chapterQueries
-            .getBookmarkedChaptersByMangaId(mangaId, ::mapChapter)
-            .awaitAsList()
-    }
-
     override suspend fun getChapterById(id: Long): Chapter? {
         return database.chapterQueries
             .getChapterById(id, ::mapChapter)

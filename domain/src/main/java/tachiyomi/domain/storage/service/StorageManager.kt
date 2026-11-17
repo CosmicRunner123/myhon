@@ -6,7 +6,6 @@ import com.hippo.unifile.UniFile
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
-import eu.kanade.tachiyomi.util.storage.DiskUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -49,9 +48,6 @@ class StorageManager(
                 baseDir?.let { parent ->
                     parent.createDirectory(AUTOMATIC_BACKUPS_PATH)
                     parent.createDirectory(LOCAL_SOURCE_PATH)
-                    parent.createDirectory(DOWNLOADS_PATH).also {
-                        DiskUtil.createNoMediaFile(it, context)
-                    }
                 }
                 _changes.send(Unit)
             }
@@ -65,10 +61,6 @@ class StorageManager(
 
     fun getAutomaticBackupsDirectory(): UniFile? {
         return getChildDirectory(AUTOMATIC_BACKUPS_PATH)
-    }
-
-    fun getDownloadsDirectory(): UniFile? {
-        return getChildDirectory(DOWNLOADS_PATH)
     }
 
     fun getLocalSourceDirectory(): UniFile? {
@@ -85,5 +77,4 @@ class StorageManager(
 }
 
 private const val AUTOMATIC_BACKUPS_PATH = "autobackup"
-private const val DOWNLOADS_PATH = "downloads"
 private const val LOCAL_SOURCE_PATH = "local"

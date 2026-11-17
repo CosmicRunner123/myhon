@@ -100,7 +100,7 @@ object SettingsDataScreen : SearchableSettings {
 
         return listOf(
             getStorageLocationPref(storagePreferences = storagePreferences),
-            Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_storage_location_info)),
+            Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_storage_location_usage_info)),
 
             getBackupAndRestoreGroup(backupPreferences = backupPreferences),
             getDataGroup(),

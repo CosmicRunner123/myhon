@@ -18,7 +18,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.util.fastAll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
@@ -51,14 +50,12 @@ import mihon.icons.materialsymbols.automirroredrounded.Help
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryManga
-import tachiyomi.domain.manga.model.Manga
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.source.local.isLocal
 
 data object LibraryTab : Tab {
 
@@ -145,8 +142,6 @@ data object LibraryTab : Tab {
                     onChangeCategoryClicked = viewModel::openChangeCategoryDialog,
                     onMarkAsReadClicked = { viewModel.markReadSelection(true) },
                     onMarkAsUnreadClicked = { viewModel.markReadSelection(false) },
-                    onDownloadClicked = viewModel::performDownloadAction
-                        .takeIf { state.selectedManga.fastAll { !it.isLocal() } },
                     onDeleteClicked = viewModel::openDeleteMangaDialog,
                 )
             },
@@ -234,10 +229,9 @@ data object LibraryTab : Tab {
             }
             is LibraryViewModel.Dialog.DeleteManga -> {
                 DeleteLibraryMangaDialog(
-                    containsLocalManga = dialog.manga.any(Manga::isLocal),
                     onDismissRequest = onDismissRequest,
-                    onConfirm = { deleteManga, deleteChapter ->
-                        viewModel.removeMangas(dialog.manga, deleteManga, deleteChapter)
+                    onConfirm = {
+                        viewModel.removeMangas(dialog.manga)
                         viewModel.clearSelection()
                     },
                 )

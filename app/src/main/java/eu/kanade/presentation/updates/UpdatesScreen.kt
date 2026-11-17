@@ -21,9 +21,7 @@ import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
-import eu.kanade.presentation.manga.components.ChapterDownloadAction
 import eu.kanade.presentation.manga.components.MangaBottomActionMenu
-import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.ui.updates.UpdatesItem
 import eu.kanade.tachiyomi.ui.updates.UpdatesViewModel
 import kotlinx.coroutines.delay
@@ -55,10 +53,8 @@ fun UpdateScreen(
     onInvertSelection: () -> Unit,
     onCalendarClicked: () -> Unit,
     onUpdateLibrary: suspend () -> Boolean,
-    onDownloadChapter: (List<UpdatesItem>, ChapterDownloadAction) -> Unit,
     onMultiBookmarkClicked: (List<UpdatesItem>, bookmark: Boolean) -> Unit,
     onMultiMarkAsReadClicked: (List<UpdatesItem>, read: Boolean) -> Unit,
-    onMultiDeleteClicked: (List<UpdatesItem>) -> Unit,
     onUpdateSelected: (UpdatesItem, Boolean, Boolean) -> Unit,
     onOpenChapter: (UpdatesItem) -> Unit,
     onFilterClicked: () -> Unit,
@@ -87,10 +83,8 @@ fun UpdateScreen(
         bottomBar = {
             UpdatesBottomBar(
                 selected = state.selected,
-                onDownloadChapter = onDownloadChapter,
                 onMultiBookmarkClicked = onMultiBookmarkClicked,
                 onMultiMarkAsReadClicked = onMultiMarkAsReadClicked,
-                onMultiDeleteClicked = onMultiDeleteClicked,
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -142,7 +136,6 @@ fun UpdateScreen(
                                 onUpdateSelected = onUpdateSelected,
                                 onClickCover = onClickCover,
                                 onClickUpdate = onOpenChapter,
-                                onDownloadChapter = onDownloadChapter,
                             )
                         }
                     }
@@ -216,10 +209,8 @@ private fun UpdatesAppBar(
 @Composable
 private fun UpdatesBottomBar(
     selected: List<UpdatesItem>,
-    onDownloadChapter: (List<UpdatesItem>, ChapterDownloadAction) -> Unit,
     onMultiBookmarkClicked: (List<UpdatesItem>, bookmark: Boolean) -> Unit,
     onMultiMarkAsReadClicked: (List<UpdatesItem>, read: Boolean) -> Unit,
-    onMultiDeleteClicked: (List<UpdatesItem>) -> Unit,
 ) {
     MangaBottomActionMenu(
         visible = selected.isNotEmpty(),
@@ -236,14 +227,6 @@ private fun UpdatesBottomBar(
         onMarkAsUnreadClicked = {
             onMultiMarkAsReadClicked(selected, false)
         }.takeIf { selected.fastAny { it.update.read || it.update.lastPageRead > 0 } },
-        onDownloadClicked = {
-            onDownloadChapter(selected, ChapterDownloadAction.START)
-        }.takeIf {
-            selected.fastAny { it.downloadStateProvider() != Download.State.DOWNLOADED }
-        },
-        onDeleteClicked = {
-            onMultiDeleteClicked(selected)
-        }.takeIf { selected.fastAny { it.downloadStateProvider() == Download.State.DOWNLOADED } },
     )
 }
 

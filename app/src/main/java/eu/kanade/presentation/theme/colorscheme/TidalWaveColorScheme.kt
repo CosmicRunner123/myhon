@@ -26,8 +26,8 @@ internal object TidalWaveColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFF003544), // Unread badge text
         secondaryContainer = Color(0xFF004d61), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFFb8eaff), // Navigation bar selector icon
-        tertiary = Color(0xFF92f7bc), // Downloaded badge
-        onTertiary = Color(0xFF001c3b), // Downloaded badge text
+        tertiary = Color(0xFF92f7bc), // Local/language badge
+        onTertiary = Color(0xFF001c3b), // Local/language badge text
         tertiaryContainer = Color(0xFFc3fada),
         onTertiaryContainer = Color(0xFF78ffd6),
         background = Color(0xFF001c3b),
@@ -57,8 +57,8 @@ internal object TidalWaveColorScheme : BaseColorScheme() {
         onSecondary = Color(0xFFffffff), // Unread badge text
         secondaryContainer = Color(0xFF9AE1FF), // Navigation bar selector pill & progress indicator (remaining)
         onSecondaryContainer = Color(0xFF001f28), // Navigation bar selector icon
-        tertiary = Color(0xFF92f7bc), // Downloaded badge
-        onTertiary = Color(0xFF001c3b), // Downloaded badge text
+        tertiary = Color(0xFF92f7bc), // Local/language badge
+        onTertiary = Color(0xFF001c3b), // Local/language badge text
         tertiaryContainer = Color(0xFFc3fada),
         onTertiaryContainer = Color(0xFF78ffd6),
         background = Color(0xFFfdfbff),

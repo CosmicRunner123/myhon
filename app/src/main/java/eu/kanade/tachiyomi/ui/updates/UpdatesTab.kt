@@ -10,17 +10,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import eu.kanade.presentation.updates.UpdateScreen
-import eu.kanade.presentation.updates.UpdatesDeleteConfirmationDialog
 import eu.kanade.presentation.updates.UpdatesFilterDialog
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
@@ -46,10 +43,6 @@ data object UpdatesTab : Tab {
             )
         }
 
-    override suspend fun onReselect(navigator: Navigator) {
-        navigator.push(DownloadQueueScreen)
-    }
-
     @Composable
     override fun Content() {
         val context = LocalContext.current
@@ -66,10 +59,8 @@ data object UpdatesTab : Tab {
             onSelectAll = viewModel::toggleAllSelection,
             onInvertSelection = viewModel::invertSelection,
             onUpdateLibrary = viewModel::updateLibrary,
-            onDownloadChapter = viewModel::downloadChapters,
             onMultiBookmarkClicked = viewModel::bookmarkUpdates,
             onMultiMarkAsReadClicked = viewModel::markUpdatesRead,
-            onMultiDeleteClicked = viewModel::showConfirmDeleteChapters,
             onUpdateSelected = viewModel::toggleSelection,
             onOpenChapter = {
                 val intent = ReaderActivity.newIntent(context, it.update.mangaId, it.update.chapterId)
@@ -81,13 +72,7 @@ data object UpdatesTab : Tab {
         )
 
         val onDismissDialog = { viewModel.setDialog(null) }
-        when (val dialog = state.dialog) {
-            is UpdatesViewModel.Dialog.DeleteConfirmation -> {
-                UpdatesDeleteConfirmationDialog(
-                    onDismissRequest = onDismissDialog,
-                    onConfirm = { viewModel.deleteChapters(dialog.toDelete) },
-                )
-            }
+        when (state.dialog) {
             is UpdatesViewModel.Dialog.FilterSheet -> {
                 UpdatesFilterDialog(
                     onDismissRequest = onDismissDialog,

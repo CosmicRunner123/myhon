@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,10 +30,7 @@ import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderThemedContent
 import eu.kanade.tachiyomi.ui.webview.WebViewActivity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import tachiyomi.presentation.core.components.CombinedCircularProgressIndicator
-import tachiyomi.source.local.isLocal
 
 /** The side padding `PagerTransitionHolder` gave the same transition view. */
 private const val TRANSITION_SIDE_PADDING = 64
@@ -167,10 +163,6 @@ class TransitionPage(
     @Composable
     override fun PageContent() {
         val transition = transition ?: return
-        val goingToChapterDownloaded by produceState(false, transition) {
-            value = withContext(Dispatchers.IO) { isDownloaded(transition) }
-        }
-
         CompositionLocalProvider(
             LocalTextStyle provides MaterialTheme.typography.bodySmall,
             LocalContentColor provides MaterialTheme.colorScheme.onBackground,
@@ -185,27 +177,8 @@ class TransitionPage(
                 Modifier.padding(horizontal = TRANSITION_SIDE_PADDING.dp)
             }
             Box(modifier = padding.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-                ChapterTransition(
-                    transition = transition,
-                    currChapterDownloaded = transition.from.pageLoader?.isLocal == true,
-                    goingToChapterDownloaded = goingToChapterDownloaded,
-                )
+                ChapterTransition(transition = transition)
             }
         }
-    }
-
-    /** `ReaderTransitionView.bind`'s answer, which reads the disk. */
-    private suspend fun isDownloaded(transition: ChapterTransition): Boolean {
-        val manga = viewer.activity.viewModel.manga ?: return false
-        if (manga.isLocal()) return true
-        val chapter = transition.to?.chapter ?: return false
-        val source = viewer.activity.viewModel.source ?: return false
-        return viewer.downloadManager.isChapterDownloadedOnDisk(
-            chapterName = chapter.name,
-            chapterScanlator = chapter.scanlator,
-            chapterUrl = chapter.url,
-            mangaTitle = manga.title,
-            source = source,
-        )
     }
 }

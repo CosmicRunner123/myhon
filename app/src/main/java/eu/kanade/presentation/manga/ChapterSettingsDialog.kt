@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import eu.kanade.domain.manga.model.downloadedFilter
 import eu.kanade.presentation.components.TabbedDialog
 import eu.kanade.presentation.components.TabbedDialogPaddings
 import mihon.icons.materialsymbols.MaterialSymbols
@@ -43,8 +42,6 @@ import tachiyomi.presentation.core.theme.active
 fun ChapterSettingsDialog(
     onDismissRequest: () -> Unit,
     manga: Manga? = null,
-    downloadedOnly: Boolean,
-    onDownloadFilterChanged: (TriState) -> Unit,
     onUnreadFilterChanged: (TriState) -> Unit,
     onBookmarkedFilterChanged: (TriState) -> Unit,
     scanlatorFilterActive: Boolean,
@@ -94,9 +91,6 @@ fun ChapterSettingsDialog(
             when (page) {
                 0 -> {
                     FilterPage(
-                        downloadFilter = manga?.downloadedFilter(downloadedOnly) ?: TriState.DISABLED,
-                        onDownloadFilterChanged = onDownloadFilterChanged
-                            .takeUnless { downloadedOnly },
                         unreadFilter = manga?.unreadFilter ?: TriState.DISABLED,
                         onUnreadFilterChanged = onUnreadFilterChanged,
                         bookmarkedFilter = manga?.bookmarkedFilter ?: TriState.DISABLED,
@@ -125,8 +119,6 @@ fun ChapterSettingsDialog(
 
 @Composable
 private fun ColumnScope.FilterPage(
-    downloadFilter: TriState,
-    onDownloadFilterChanged: ((TriState) -> Unit)?,
     unreadFilter: TriState,
     onUnreadFilterChanged: (TriState) -> Unit,
     bookmarkedFilter: TriState,
@@ -134,11 +126,6 @@ private fun ColumnScope.FilterPage(
     scanlatorFilterActive: Boolean,
     onScanlatorFilterClicked: (() -> Unit),
 ) {
-    TriStateItem(
-        label = stringResource(MR.strings.label_downloaded),
-        state = downloadFilter,
-        onClick = onDownloadFilterChanged,
-    )
     TriStateItem(
         label = stringResource(MR.strings.action_filter_unread),
         state = unreadFilter,

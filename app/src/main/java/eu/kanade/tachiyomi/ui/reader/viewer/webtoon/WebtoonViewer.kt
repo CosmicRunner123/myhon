@@ -40,7 +40,6 @@ import kotlin.math.min
 class WebtoonViewer(val activity: ReaderActivity, val isContinuous: Boolean = true) : Viewer {
 
     val graph by lazy { activity.appGraph }
-    val downloadManager by lazy { graph.downloadManager }
     val readerPreferences by lazy { graph.readerPreferences }
 
     private val scope = MainScope()

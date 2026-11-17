@@ -63,7 +63,6 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
-import mihon.app.di.appGraph
 import tachiyomi.core.common.util.system.logcat
 import java.io.FilterInputStream
 import java.lang.ref.WeakReference
@@ -106,8 +105,6 @@ open class WebGpuViewer(
     /** The reader's night mode rather than the app's - see [ReaderComposePage]. */
     internal val readerThemedContext: Context
         get() = cachedThemedContext ?: activity.createReaderThemeContext().also { cachedThemedContext = it }
-
-    val downloadManager by lazy { activity.appGraph.downloadManager }
 
     protected val scope = MainScope()
 

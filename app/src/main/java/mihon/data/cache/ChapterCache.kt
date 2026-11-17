@@ -21,7 +21,6 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 
@@ -84,15 +83,6 @@ class ChapterCache(
      * The image's file, or null when it isn't cached.
      */
     suspend fun getImageFile(imageUrl: String): File? = images.get(imageUrl)
-
-    /**
-     * Opens the image, or returns null when it isn't cached.
-     */
-    suspend fun openImage(imageUrl: String): InputStream? = images.open(imageUrl)
-
-    suspend fun removeImage(imageUrl: String) {
-        images.remove(imageUrl)
-    }
 
     /**
      * Stores the image [response] holds, and closes it.

@@ -26,15 +26,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import eu.kanade.tachiyomi.data.download.model.Download
 import me.saket.swipe.SwipeableActionsBox
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.BookmarkAdd
 import mihon.icons.materialsymbols.rounded.BookmarkRemove
 import mihon.icons.materialsymbols.rounded.Check
-import mihon.icons.materialsymbols.rounded.Delete
-import mihon.icons.materialsymbols.rounded.Download
-import mihon.icons.materialsymbols.rounded.FileDownloadOff
 import mihon.icons.materialsymbols.rounded.RemoveDone
 import mihon.icons.materialsymbols.roundedfilled.Bookmark
 import mihon.icons.materialsymbols.roundedfilled.Circle
@@ -54,14 +50,10 @@ fun MangaChapterListItem(
     read: Boolean,
     bookmark: Boolean,
     selected: Boolean,
-    downloadIndicatorEnabled: Boolean,
-    downloadStateProvider: () -> Download.State,
-    downloadProgressProvider: () -> Int,
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
-    onDownloadClick: ((ChapterDownloadAction) -> Unit)?,
     onChapterSwipe: (LibraryPreferences.ChapterSwipeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,7 +61,6 @@ fun MangaChapterListItem(
         action = chapterSwipeStartAction,
         read = read,
         bookmark = bookmark,
-        downloadState = downloadStateProvider(),
         background = MaterialTheme.colorScheme.primaryContainer,
         onSwipe = { onChapterSwipe(chapterSwipeStartAction) },
     )
@@ -77,7 +68,6 @@ fun MangaChapterListItem(
         action = chapterSwipeEndAction,
         read = read,
         bookmark = bookmark,
-        downloadState = downloadStateProvider(),
         background = MaterialTheme.colorScheme.primaryContainer,
         onSwipe = { onChapterSwipe(chapterSwipeEndAction) },
     )
@@ -96,7 +86,7 @@ fun MangaChapterListItem(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Column(
                 modifier = Modifier.weight(1f),
@@ -170,14 +160,6 @@ fun MangaChapterListItem(
                     }
                 }
             }
-
-            ChapterDownloadIndicator(
-                enabled = downloadIndicatorEnabled,
-                modifier = Modifier.padding(start = 4.dp),
-                downloadStateProvider = downloadStateProvider,
-                downloadProgressProvider = downloadProgressProvider,
-                onClick = { onDownloadClick?.invoke(it) },
-            )
         }
     }
 }
@@ -186,7 +168,6 @@ private fun getSwipeAction(
     action: LibraryPreferences.ChapterSwipeAction,
     read: Boolean,
     bookmark: Boolean,
-    downloadState: Download.State,
     background: Color,
     onSwipe: () -> Unit,
 ): me.saket.swipe.SwipeAction? {
@@ -203,15 +184,6 @@ private fun getSwipeAction(
             isUndo = bookmark,
             onSwipe = onSwipe,
         )
-        LibraryPreferences.ChapterSwipeAction.Download -> swipeAction(
-            icon = when (downloadState) {
-                Download.State.NOT_DOWNLOADED, Download.State.ERROR -> MaterialSymbols.Rounded.Download
-                Download.State.QUEUE, Download.State.DOWNLOADING -> MaterialSymbols.Rounded.FileDownloadOff
-                Download.State.DOWNLOADED -> MaterialSymbols.Rounded.Delete
-            },
-            background = background,
-            onSwipe = onSwipe,
-        )
         LibraryPreferences.ChapterSwipeAction.Disabled -> null
     }
 }
@@ -220,7 +192,7 @@ private fun swipeAction(
     onSwipe: () -> Unit,
     icon: ImageVector,
     background: Color,
-    isUndo: Boolean = false,
+    isUndo: Boolean,
 ): me.saket.swipe.SwipeAction {
     return me.saket.swipe.SwipeAction(
         icon = {

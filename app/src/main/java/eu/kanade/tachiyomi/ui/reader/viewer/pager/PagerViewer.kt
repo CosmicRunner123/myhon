@@ -32,7 +32,6 @@ import eu.kanade.tachiyomi.ui.reader.viewer.mouseWheelPaging
 import eu.kanade.tachiyomi.ui.reader.viewer.position
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-import mihon.app.di.appGraph
 import tachiyomi.core.common.util.system.logcat
 import kotlin.math.min
 
@@ -41,9 +40,6 @@ import kotlin.math.min
  */
 @Suppress("LeakingThis")
 abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
-
-    val graph by lazy { activity.appGraph }
-    val downloadManager by lazy { graph.downloadManager }
 
     private val scope = MainScope()
 

@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.data.backup.models.BackupSourcePreferences
 import eu.kanade.tachiyomi.data.backup.restore.restorers.CategoriesRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.MangaRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.PreferenceRestorer
-import eu.kanade.tachiyomi.data.download.DownloadCache
 import eu.kanade.tachiyomi.util.system.createFileInCacheDir
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -43,7 +42,6 @@ class BackupRestorer(
     @Assisted private val notifier: BackupNotifier,
     @Assisted private val isSync: Boolean,
     private val context: Context,
-    private val downloadCache: DownloadCache,
     private val categoriesRestorer: CategoriesRestorer,
     private val preferenceRestorer: PreferenceRestorer,
     private val mangaRestorer: MangaRestorer,
@@ -70,15 +68,6 @@ class BackupRestorer(
         val startTime = System.currentTimeMillis()
 
         restoreFromFile(uri, options)
-
-        // Invalidate download cache to ensure UI reflects any restored downloads
-        if (options.libraryEntries) {
-            try {
-                downloadCache.invalidateCache()
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to invalidate download cache after restore" }
-            }
-        }
 
         val time = System.currentTimeMillis() - startTime
 

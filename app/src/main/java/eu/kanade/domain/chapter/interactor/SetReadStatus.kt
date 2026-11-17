@@ -1,21 +1,15 @@
 package eu.kanade.domain.chapter.interactor
 
 import dev.zacsweers.metro.Inject
-import eu.kanade.domain.download.interactor.DeleteDownload
 import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.model.ChapterUpdate
 import tachiyomi.domain.chapter.repository.ChapterRepository
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.manga.repository.MangaRepository
 
 @Inject
 class SetReadStatus(
-    private val downloadPreferences: DownloadPreferences,
-    private val deleteDownload: DeleteDownload,
-    private val mangaRepository: MangaRepository,
     private val chapterRepository: ChapterRepository,
 ) {
 
@@ -44,20 +38,6 @@ class SetReadStatus(
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             return Result.InternalError(e)
-        }
-
-        if (read && downloadPreferences.removeAfterMarkedAsRead.get()) {
-            chaptersToUpdate
-                // Chapters here still carry their pre-update read state; downstream
-                // deletion filtering (excluded categories) relies on the new state.
-                .map { it.copy(read = true) }
-                .groupBy { it.mangaId }
-                .forEach { (mangaId, chapters) ->
-                    deleteDownload.awaitAll(
-                        manga = mangaRepository.getMangaById(mangaId),
-                        chapters = chapters.toTypedArray(),
-                    )
-                }
         }
 
         return Result.Success

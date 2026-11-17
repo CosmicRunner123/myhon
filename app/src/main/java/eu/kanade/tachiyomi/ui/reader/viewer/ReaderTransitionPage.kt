@@ -26,7 +26,6 @@ import tachiyomi.presentation.core.i18n.stringResource
 @Composable
 fun ReaderTransitionPage(
     transition: ChapterTransition,
-    downloadState: TransitionDownloadState?,
     onRetry: (ReaderChapter) -> Unit,
     onButtonPressChange: (pressed: Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -37,17 +36,11 @@ fun ReaderTransitionPage(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (downloadState != null) {
-            CompositionLocalProvider(
-                LocalTextStyle provides MaterialTheme.typography.bodySmall,
-                LocalContentColor provides MaterialTheme.colorScheme.onBackground,
-            ) {
-                ChapterTransition(
-                    transition,
-                    downloadState.currChapterDownloaded,
-                    downloadState.goingToChapterDownloaded,
-                )
-            }
+        CompositionLocalProvider(
+            LocalTextStyle provides MaterialTheme.typography.bodySmall,
+            LocalContentColor provides MaterialTheme.colorScheme.onBackground,
+        ) {
+            ChapterTransition(transition)
         }
 
         val toChapter = transition.to ?: return@Column

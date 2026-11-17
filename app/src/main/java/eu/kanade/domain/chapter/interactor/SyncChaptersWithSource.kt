@@ -6,8 +6,6 @@ import eu.kanade.domain.chapter.model.toSChapter
 import eu.kanade.domain.manga.interactor.GetExcludedScanlators
 import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.domain.manga.model.toSManga
-import eu.kanade.tachiyomi.data.download.DownloadManager
-import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.online.HttpSource
@@ -32,8 +30,6 @@ import kotlin.time.Instant
 
 @Inject
 class SyncChaptersWithSource(
-    private val downloadManager: DownloadManager,
-    private val downloadProvider: DownloadProvider,
     private val chapterRepository: ChapterRepository,
     private val shouldUpdateDbChapter: ShouldUpdateDbChapter,
     private val updateManga: UpdateManga,
@@ -118,19 +114,6 @@ class SyncChaptersWithSource(
                 newChapters.add(toAddChapter)
             } else {
                 if (shouldUpdateDbChapter.await(dbChapter, chapter)) {
-                    val shouldRenameChapter = downloadProvider.isChapterDirNameChanged(dbChapter, chapter) &&
-                        downloadManager.isChapterDownloaded(
-                            dbChapter.name,
-                            dbChapter.scanlator,
-                            dbChapter.url,
-                            manga.title,
-                            manga.source,
-                        )
-
-                    if (shouldRenameChapter) {
-                        downloadManager.renameChapter(source, manga, dbChapter, chapter)
-                    }
-
                     updatedChapters.add(
                         ChapterRemoteUpdate(
                             id = dbChapter.id,
@@ -147,11 +130,6 @@ class SyncChaptersWithSource(
         }
 
         val removedChapters = dbChapters.filterNot { it.url in sourceUrls }
-
-        // The source no longer lists these, so their queued downloads could only fail
-        removedChapters.mapNotNull { downloadManager.getQueuedDownloadOrNull(it.id) }
-            .takeIf { it.isNotEmpty() }
-            ?.let { downloadManager.cancelQueuedDownloads(it) }
 
         // Return if there's nothing to add, delete, or update to avoid unnecessary db transactions.
         if (newChapters.isEmpty() && removedChapters.isEmpty() && updatedChapters.isEmpty()) {

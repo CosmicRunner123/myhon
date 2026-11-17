@@ -55,14 +55,11 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.zacsweers.metro.Inject
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.presentation.components.AppStateBanners
-import eu.kanade.presentation.components.DownloadedOnlyBannerBackgroundColor
 import eu.kanade.presentation.components.IncognitoModeBannerBackgroundColor
-import eu.kanade.presentation.components.IndexingBannerBackgroundColor
 import eu.kanade.presentation.more.AppMigratingScreen
 import eu.kanade.presentation.more.settings.screen.data.RestoreBackupScreen
 import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.DefaultNavigatorScreenTransition
-import eu.kanade.tachiyomi.data.download.DownloadCache
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
 import eu.kanade.tachiyomi.ui.home.HomeScreen
@@ -105,8 +102,6 @@ class MainActivity : BaseActivity() {
     @Inject private lateinit var libraryPreferences: LibraryPreferences
 
     @Inject private lateinit var preferences: BasePreferences
-
-    @Inject private lateinit var downloadCache: DownloadCache
 
     @Inject private lateinit var chapterCache: ChapterCache
 
@@ -181,13 +176,9 @@ class MainActivity : BaseActivity() {
             val context = LocalContext.current
 
             val incognito by preferences.incognitoMode.collectAsState()
-            val downloadOnly by preferences.downloadedOnly.collectAsState()
-            val indexing by downloadCache.isInitializing.collectAsState()
 
             val isSystemInDarkTheme = isSystemInDarkTheme()
             val statusBarBackgroundColor = when {
-                indexing -> IndexingBannerBackgroundColor
-                downloadOnly -> DownloadedOnlyBannerBackgroundColor
                 incognito -> IncognitoModeBannerBackgroundColor
                 else -> MaterialTheme.colorScheme.surface
             }
@@ -221,9 +212,7 @@ class MainActivity : BaseActivity() {
                 Scaffold(
                     topBar = {
                         AppStateBanners(
-                            downloadedOnlyMode = downloadOnly,
                             incognitoMode = incognito,
-                            indexing = indexing,
                             modifier = Modifier.windowInsetsPadding(scaffoldInsets),
                         )
                     },
@@ -422,10 +411,6 @@ class MainActivity : BaseActivity() {
             }
             Constants.SHORTCUT_UPDATES -> HomeScreen.Tab.Updates
             Constants.SHORTCUT_HISTORY -> HomeScreen.Tab.History
-            Constants.SHORTCUT_DOWNLOADS -> {
-                navigator.popUntilRoot()
-                HomeScreen.Tab.More(toDownloads = true)
-            }
             Intent.ACTION_APPLICATION_PREFERENCES -> {
                 navigator.popUntilRoot()
                 navigator.push(SettingsScreen())

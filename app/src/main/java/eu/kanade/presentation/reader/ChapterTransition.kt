@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -22,9 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -34,7 +29,6 @@ import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Info
-import mihon.icons.materialsymbols.roundedfilled.CheckCircle
 import mihon.icons.materialsymbols.roundedfilled.Warning
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.service.calculateChapterGap
@@ -44,11 +38,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 @Composable
-fun ChapterTransition(
-    transition: ChapterTransition,
-    currChapterDownloaded: Boolean,
-    goingToChapterDownloaded: Boolean,
-) {
+fun ChapterTransition(transition: ChapterTransition) {
     val currChapter = transition.from.chapter
     val goingToChapter = transition.to?.chapter
 
@@ -58,10 +48,8 @@ fun ChapterTransition(
                 TransitionText(
                     topLabel = stringResource(MR.strings.transition_previous),
                     topChapter = goingToChapter,
-                    topChapterDownloaded = goingToChapterDownloaded,
                     bottomLabel = stringResource(MR.strings.transition_current),
                     bottomChapter = currChapter,
-                    bottomChapterDownloaded = currChapterDownloaded,
                     fallbackLabel = stringResource(MR.strings.transition_no_previous),
                     chapterGap = calculateChapterGap(currChapter, goingToChapter),
                 )
@@ -70,10 +58,8 @@ fun ChapterTransition(
                 TransitionText(
                     topLabel = stringResource(MR.strings.transition_finished),
                     topChapter = currChapter,
-                    topChapterDownloaded = currChapterDownloaded,
                     bottomLabel = stringResource(MR.strings.transition_next),
                     bottomChapter = goingToChapter,
-                    bottomChapterDownloaded = goingToChapterDownloaded,
                     fallbackLabel = stringResource(MR.strings.transition_no_next),
                     chapterGap = calculateChapterGap(goingToChapter, currChapter),
                 )
@@ -86,10 +72,8 @@ fun ChapterTransition(
 private fun TransitionText(
     topLabel: String,
     topChapter: Chapter?,
-    topChapterDownloaded: Boolean,
     bottomLabel: String,
     bottomChapter: Chapter?,
-    bottomChapterDownloaded: Boolean,
     fallbackLabel: String,
     chapterGap: Int,
 ) {
@@ -103,7 +87,6 @@ private fun TransitionText(
                 header = topLabel,
                 name = topChapter.name,
                 scanlator = topChapter.scanlator,
-                downloaded = topChapterDownloaded,
             )
 
             Spacer(Modifier.height(VerticalSpacerSize))
@@ -128,7 +111,6 @@ private fun TransitionText(
                 header = bottomLabel,
                 name = bottomChapter.name,
                 scanlator = bottomChapter.scanlator,
-                downloaded = bottomChapterDownloaded,
             )
         } else {
             NoChapterNotification(
@@ -213,7 +195,6 @@ private fun ChapterText(
     header: String,
     name: String,
     scanlator: String?,
-    downloaded: Boolean,
 ) {
     Column {
         ChapterHeaderText(
@@ -222,31 +203,11 @@ private fun ChapterText(
         )
 
         Text(
-            text = buildAnnotatedString {
-                if (downloaded) {
-                    appendInlineContent(DOWNLOADED_ICON_ID)
-                    append(' ')
-                }
-                append(name)
-            },
+            text = name,
             fontSize = 20.sp,
             maxLines = 5,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.titleLarge,
-            inlineContent = mapOf(
-                DOWNLOADED_ICON_ID to InlineTextContent(
-                    Placeholder(
-                        width = 22.sp,
-                        height = 22.sp,
-                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                    ),
-                ) {
-                    Icon(
-                        imageVector = MaterialSymbols.RoundedFilled.CheckCircle,
-                        contentDescription = stringResource(MR.strings.label_downloaded),
-                    )
-                },
-            ),
         )
 
         scanlator?.let {
@@ -271,7 +232,6 @@ private val CardColor: CardColors
     )
 
 private val VerticalSpacerSize = 24.dp
-private const val DOWNLOADED_ICON_ID = "downloaded"
 
 private fun previewChapter(name: String, scanlator: String, chapterNumber: Double) = Chapter.create().copy(
     id = 0L,
@@ -308,8 +268,6 @@ private fun TransitionTextPreview() {
         Surface(modifier = Modifier.padding(48.dp)) {
             ChapterTransition(
                 transition = ChapterTransition.Next(ReaderChapter(FakeChapter), ReaderChapter(FakeChapter)),
-                currChapterDownloaded = false,
-                goingToChapterDownloaded = true,
             )
         }
     }
@@ -322,8 +280,6 @@ private fun TransitionTextLongTitlePreview() {
         Surface(modifier = Modifier.padding(48.dp)) {
             ChapterTransition(
                 transition = ChapterTransition.Next(ReaderChapter(FakeChapterLongTitle), ReaderChapter(FakeChapter)),
-                currChapterDownloaded = true,
-                goingToChapterDownloaded = true,
             )
         }
     }
@@ -336,8 +292,6 @@ private fun TransitionTextWithGapPreview() {
         Surface(modifier = Modifier.padding(48.dp)) {
             ChapterTransition(
                 transition = ChapterTransition.Next(ReaderChapter(FakeChapter), ReaderChapter(FakeGapChapter)),
-                currChapterDownloaded = true,
-                goingToChapterDownloaded = false,
             )
         }
     }
@@ -350,8 +304,6 @@ private fun TransitionTextNoNextPreview() {
         Surface(modifier = Modifier.padding(48.dp)) {
             ChapterTransition(
                 transition = ChapterTransition.Next(ReaderChapter(FakeChapter), null),
-                currChapterDownloaded = true,
-                goingToChapterDownloaded = false,
             )
         }
     }
@@ -364,8 +316,6 @@ private fun TransitionTextNoPreviousPreview() {
         Surface(modifier = Modifier.padding(48.dp)) {
             ChapterTransition(
                 transition = ChapterTransition.Prev(ReaderChapter(FakeChapter), null),
-                currChapterDownloaded = true,
-                goingToChapterDownloaded = false,
             )
         }
     }

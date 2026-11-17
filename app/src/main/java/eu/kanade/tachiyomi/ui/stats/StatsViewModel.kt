@@ -12,7 +12,6 @@ import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import eu.kanade.core.util.fastCountNot
 import eu.kanade.presentation.more.stats.StatsScreenState
 import eu.kanade.presentation.more.stats.data.StatsData
-import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +34,6 @@ import tachiyomi.source.local.isLocal
 @ViewModelKey
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class StatsViewModel(
-    private val downloadManager: DownloadManager,
     private val getLibraryManga: GetLibraryManga,
     private val getTotalReadDuration: GetTotalReadDuration,
     private val getTracksPerManga: GetTracksPerManga,
@@ -76,7 +74,6 @@ class StatsViewModel(
             val chaptersStatData = StatsData.Chapters(
                 totalChapterCount = distinctLibraryManga.sumOf { it.totalChapters }.toInt(),
                 readChapterCount = distinctLibraryManga.sumOf { it.readCount }.toInt(),
-                downloadCount = downloadManager.getDownloadCount(),
             )
 
             val trackersStatData = StatsData.Trackers(

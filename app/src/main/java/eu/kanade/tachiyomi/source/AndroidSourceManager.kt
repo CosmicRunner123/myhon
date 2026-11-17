@@ -50,10 +50,6 @@ class AndroidSourceManager(
         return listOf(localSource)
     }
 
-    override suspend fun getStubSources(): List<StubSource> {
-        return stubSourcesMap.values.toList()
-    }
-
     private suspend fun createStubSource(id: Long): StubSource {
         return sourceRepository.getStubSource(id) ?: StubSource(id = id, lang = "", name = "")
     }

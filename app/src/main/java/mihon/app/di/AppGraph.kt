@@ -17,9 +17,6 @@ import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.data.backup.create.BackupCreateWorker
 import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreWorker
 import eu.kanade.tachiyomi.data.cache.CoverCache
-import eu.kanade.tachiyomi.data.download.DownloadCache
-import eu.kanade.tachiyomi.data.download.DownloadManager
-import eu.kanade.tachiyomi.data.download.DownloadWorker
 import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
 import eu.kanade.tachiyomi.data.library.MetadataUpdateWorker
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
@@ -39,7 +36,6 @@ import mihon.data.cache.ChapterCache
 import tachiyomi.domain.backup.service.BackupPreferences
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.interactor.ResetCategoryFlags
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetFavorites
 import tachiyomi.domain.manga.interactor.ResetViewerFlags
@@ -62,7 +58,6 @@ interface AppGraph : ViewModelGraph {
     fun inject(backupRestoreWorker: BackupRestoreWorker)
     fun inject(backupCreateWorker: BackupCreateWorker)
     fun inject(delayedTrackingUpdateWorker: DelayedTrackingUpdateWorker)
-    fun inject(downloadWorker: DownloadWorker)
     fun inject(notificationReceiver: NotificationReceiver)
     fun inject(notificationReceiver: SecureActivityDelegateImpl)
 
@@ -80,11 +75,8 @@ interface AppGraph : ViewModelGraph {
     val storagePreferences: StoragePreferences
     val privacyPreferences: PrivacyPreferences
     val securityPreferences: SecurityPreferences
-    val downloadPreferences: DownloadPreferences
 
     val crashLogUtil: CrashLogUtil
-
-    val downloadManager: DownloadManager
 
     val updateChecker: AppUpdateChecker
 
@@ -92,7 +84,6 @@ interface AppGraph : ViewModelGraph {
     val trackerManager: TrackerManager
     val chapterCache: ChapterCache
     val coverCache: CoverCache
-    val downloadCache: DownloadCache
 
     val networkHelper: NetworkHelper
 

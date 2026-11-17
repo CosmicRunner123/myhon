@@ -24,10 +24,6 @@ import eu.kanade.domain.manga.model.readingMode
 import eu.kanade.domain.track.interactor.TrackChapter
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.tachiyomi.data.cache.CoverCache
-import eu.kanade.tachiyomi.data.download.DownloadCache
-import eu.kanade.tachiyomi.data.download.DownloadManager
-import eu.kanade.tachiyomi.data.download.DownloadProvider
-import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.saver.Image
 import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.saver.Location
@@ -35,7 +31,6 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.reader.loader.ChapterLoader
-import eu.kanade.tachiyomi.ui.reader.loader.DownloadPageLoader
 import eu.kanade.tachiyomi.ui.reader.loader.HttpPageLoader
 import eu.kanade.tachiyomi.ui.reader.model.InsertPage
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
@@ -44,7 +39,6 @@ import eu.kanade.tachiyomi.ui.reader.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderOrientation
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.ui.reader.setting.ReadingMode
-import eu.kanade.tachiyomi.util.chapter.filterDownloaded
 import eu.kanade.tachiyomi.util.chapter.removeDuplicates
 import eu.kanade.tachiyomi.util.editCover
 import eu.kanade.tachiyomi.util.lang.byteSize
@@ -82,8 +76,6 @@ import tachiyomi.domain.chapter.interactor.UpdateChapter
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.model.ChapterUpdate
 import tachiyomi.domain.chapter.service.getChapterSort
-import tachiyomi.domain.download.service.DownloadPreferences
-import tachiyomi.domain.history.interactor.GetNextChapters
 import tachiyomi.domain.history.interactor.UpsertHistory
 import tachiyomi.domain.history.model.HistoryUpdate
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -105,17 +97,13 @@ class ReaderViewModel(
     @AppCoroutineScope private val appScope: CoroutineScope,
     private val context: Context,
     private val sourceManager: SourceManager,
-    private val downloadManager: DownloadManager,
-    private val downloadProvider: DownloadProvider,
     private val imageSaver: ImageSaver,
     val readerPreferences: ReaderPreferences,
     private val basePreferences: BasePreferences,
-    private val downloadPreferences: DownloadPreferences,
     private val trackPreferences: TrackPreferences,
     private val trackChapter: TrackChapter,
     private val getManga: GetManga,
     private val getChaptersByMangaId: GetChaptersByMangaId,
-    private val getNextChapters: GetNextChapters,
     private val upsertHistory: UpsertHistory,
     private val updateChapter: UpdateChapter,
     private val setMangaViewerFlags: SetMangaViewerFlags,
@@ -124,7 +112,6 @@ class ReaderViewModel(
     private val updateManga: UpdateManga,
     private val coverCache: CoverCache,
     private val chapterCache: ChapterCache,
-    private val downloadCache: DownloadCache,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -200,8 +187,6 @@ class ReaderViewModel(
     private var pendingProgressChapter: ReaderChapter? = null
     private var pendingProgressSave: Job? = null
 
-    private var chapterToDownload: Download? = null
-
     private var unfilteredChapterList: List<Chapter>? = null
 
     private suspend fun getUnfilteredChapterList(): List<Chapter> {
@@ -237,26 +222,6 @@ class ReaderViewModel(
                         readerPreferences.skipFiltered.get() -> {
                             (manga.unreadFilterRaw == Manga.CHAPTER_SHOW_READ && !it.read) ||
                                 (manga.unreadFilterRaw == Manga.CHAPTER_SHOW_UNREAD && it.read) ||
-                                (
-                                    manga.downloadedFilterRaw == Manga.CHAPTER_SHOW_DOWNLOADED &&
-                                        !downloadManager.isChapterDownloaded(
-                                            it.name,
-                                            it.scanlator,
-                                            it.url,
-                                            manga.title,
-                                            manga.source,
-                                        )
-                                    ) ||
-                                (
-                                    manga.downloadedFilterRaw == Manga.CHAPTER_SHOW_NOT_DOWNLOADED &&
-                                        downloadManager.isChapterDownloaded(
-                                            it.name,
-                                            it.scanlator,
-                                            it.url,
-                                            manga.title,
-                                            manga.source,
-                                        )
-                                    ) ||
                                 (manga.bookmarkedFilterRaw == Manga.CHAPTER_SHOW_BOOKMARKED && !it.bookmark) ||
                                 (manga.bookmarkedFilterRaw == Manga.CHAPTER_SHOW_NOT_BOOKMARKED && it.bookmark)
                         }
@@ -282,18 +247,10 @@ class ReaderViewModel(
                     this
                 }
             }
-            .run {
-                if (basePreferences.downloadedOnly.get()) {
-                    filterDownloaded(manga, downloadCache)
-                } else {
-                    this
-                }
-            }
             .map(::ReaderChapter)
     }
 
     private var incognitoMode: Boolean = false
-    private val downloadAheadAmount = downloadPreferences.autoDownloadWhileReading.get()
 
     init {
         // To save state
@@ -317,22 +274,7 @@ class ReaderViewModel(
     }
 
     override fun onCleared() {
-        val currentChapters = state.value.viewerChapters
-        if (currentChapters != null) {
-            currentChapters.unref()
-            chapterToDownload?.let {
-                // viewModelScope is already cancelled here
-                appScope.launch { downloadManager.addDownloadsToStartOfQueue(listOf(it)) }
-            }
-        }
-    }
-
-    /**
-     * Called when the user pressed the back button and is going to leave the reader. Used to
-     * trigger deletion of the downloaded chapters.
-     */
-    fun onActivityFinish() {
-        deletePendingChapters()
+        state.value.viewerChapters?.unref()
     }
 
     /**
@@ -351,12 +293,9 @@ class ReaderViewModel(
 
                 loader = ChapterLoader(
                     context,
-                    downloadManager,
-                    downloadProvider,
                     chapterCache,
                     appScope,
                     ::canLoadAhead,
-                    manga,
                     source,
                 )
 
@@ -390,13 +329,11 @@ class ReaderViewModel(
         preloadNextChapterAfter(newChapters)
 
         withContext(Dispatchers.Main) {
-            val toDownload = cancelQueuedDownloads(newChapters.currChapter)
             mutableState.update {
                 // Add new references first to avoid unnecessary recycling
                 newChapters.ref()
                 it.viewerChapters?.unref()
 
-                chapterToDownload = toDownload
                 it.copy(
                     viewerChapters = newChapters,
                     bookmarked = newChapters.currChapter.chapter.bookmark,
@@ -490,22 +427,6 @@ class ReaderViewModel(
             return
         }
 
-        if (chapter.pageLoader?.isLocal == false) {
-            val manga = manga ?: return
-            val dbChapter = chapter.chapter
-            val source = state.value.source ?: return
-            val isDownloaded = downloadManager.isChapterDownloadedOnDisk(
-                dbChapter.name,
-                dbChapter.scanlator,
-                dbChapter.url,
-                manga.title,
-                source,
-            )
-            if (isDownloaded) {
-                chapter.state = ReaderChapter.State.Wait
-            }
-        }
-
         if (chapter.state != ReaderChapter.State.Wait && chapter.state !is ReaderChapter.State.Error) {
             return
         }
@@ -525,8 +446,8 @@ class ReaderViewModel(
 
     /**
      * Called every time a page changes on the reader. Used to mark the flag of chapters being
-     * read, update tracking services, enqueue downloaded chapter deletion, and updating the active chapter if this
-     * [page]'s chapter is different from the currently active.
+     * read, update tracking services, and updating the active chapter if this [page]'s chapter is different from the
+     * currently active.
      */
     fun onPageSelected(page: ReaderPage) {
         // InsertPage doesn't change page progress
@@ -535,7 +456,7 @@ class ReaderViewModel(
         }
 
         val selectedChapter = page.chapter
-        val pages = selectedChapter.pages ?: return
+        if (selectedChapter.pages == null) return
 
         // Save last page read and mark as read if needed
         updateChapterProgress(selectedChapter, page)
@@ -545,90 +466,7 @@ class ReaderViewModel(
             loadNewChapter(selectedChapter)
         }
 
-        val inDownloadRange = page.number.toDouble() / pages.size > 0.25
-        if (inDownloadRange) {
-            downloadNextChapters()
-        }
-
         eventChannel.trySend(Event.PageChanged)
-    }
-
-    private fun downloadNextChapters() {
-        if (downloadAheadAmount == 0) return
-        val manga = manga ?: return
-
-        // Only download ahead if current + next chapter is already downloaded too to avoid jank
-        if (getCurrentChapter()?.pageLoader !is DownloadPageLoader) return
-        val nextChapter = state.value.viewerChapters?.nextChapter?.chapter ?: return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val isNextChapterDownloaded = downloadManager.isChapterDownloaded(
-                nextChapter.name,
-                nextChapter.scanlator,
-                nextChapter.url,
-                manga.title,
-                manga.source,
-            )
-            if (!isNextChapterDownloaded) return@launch
-
-            val chaptersToDownload = getNextChapters.await(manga.id, nextChapter.id).run {
-                if (readerPreferences.skipDupe.get()) {
-                    removeDuplicates(nextChapter)
-                } else {
-                    this
-                }
-            }.take(downloadAheadAmount)
-
-            downloadManager.downloadChapters(
-                manga,
-                chaptersToDownload,
-            )
-        }
-    }
-
-    /**
-     * Removes [currentChapter] from download queue
-     * if setting is enabled and [currentChapter] is queued for download
-     */
-    private suspend fun cancelQueuedDownloads(currentChapter: ReaderChapter): Download? {
-        return downloadManager.getQueuedDownloadOrNull(currentChapter.chapter.id)?.also {
-            downloadManager.cancelQueuedDownloads(listOf(it))
-        }
-    }
-
-    /**
-     * Determines if deleting option is enabled and nth to last chapter actually exists.
-     * If both conditions are satisfied enqueues chapter for delete
-     * @param currentChapter current chapter, which is going to be marked as read.
-     */
-    private suspend fun deleteChapterIfNeeded(currentChapter: ReaderChapter) {
-        val removeAfterReadSlots = downloadPreferences.removeAfterReadSlots.get()
-        if (removeAfterReadSlots == -1) return
-
-        // Determine which chapter should be deleted and enqueue
-        val currentChapterPosition = chapterList.indexOf(currentChapter)
-        val chapterToDelete = chapterList.getOrNull(currentChapterPosition - removeAfterReadSlots)
-
-        // If chapter is completely read, no need to download it
-        chapterToDownload = null
-
-        if (chapterToDelete == null || !chapterToDelete.chapter.read) return
-
-        val markDuplicateAsRead = libraryPreferences.markDuplicateReadChapterAsRead.get()
-            .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_EXISTING)
-        val duplicateChapters = if (markDuplicateAsRead) {
-            getUnfilteredChapterList()
-                .filter {
-                    it.id != chapterToDelete.chapter.id &&
-                        it.isRecognizedNumber &&
-                        it.chapterNumber == chapterToDelete.chapter.chapterNumber
-                }
-                // The list is loaded once, before these were marked read along with chapterToDelete
-                .map { it.copy(read = true) }
-        } else {
-            emptyList()
-        }
-        enqueueDeleteChapters(listOf(chapterToDelete.chapter) + duplicateChapters)
     }
 
     /**
@@ -698,7 +536,6 @@ class ReaderViewModel(
 
     private suspend fun updateChapterProgressOnComplete(readerChapter: ReaderChapter) {
         updateTrackChapterRead(readerChapter)
-        deleteChapterIfNeeded(readerChapter)
 
         val markDuplicateAsRead = libraryPreferences.markDuplicateReadChapterAsRead.get()
             .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_EXISTING)
@@ -1059,27 +896,6 @@ class ReaderViewModel(
         // Reading the last page and leaving right away is common, so it outlives the reader
         appScope.launch {
             trackChapter.await(context, manga.id, readerChapter.chapter.chapterNumber)
-        }
-    }
-
-    /**
-     * Enqueues these [chapters] to be deleted when [deletePendingChapters] is called. The download
-     * manager handles persisting them across process deaths.
-     */
-    private suspend fun enqueueDeleteChapters(chapters: List<Chapter>) {
-        val manga = manga ?: return
-        downloadManager.enqueueChaptersToDelete(chapters, manga)
-    }
-
-    /**
-     * Deletes all the pending chapters. This operation will run in a background thread and errors
-     * are ignored.
-     */
-    private fun deletePendingChapters() {
-        appScope.launch {
-            // Progress writes started before leaving may still enqueue the chapter just finished
-            progressWrites.withLock {}
-            downloadManager.deletePendingChapters()
         }
     }
 
