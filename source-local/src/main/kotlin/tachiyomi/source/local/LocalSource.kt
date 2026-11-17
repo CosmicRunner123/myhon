@@ -6,10 +6,6 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import eu.kanade.tachiyomi.source.Source
-import eu.kanade.tachiyomi.source.UnmeteredSource
-import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.SMangaUpdate
@@ -17,7 +13,6 @@ import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
@@ -43,7 +38,6 @@ import tachiyomi.core.metadata.tachiyomi.MangaDetails
 import tachiyomi.domain.chapter.service.ChapterRecognition
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.i18n.MR
-import tachiyomi.source.local.filter.OrderBy
 import tachiyomi.source.local.image.LocalCoverManager
 import tachiyomi.source.local.io.Archive
 import tachiyomi.source.local.io.Format
@@ -51,8 +45,6 @@ import tachiyomi.source.local.io.LocalSourceFileSystem
 import tachiyomi.source.local.metadata.fillMetadata
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
-import kotlin.time.Duration.Companion.days
-import tachiyomi.domain.source.model.Source as DomainSource
 
 @Inject
 @SingleIn(AppScope::class)
@@ -62,13 +54,7 @@ class LocalSource(
     private val coverManager: LocalCoverManager,
     private val json: Json,
     private val xml: XML,
-) : Source, UnmeteredSource {
-
-    @Suppress("PrivatePropertyName")
-    private val PopularFilters = FilterList(OrderBy.Popular(context))
-
-    @Suppress("PrivatePropertyName")
-    private val LatestFilters = FilterList(OrderBy.Latest(context))
+) : Source {
 
     override val name: String = context.stringResource(MR.strings.local_source)
 
@@ -77,8 +63,6 @@ class LocalSource(
     override val lang: String = "other"
 
     override fun toString() = name
-
-    override val supportsLatest: Boolean = true
 
     /**
      * Names of the series folders, or null when the local folder could not be listed.
@@ -91,75 +75,6 @@ class LocalSource(
             ?.distinct()
             // UniFile answers a failed query with "no files" and "not a directory"
             ?.takeIf { directory.exists() }
-    }
-
-    // Browse related
-    override suspend fun getPopularManga(page: Int) = getSearchManga(page, "", PopularFilters)
-
-    override suspend fun getLatestUpdates(page: Int) = getSearchManga(page, "", LatestFilters)
-
-    override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = withContext(
-        Dispatchers.IO,
-    ) {
-        val lastModifiedLimit = if (filters === LatestFilters) {
-            System.currentTimeMillis() - LATEST_THRESHOLD
-        } else {
-            0L
-        }
-
-        var mangaDirs = fileSystem.getFilesInBaseDirectory()
-            // Filter out files that are hidden and is not a folder
-            .filter { it.isDirectory && !it.name.orEmpty().startsWith('.') }
-            .distinctBy { it.name }
-            .filter {
-                if (lastModifiedLimit == 0L && query.isBlank()) {
-                    true
-                } else if (lastModifiedLimit == 0L) {
-                    it.name.orEmpty().contains(query, ignoreCase = true)
-                } else {
-                    it.lastModified() >= lastModifiedLimit
-                }
-            }
-
-        filters.forEach { filter ->
-            when (filter) {
-                is OrderBy.Popular -> {
-                    mangaDirs = if (filter.state!!.ascending) {
-                        mangaDirs.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name.orEmpty() })
-                    } else {
-                        mangaDirs.sortedWith(compareByDescending(String.CASE_INSENSITIVE_ORDER) { it.name.orEmpty() })
-                    }
-                }
-                is OrderBy.Latest -> {
-                    mangaDirs = if (filter.state!!.ascending) {
-                        mangaDirs.sortedBy(UniFile::lastModified)
-                    } else {
-                        mangaDirs.sortedByDescending(UniFile::lastModified)
-                    }
-                }
-                else -> {
-                    /* Do nothing */
-                }
-            }
-        }
-
-        val mangas = mangaDirs
-            .map { mangaDir ->
-                async {
-                    SManga.create().apply {
-                        title = mangaDir.name.orEmpty()
-                        url = mangaDir.name.orEmpty()
-
-                        // Try to find the cover
-                        coverManager.find(mangaDir.name.orEmpty())?.let {
-                            thumbnail_url = it.uri.toString()
-                        }
-                    }
-                }
-            }
-            .awaitAll()
-
-        MangasPage(mangas, false)
     }
 
     override suspend fun getMangaUpdate(
@@ -358,12 +273,6 @@ class LocalSource(
         chapters
     }
 
-    // Filters
-    override fun getFilterList() = FilterList(OrderBy.Popular(context))
-
-    // Unused stuff
-    override suspend fun getPageList(chapter: SChapter): List<Page> = throw UnsupportedOperationException("Unused")
-
     fun getFormat(chapter: SChapter): Format {
         try {
             val (mangaDirName, chapterName) = chapter.url.split('/', limit = 2)
@@ -422,13 +331,7 @@ class LocalSource(
 
     companion object {
         const val ID = 0L
-
-        private val LATEST_THRESHOLD = 7.days.inWholeMilliseconds
     }
 }
 
 fun Manga.isLocal(): Boolean = source == LocalSource.ID
-
-fun Source.isLocal(): Boolean = id == LocalSource.ID
-
-fun DomainSource.isLocal(): Boolean = id == LocalSource.ID

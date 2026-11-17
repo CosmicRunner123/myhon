@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.ui.reader
 
-import android.app.assist.AssistContent
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -57,7 +56,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
-import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
@@ -79,10 +77,8 @@ import eu.kanade.presentation.reader.settings.ReaderSettingsDialog
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
-import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
 import eu.kanade.tachiyomi.ui.main.MainActivity
-import eu.kanade.tachiyomi.ui.reader.ReaderViewModel.SetAsCoverResult.AddToLibraryFirst
 import eu.kanade.tachiyomi.ui.reader.ReaderViewModel.SetAsCoverResult.Error
 import eu.kanade.tachiyomi.ui.reader.ReaderViewModel.SetAsCoverResult.Success
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
@@ -96,8 +92,6 @@ import eu.kanade.tachiyomi.ui.reader.viewer.LocalPageColorFilter
 import eu.kanade.tachiyomi.ui.reader.viewer.Viewer
 import eu.kanade.tachiyomi.ui.reader.viewer.ViewerNavigation.Action
 import eu.kanade.tachiyomi.ui.reader.viewer.ViewerNavigation.NavigationRegion
-import eu.kanade.tachiyomi.ui.webview.WebViewActivity
-import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.readerBackgroundColor
 import eu.kanade.tachiyomi.util.system.toShareIntent
 import eu.kanade.tachiyomi.util.system.toast
@@ -143,7 +137,6 @@ class ReaderActivity : BaseActivity() {
     val settingsViewModel by viewModels<ReaderSettingsViewModel> {
         viewModelFactory { initializer { ReaderSettingsViewModel(viewModel, readerPreferences, preferences) } }
     }
-    private var assistUrl: String? = null
 
     private var menuToggleToast: Toast? = null
     private var readingModeToast: Toast? = null
@@ -428,11 +421,6 @@ class ReaderActivity : BaseActivity() {
         }
     }
 
-    override fun onProvideAssistContent(outContent: AssistContent) {
-        super.onProvideAssistContent(outContent)
-        assistUrl?.let { outContent.webUri = it.toUri() }
-    }
-
     /**
      * Called when the user clicks the back key or the button on the toolbar.
      */
@@ -539,7 +527,6 @@ class ReaderActivity : BaseActivity() {
 
     @Composable
     fun AppBars(state: ReaderViewModel.State) {
-        val isHttpSource = state.source is HttpSource
         val readingMode = ReadingMode.fromPreference(viewModel.getMangaReadingMode())
 
         val cropBorderPaged by readerPreferences.cropBorders.collectAsState()
@@ -561,9 +548,6 @@ class ReaderActivity : BaseActivity() {
             onClickTopAppBar = ::openMangaScreen,
             bookmarked = state.bookmarked,
             onToggleBookmarked = viewModel::toggleChapterBookmark,
-            onOpenInWebView = ::openChapterInWebView.takeIf { isHttpSource },
-            onOpenInBrowser = ::openChapterInBrowser.takeIf { isHttpSource },
-            onShare = ::shareChapter.takeIf { isHttpSource },
 
             chapterNavigatorType = if (!verticalNavigator) {
                 if (readingMode == ReadingMode.RIGHT_TO_LEFT) {
@@ -657,28 +641,6 @@ class ReaderActivity : BaseActivity() {
         }
     }
 
-    private fun openChapterInWebView() {
-        val manga = viewModel.manga ?: return
-        val source = viewModel.getSource() ?: return
-        assistUrl?.let {
-            val intent = WebViewActivity.newIntent(this@ReaderActivity, it, source.id, manga.title)
-            startActivity(intent)
-        }
-    }
-
-    private fun openChapterInBrowser() {
-        assistUrl?.let {
-            openInBrowser(it.toUri(), forceDefaultBrowser = false)
-        }
-    }
-
-    private fun shareChapter() {
-        assistUrl?.let {
-            val intent = it.toUri().toShareIntent(this, type = "text/plain")
-            startActivity(intent)
-        }
-    }
-
     private fun showReadingModeToast(mode: Int) {
         try {
             readingModeToast?.cancel()
@@ -696,12 +658,6 @@ class ReaderActivity : BaseActivity() {
     private fun setChapters(viewerChapters: ViewerChapters) {
         isLoadingViewer = false
         viewer?.setChapters(viewerChapters)
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.getChapterUrl()?.let { url ->
-                assistUrl = url
-            }
-        }
     }
 
     /**
@@ -841,7 +797,6 @@ class ReaderActivity : BaseActivity() {
         toast(
             when (result) {
                 Success -> MR.strings.cover_updated
-                AddToLibraryFirst -> MR.strings.notification_first_add_to_library
                 Error -> MR.strings.notification_cover_update_failed
             },
         )

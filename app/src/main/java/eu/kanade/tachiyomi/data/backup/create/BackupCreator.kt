@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupManga
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
 import eu.kanade.tachiyomi.data.backup.models.BackupSource
-import eu.kanade.tachiyomi.data.backup.models.BackupSourcePreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -103,7 +102,6 @@ class BackupCreator(
                             backupCategories = backupCategories(options),
                             backupSources = backupSources(sourceIds),
                             backupPreferences = backupAppPreferences(options),
-                            backupSourcePreferences = backupSourcePreferences(options),
                         ),
                     )
                     if (writer.isEmpty) {
@@ -147,12 +145,6 @@ class BackupCreator(
         if (!options.appSettings) return emptyList()
 
         return preferenceBackupCreator.createApp(includePrivatePreferences = options.privateSettings)
-    }
-
-    private suspend fun backupSourcePreferences(options: BackupOptions): List<BackupSourcePreferences> {
-        if (!options.sourceSettings) return emptyList()
-
-        return preferenceBackupCreator.createSource(includePrivatePreferences = options.privateSettings)
     }
 
     companion object {

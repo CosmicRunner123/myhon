@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.core.net.toUri
 
 /**
  * Class that manages [PendingIntent] of activity's
@@ -27,10 +26,5 @@ object NotificationHandler {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-    }
-
-    fun openUrl(context: Context, url: String): PendingIntent {
-        val notificationIntent = Intent(Intent.ACTION_VIEW, url.toUri())
-        return PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
     }
 }

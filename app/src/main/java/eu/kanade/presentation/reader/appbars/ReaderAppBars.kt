@@ -52,9 +52,6 @@ fun ReaderAppBars(
     onClickTopAppBar: () -> Unit,
     bookmarked: Boolean,
     onToggleBookmarked: () -> Unit,
-    onOpenInWebView: (() -> Unit)?,
-    onOpenInBrowser: (() -> Unit)?,
-    onShare: (() -> Unit)?,
 
     chapterNavigatorType: ChapterNavigatorType,
     verticalNavigatorHeight: Float,
@@ -94,9 +91,6 @@ fun ReaderAppBars(
                 navigateUp = navigateUp,
                 bookmarked = bookmarked,
                 onToggleBookmarked = onToggleBookmarked,
-                onOpenInWebView = onOpenInWebView,
-                onOpenInBrowser = onOpenInBrowser,
-                onShare = onShare,
             )
         }
 

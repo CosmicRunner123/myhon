@@ -86,7 +86,6 @@ import mihon.icons.materialsymbols.rounded.Close
 import mihon.icons.materialsymbols.rounded.DoneAll
 import mihon.icons.materialsymbols.rounded.HourglassEmpty
 import mihon.icons.materialsymbols.rounded.Person
-import mihon.icons.materialsymbols.rounded.Public
 import mihon.icons.materialsymbols.rounded.Schedule
 import mihon.icons.materialsymbols.rounded.Sync
 import mihon.icons.materialsymbols.roundedfilled.Brush
@@ -177,8 +176,6 @@ fun MangaActionRow(
     trackingCount: Int,
     nextUpdate: Instant?,
     isUserIntervalMode: Boolean,
-    onWebViewClicked: (() -> Unit)?,
-    onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
     onEditIntervalClicked: (() -> Unit)?,
     modifier: Modifier = Modifier,
@@ -220,15 +217,6 @@ fun MangaActionRow(
             color = if (trackingCount == 0) defaultActionButtonColor else MaterialTheme.colorScheme.primary,
             onClick = onTrackingClicked,
         )
-        if (onWebViewClicked != null) {
-            MangaActionButton(
-                title = stringResource(MR.strings.action_web_view),
-                icon = MaterialSymbols.Rounded.Public,
-                color = defaultActionButtonColor,
-                onClick = onWebViewClicked,
-                onLongClick = onWebViewLongClicked,
-            )
-        }
     }
 }
 
@@ -715,12 +703,10 @@ private fun RowScope.MangaActionButton(
     icon: ImageVector,
     color: Color,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null,
 ) {
     TextButton(
         onClick = onClick,
         modifier = Modifier.weight(1f),
-        onLongClick = onLongClick,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(

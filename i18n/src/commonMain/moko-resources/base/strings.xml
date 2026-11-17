@@ -32,7 +32,6 @@
     <string name="label_stats">Statistics</string>
     <string name="label_help">Help</string>
     <string name="label_default">Default</string>
-    <string name="label_warning">Warning</string>
     <string name="label_auto">Auto</string>
 
     <!-- Shared labels -->
@@ -95,9 +94,6 @@
     <string name="action_open_in_browser">Open in browser</string>
     <string name="action_copy_to_clipboard">Copy to clipboard</string>
     <string name="action_copy_link">Copy link</string>
-    <!-- Do not translate "WebView" -->
-    <string name="action_open_in_web_view">Open in WebView</string>
-    <string name="action_web_view" translatable="false">WebView</string>
     <string name="action_display_mode">Display mode</string>
     <string name="action_display">Display</string>
     <string name="action_display_grid">Compact grid</string>
@@ -126,9 +122,7 @@
     <string name="action_show_errors">Tap to see details</string>
     <string name="action_restore">Restore</string>
     <string name="action_webview_back">Back</string>
-    <string name="action_webview_forward">Forward</string>
     <string name="action_webview_refresh">Refresh</string>
-    <string name="action_webview_close_tab">Close tab</string>
     <string name="action_not_now">Not now</string>
 
     <!-- Operations -->
@@ -296,8 +290,6 @@
     <string name="pref_double_tap_zoom">Double tap to zoom</string>
     <string name="pref_cutout_short">Show content in cutout area</string>
     <string name="pref_page_transitions">Animate page transitions</string>
-    <string name="pref_load_ahead_only_over_wifi">Load ahead only on Wi-Fi</string>
-    <string name="pref_load_ahead_only_over_wifi_summary">Saves mobile data by loading only the pages near the one you\'re reading</string>
     <string name="pref_flash_page">Flash on page change</string>
     <string name="pref_flash_page_summ">Reduces ghosting on e-ink displays</string>
     <string name="pref_flash_duration">Flash duration</string>
@@ -495,11 +487,6 @@
     <string name="label_data">Data</string>
     <string name="pref_storage_usage">Storage usage</string>
     <string name="available_disk_space_info">Available: %1$s / Total: %2$s</string>
-    <string name="pref_clear_chapter_cache">Clear chapter cache</string>
-    <string name="used_cache">Used: %1$s</string>
-    <string name="cache_deleted">Cache cleared, %1$d files deleted</string>
-    <string name="cache_delete_error">Error occurred while clearing</string>
-    <string name="pref_auto_clear_chapter_cache">Clear chapter cache on app launch</string>
     <string name="export">Export</string>
     <string name="library_list">Library List</string>
     <string name="library_exported">Library Exported</string>
@@ -525,8 +512,6 @@
     <string name="clear_db_exclude_read">Keep entries with read chapters</string>
     <string name="clear_database_completed">Entries deleted</string>
     <string name="database_clean">Nothing to clear</string>
-    <string name="pref_clear_webview_data">Clear WebView data</string>
-    <string name="webview_data_deleted">WebView data cleared</string>
     <string name="pref_refresh_library_covers">Refresh library covers</string>
     <string name="pref_reset_viewer_flags">Reset per-series reader settings</string>
     <string name="pref_reset_viewer_flags_summary">Resets reading mode and orientation of all series</string>
@@ -589,8 +574,6 @@
     <string name="chapter_not_found">Chapter not found</string>
     <string name="local_invalid_format">Invalid chapter format</string>
     <string name="local_series_folder_not_found">Series folder not found</string>
-    <string name="local_filter_order_by">Order by</string>
-    <string name="date">Date</string>
 
     <!-- Manga info -->
     <string name="ongoing">Ongoing</string>
@@ -633,7 +616,6 @@
     <string name="confirm_set_chapter_settings">Are you sure you want to save these settings as default?</string>
     <string name="also_set_chapter_settings_for_library">Also apply to all entries in my library</string>
     <string name="set_chapter_settings_as_default">Set as default</string>
-    <string name="no_chapters_error">No chapters found</string>
     <string name="are_you_sure">Are you sure?</string>
     <string name="exclude_scanlators">Exclude scanlators</string>
     <string name="no_scanlators_found">No scanlators found</string>
@@ -762,13 +744,11 @@
 
     <!-- Library update service notifications -->
     <string name="notification_updating_progress">Updating library… (%s)</string>
-    <string name="notification_size_warning">Large updates harm sources and may lead to slower updates and also increased battery usage. Tap to learn more.</string>
     <string name="notification_new_chapters">New chapters found</string>
     <string name="notification_chapters_single">Chapter %1$s</string>
     <string name="notification_chapters_single_and_more">Chapter %1$s and %2$d more</string>
     <string name="notification_chapters_multiple">Chapters %1$s</string>
     <string name="notification_cover_update_failed">Failed to update cover</string>
-    <string name="notification_first_add_to_library">Please add the entry to your library before doing this</string>
     <string name="library_errors_help">For help on how to fix library update errors, see %1$s</string>
     <string name="skipped_reason_completed">Skipped because series is complete</string>
     <string name="skipped_reason_not_caught_up">Skipped because there are unread chapters</string>
@@ -803,15 +783,7 @@
     <string name="getting_started_guide">Getting started guide</string>
     <string name="information_empty_category">You have no categories. Tap the plus button to create one for organizing your library.</string>
     <string name="information_empty_category_dialog">You don\'t have any categories yet.</string>
-    <string name="information_cloudflare_bypass_failure">Failed to bypass Cloudflare</string>
-    <string name="information_cloudflare_help">Tap here for help with Cloudflare</string>
     <string name="information_required_plain">*required</string>
-    <!-- Do not translate "WebView" -->
-    <string name="information_webview_required">WebView is required for the app to function</string>
-    <!-- Do not translate "WebView" -->
-    <string name="information_webview_outdated">Please update the WebView app for better compatibility</string>
-    <!-- Do not translate "WebView" -->
-    <string name="information_webview_crashed">WebView stopped working and the page was closed</string>
     <string name="chapter_settings_updated">Updated default chapter settings</string>
 
     <!-- Notification channels -->
@@ -828,12 +800,6 @@
     <!-- App widget -->
     <string name="appwidget_updates_description">See your recently updated library entries</string>
     <string name="appwidget_unavailable_locked">Widget not available when app lock is enabled</string>
-
-    <!-- Common exceptions -->
-    <!-- Do not translate "WebView" -->
-    <string name="exception_http">HTTP %d, check website in WebView</string>
-    <string name="exception_offline">No Internet connection</string>
-    <string name="exception_unknown_host">Couldn\'t reach %s</string>
 
     <!-- Notes screen -->
     <string name="notes_placeholder">Enjoyed the part where…</string>

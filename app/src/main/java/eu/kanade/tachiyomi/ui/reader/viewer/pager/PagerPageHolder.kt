@@ -2,19 +2,15 @@ package eu.kanade.tachiyomi.ui.reader.viewer.pager
 
 import android.annotation.SuppressLint
 import android.content.Context
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderPageErrorView
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderPageImageView
-import eu.kanade.tachiyomi.ui.reader.viewer.ReaderProgressIndicator
 import eu.kanade.tachiyomi.ui.reader.viewer.processPagedImage
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import okio.Buffer
@@ -38,11 +34,6 @@ class PagerPageHolder(
         get() = page
 
     /**
-     * Loading progress bar to indicate the current progress.
-     */
-    private var progressIndicator: ReaderProgressIndicator? = null // = ReaderProgressIndicator(readerThemedContext)
-
-    /**
      * Error layout to show when the image fails to load.
      */
     private var errorLayout: ReaderPageErrorView? = null
@@ -50,13 +41,13 @@ class PagerPageHolder(
     private val scope = MainScope()
 
     /**
-     * Job for loading the page and processing changes to the page's status.
+     * Job for loading the page.
      */
     private var loadJob: Job? = null
 
     init {
         pageColorFilter = viewer.pageColorFilter
-        loadJob = scope.launch { loadPageAndProcessStatus() }
+        loadJob = scope.launch { setImage() }
     }
 
     /**
@@ -69,77 +60,9 @@ class PagerPageHolder(
         loadJob = null
     }
 
-    private fun initProgressIndicator() {
-        if (progressIndicator == null) {
-            progressIndicator = ReaderProgressIndicator(context)
-            addView(progressIndicator)
-        }
-    }
-
-    /**
-     * Loads the page and processes changes to the page's status.
-     *
-     * Returns immediately if the page has no PageLoader.
-     * Otherwise, this function does not return. It will continue to process status changes until
-     * the Job is cancelled.
-     */
-    private suspend fun loadPageAndProcessStatus() {
-        val loader = page.chapter.pageLoader ?: return
-
-        supervisorScope {
-            launch(Dispatchers.IO) {
-                loader.loadPage(page)
-            }
-            page.statusFlow.collectLatest { state ->
-                when (state) {
-                    Page.State.Queue -> setQueued()
-                    Page.State.LoadPage -> setLoading()
-                    Page.State.DownloadImage -> {
-                        setDownloading()
-                        page.progressFlow.collectLatest { value ->
-                            progressIndicator?.setProgress(value)
-                        }
-                    }
-                    Page.State.Ready -> setImage()
-                    is Page.State.Error -> setError(state.error)
-                }
-            }
-        }
-    }
-
-    /**
-     * Called when the page is queued.
-     */
-    private fun setQueued() {
-        initProgressIndicator()
-        progressIndicator?.show()
-        removeErrorLayout()
-    }
-
-    /**
-     * Called when the page is loading.
-     */
-    private fun setLoading() {
-        initProgressIndicator()
-        progressIndicator?.show()
-        removeErrorLayout()
-    }
-
-    /**
-     * Called when the page is downloading.
-     */
-    private fun setDownloading() {
-        initProgressIndicator()
-        progressIndicator?.show()
-        removeErrorLayout()
-    }
-
-    /**
-     * Called when the page is ready.
-     */
     private suspend fun setImage() {
-        progressIndicator?.setProgress(0)
-
+        // An unloaded chapter has closed the files its pages read from
+        if (page.chapter.pageLoader == null) return
         val streamFn = page.stream ?: return
 
         try {
@@ -177,22 +100,9 @@ class PagerPageHolder(
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e)
             withContext(Dispatchers.Main) {
-                setError(e)
+                showErrorLayout(e)
             }
         }
-    }
-
-    /**
-     * Called when the page has an error.
-     */
-    private fun setError(error: Throwable?) {
-        progressIndicator?.hide()
-        showErrorLayout(error)
-    }
-
-    override fun onImageLoaded() {
-        super.onImageLoaded()
-        progressIndicator?.hide()
     }
 
     /**
@@ -200,7 +110,7 @@ class PagerPageHolder(
      */
     override fun onImageLoadError(error: Throwable?) {
         super.onImageLoadError(error)
-        setError(error)
+        showErrorLayout(error)
     }
 
     /**
@@ -216,12 +126,7 @@ class PagerPageHolder(
             addView(it, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
             errorLayout = it
         }
-        errorLayout.bind(
-            page = page,
-            error = error,
-            sourceId = viewer.activity.viewModel.manga?.source,
-            onButtonPressChange = { pressed -> viewer.pager.setGestureDetectorEnabled(!pressed) },
-        )
+        errorLayout.bind(error)
     }
 
     /**

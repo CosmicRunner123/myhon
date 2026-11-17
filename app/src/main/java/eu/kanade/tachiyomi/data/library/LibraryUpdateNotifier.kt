@@ -19,10 +19,8 @@ import dev.zacsweers.metro.Inject
 import eu.kanade.presentation.util.formatChapterNumber
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.core.security.SecurityPreferences
-import eu.kanade.tachiyomi.data.notification.NotificationHandler
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
-import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.lang.chop
 import eu.kanade.tachiyomi.util.system.cancelNotification
@@ -33,9 +31,7 @@ import tachiyomi.core.common.Constants
 import tachiyomi.core.common.i18n.pluralStringResource
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.chapter.model.Chapter
-import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import java.math.RoundingMode
 import java.text.NumberFormat
@@ -45,7 +41,6 @@ import mihon.icons.materialsymbols.R as MaterialSymbolsR
 class LibraryUpdateNotifier(
     private val context: Context,
     private val securityPreferences: SecurityPreferences,
-    private val sourceManager: SourceManager,
 ) {
 
     private val percentFormatter = NumberFormat.getPercentInstance().apply {
@@ -122,33 +117,6 @@ class LibraryUpdateNotifier(
                 .setProgress(total, current, false)
                 .build(),
         )
-    }
-
-    /**
-     * Warn when excessively checking any single source.
-     */
-    suspend fun showQueueSizeWarningNotificationIfNeeded(mangaToUpdate: List<LibraryManga>) {
-        val maxUpdatesFromSource = mangaToUpdate
-            .groupBy { it.manga.source }
-            .filter { (sourceId, _) -> sourceManager.get(sourceId) !is UnmeteredSource }
-            .maxOfOrNull { it.value.size } ?: 0
-
-        if (maxUpdatesFromSource <= MANGA_PER_SOURCE_QUEUE_WARNING_THRESHOLD) {
-            return
-        }
-
-        context.notify(
-            Notifications.ID_LIBRARY_SIZE_WARNING,
-            Notifications.CHANNEL_LIBRARY_PROGRESS,
-        ) {
-            setContentTitle(context.stringResource(MR.strings.label_warning))
-            setStyle(
-                NotificationCompat.BigTextStyle().bigText(context.stringResource(MR.strings.notification_size_warning)),
-            )
-            setSmallIcon(MaterialSymbolsR.drawable.rounded_filled_warning)
-            setTimeoutAfter(WARNING_NOTIF_TIMEOUT_MS)
-            setContentIntent(NotificationHandler.openUrl(context, HELP_WARNING_URL))
-        }
     }
 
     /**
@@ -373,16 +341,9 @@ class LibraryUpdateNotifier(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
-
-    companion object {
-        const val HELP_WARNING_URL =
-            "https://mihon.app/docs/faq/library#why-am-i-warned-about-large-bulk-updates-and-downloads"
-    }
 }
 
 private const val NOTIF_MAX_CHAPTERS = 5
 private const val NOTIF_TITLE_MAX_LEN = 45
 private const val NOTIF_ICON_SIZE = 192
-private const val WARNING_NOTIF_TIMEOUT_MS = 30_000L
-private const val MANGA_PER_SOURCE_QUEUE_WARNING_THRESHOLD = 60
 private const val NOTIF_PROGRESS_INTERVAL_MS = 500L

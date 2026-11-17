@@ -52,7 +52,6 @@ import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.chapter.model.Chapter
-import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_CHARGING
@@ -225,8 +224,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
             }
             .sortedBy { it.manga.title }
 
-        notifier.showQueueSizeWarningNotificationIfNeeded(mangaToUpdate)
-
         if (skippedUpdates.isNotEmpty()) {
             // TODO: surface skipped reasons to user?
             logcat {
@@ -290,9 +287,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
                                         }
                                     } catch (e: Throwable) {
                                         val errorMessage = when (e) {
-                                            is NoChaptersException -> context.stringResource(
-                                                MR.strings.no_chapters_error,
-                                            )
                                             // failedUpdates will already have the source, don't need to copy it into the message
                                             is SourceNotInstalledException -> context.stringResource(
                                                 MR.strings.loader_not_implemented_error,
@@ -409,8 +403,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
         private const val WORK_NAME_MANUAL = "LibraryUpdate-manual"
 
         private const val ERROR_LOG_HELP_URL = "https://github.com/CosmicRunner123/myhon#readme"
-
-        private const val MANGA_PER_SOURCE_QUEUE_WARNING_THRESHOLD = 60
 
         /**
          * Key for category to update.

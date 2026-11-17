@@ -7,6 +7,4 @@ interface SourceManager {
     suspend fun get(sourceKey: Long): Source?
 
     suspend fun getOrStub(sourceKey: Long): Source
-
-    suspend fun getAll(): List<Source>
 }

@@ -31,10 +31,6 @@ abstract class Screen : Screen {
     override val key: ScreenKey = uniqueScreenKey
 }
 
-interface AssistContentScreen {
-    fun onProvideAssistUrl(): String?
-}
-
 @Composable
 fun DefaultNavigatorScreenTransition(
     navigator: Navigator,

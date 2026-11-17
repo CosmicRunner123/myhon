@@ -2,13 +2,9 @@ package eu.kanade.domain.chapter.interactor
 
 import dev.zacsweers.metro.Inject
 import eu.kanade.domain.chapter.model.copyFromSChapter
-import eu.kanade.domain.chapter.model.toSChapter
 import eu.kanade.domain.manga.interactor.GetExcludedScanlators
 import eu.kanade.domain.manga.interactor.UpdateManga
-import eu.kanade.domain.manga.model.toSManga
-import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.SChapter
-import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -16,12 +12,10 @@ import tachiyomi.data.chapter.ChapterSanitizer
 import tachiyomi.domain.chapter.interactor.ShouldUpdateDbChapter
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.model.ChapterRemoteUpdate
-import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.chapter.repository.ChapterRepository
 import tachiyomi.domain.chapter.service.ChapterRecognition
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.source.local.isLocal
 import java.lang.Long.max
 import java.util.TreeSet
 import kotlin.time.Clock
@@ -42,20 +36,14 @@ class SyncChaptersWithSource(
      *
      * @param rawSourceChapters the chapters from the source.
      * @param manga the manga the chapters belong to.
-     * @param source the source the manga belongs to.
      * @return Newly added chapters
      */
     suspend fun await(
         rawSourceChapters: List<SChapter>,
         manga: Manga,
-        source: Source,
         manualFetch: Boolean = false,
         fetchWindow: ClosedRange<Instant>? = null,
     ): List<Chapter> {
-        if (rawSourceChapters.isEmpty() && !source.isLocal()) {
-            throw NoChaptersException()
-        }
-
         val timeZone = TimeZone.currentSystemDefault()
         val now = Clock.System.now().toLocalDateTime(timeZone)
         val nowInstant = now.toInstant(timeZone)
@@ -80,22 +68,9 @@ class SyncChaptersWithSource(
         // to a higher value than newer chapters
         var maxSeenUploadDate: Instant? = null
 
-        // Update metadata from source if necessary.
-        val preparedChapters = if (source is HttpSource) {
-            val sManga = manga.toSManga()
-            sourceChapters.map { chapter ->
-                val sChapter = chapter.toSChapter()
-                @Suppress("DEPRECATION")
-                source.prepareNewChapter(sChapter, sManga)
-                chapter.copyFromSChapter(sChapter)
-            }
-        } else {
-            sourceChapters
-        }
-
         // Recognize chapter numbers, from the whole list since names alone don't always tell.
-        val recognizedChapters = preparedChapters
-            .zip(ChapterRecognition.parseChapterNumbers(manga.title, preparedChapters)) { chapter, numbering ->
+        val recognizedChapters = sourceChapters
+            .zip(ChapterRecognition.parseChapterNumbers(manga.title, sourceChapters)) { chapter, numbering ->
                 chapter.copy(chapterNumber = numbering.chapter?.let(ChapterRecognition::toDouble) ?: -1.0)
             }
 

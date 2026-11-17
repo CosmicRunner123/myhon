@@ -41,7 +41,6 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import eu.kanade.tachiyomi.ui.base.delegate.SecureActivityDelegate
 import eu.kanade.tachiyomi.util.system.DeviceUtil
-import eu.kanade.tachiyomi.util.system.WebViewUtil
 import eu.kanade.tachiyomi.util.system.animatorDurationScale
 import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.isDebugBuildType
@@ -64,7 +63,6 @@ import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.widget.WidgetManager
 import java.security.Security
@@ -91,8 +89,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
     @Inject private lateinit var coverCache: Lazy<CoverCache>
 
     @Inject private lateinit var networkHelper: Lazy<NetworkHelper>
-
-    @Inject private lateinit var sourceManager: Lazy<SourceManager>
 
     @Inject private lateinit var widgetManager: WidgetManager
 
@@ -212,7 +208,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         return ImageLoader.Builder(this).apply {
             val callFactoryLazy = lazy { networkHelper.value.client }
             val coverCache = coverCache.value
-            val sourceManager = sourceManager.value
             components {
                 // NetworkFetcher.Factory
                 add(OkHttpNetworkFetcherFactory(callFactoryLazy::value))
@@ -220,8 +215,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
                 add(ImageDecoder.Factory())
                 // Fetcher.Factory
                 add(BufferedSourceFetcher.Factory())
-                add(MangaCoverFetcher.MangaCoverFactory(callFactoryLazy, coverCache, sourceManager))
-                add(MangaCoverFetcher.MangaFactory(callFactoryLazy, coverCache, sourceManager))
+                add(MangaCoverFetcher.MangaCoverFactory(callFactoryLazy, coverCache))
+                add(MangaCoverFetcher.MangaFactory(callFactoryLazy, coverCache))
                 // Keyer
                 add(MangaCoverKeyer(coverCache))
                 add(MangaKeyer(coverCache))
@@ -252,22 +247,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
     override fun onStop(owner: LifecycleOwner) {
         SecureActivityDelegate.onApplicationStopped(this)
-    }
-
-    override fun getPackageName(): String {
-        try {
-            // Override the value passed as X-Requested-With in WebView requests
-            val stackTrace = Thread.currentThread().stackTrace
-            val isChromiumCall = stackTrace.any { trace ->
-                trace.className.lowercase() in setOf("org.chromium.base.buildinfo", "org.chromium.base.apkinfo") &&
-                    trace.methodName.lowercase() in setOf("getall", "getpackagename", "<init>")
-            }
-
-            if (isChromiumCall) return WebViewUtil.spoofedPackageName(applicationContext)
-        } catch (_: Exception) {
-        }
-
-        return super.getPackageName()
     }
 
     private fun setupNotificationChannels() {

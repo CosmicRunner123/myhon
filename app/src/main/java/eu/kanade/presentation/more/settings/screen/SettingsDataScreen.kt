@@ -26,9 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -54,7 +52,6 @@ import eu.kanade.tachiyomi.data.export.LibraryExporter.ExportOptions
 import eu.kanade.tachiyomi.util.system.DeviceUtil
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.system.workManager
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import logcat.LogPriority
@@ -279,16 +276,6 @@ object SettingsDataScreen : SearchableSettings {
 
     @Composable
     private fun getDataGroup(): Preference.PreferenceGroup {
-        val context = LocalContext.current
-        val scope = rememberCoroutineScope()
-        val libraryPreferences = remember { context.appGraph.libraryPreferences }
-
-        val chapterCache = remember { context.appGraph.chapterCache }
-        var cacheReadableSizeSema by remember { mutableIntStateOf(0) }
-        val cacheReadableSize by produceState("", cacheReadableSizeSema) {
-            value = chapterCache.readableSize()
-        }
-
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_storage_usage),
             preferenceItems = listOf(
@@ -303,28 +290,6 @@ object SettingsDataScreen : SearchableSettings {
                         },
                     )
                 },
-
-                Preference.PreferenceItem.TextPreference(
-                    title = stringResource(MR.strings.pref_clear_chapter_cache),
-                    subtitle = stringResource(MR.strings.used_cache, cacheReadableSize),
-                    onClick = {
-                        scope.launch {
-                            try {
-                                val deletedFiles = chapterCache.clear()
-                                context.toast(context.stringResource(MR.strings.cache_deleted, deletedFiles))
-                                cacheReadableSizeSema++
-                            } catch (e: Exception) {
-                                if (e is CancellationException) throw e
-                                logcat(LogPriority.ERROR, e)
-                                context.toast(MR.strings.cache_delete_error)
-                            }
-                        }
-                    },
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    preference = libraryPreferences.autoClearChapterCache,
-                    title = stringResource(MR.strings.pref_auto_clear_chapter_cache),
-                ),
             ),
         )
     }

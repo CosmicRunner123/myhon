@@ -9,31 +9,13 @@
 -dontwarn androidx.window.extensions.**
 -dontwarn androidx.window.sidecar.**
 
-##---------------Begin: proguard configuration for RxJava 1.x  ----------
--dontwarn sun.misc.**
-
--keepclassmembers class rx.internal.util.unsafe.*ArrayQueue*Field* {
-   long producerIndex;
-   long consumerIndex;
-}
-
--keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueProducerNodeRef {
-    rx.internal.util.atomic.LinkedQueueNode producerNode;
-}
-
--keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueConsumerNodeRef {
-    rx.internal.util.atomic.LinkedQueueNode consumerNode;
-}
-
--dontnote rx.internal.util.PlatformDependent
-##---------------End: proguard configuration for RxJava 1.x  ----------
-
 ##---------------Begin: proguard configuration for okhttp  ----------
 -keepclasseswithmembers class okhttp3.MultipartBody$Builder { *; }
 ##---------------End: proguard configuration for okhttp  ----------
 
 ##---------------Begin: proguard configuration for kotlinx.serialization  ----------
--keepattributes *Annotation*, InnerClasses
+# R8 rejects InnerClasses without EnclosingMethod
+-keepattributes *Annotation*, InnerClasses, EnclosingMethod, Signature
 -dontnote kotlinx.serialization.** # core serialization annotations
 
 # kotlinx-serialization-json specific. Add this if you have java.lang.NoClassDefFoundError kotlinx.serialization.json.JsonObjectSerializer

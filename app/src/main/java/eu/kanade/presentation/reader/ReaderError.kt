@@ -20,19 +20,14 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
 /**
- * A page that failed to load or decode: the message, Retry, and Open in WebView when [onOpenInWebView] is given.
- *
- * [onButtonPressChange] tells a viewer that reads every touch for its own taps when a button is held.
+ * A page that failed to decode: the message, and Retry when [onRetry] is given.
  */
 @Composable
 fun ReaderError(
     message: String?,
-    onRetry: () -> Unit,
-    onOpenInWebView: (() -> Unit)?,
+    onRetry: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    onButtonPressChange: ((pressed: Boolean) -> Unit)? = null,
 ) {
-    val buttonModifier = if (onButtonPressChange != null) Modifier.reportPress(onButtonPressChange) else Modifier
     Column(
         modifier = modifier.padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -44,12 +39,9 @@ fun ReaderError(
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
-        Button(onClick = onRetry, modifier = buttonModifier) {
-            Text(stringResource(MR.strings.action_retry))
-        }
-        if (onOpenInWebView != null) {
-            Button(onClick = onOpenInWebView, modifier = buttonModifier) {
-                Text(stringResource(MR.strings.action_open_in_web_view))
+        if (onRetry != null) {
+            Button(onClick = onRetry) {
+                Text(stringResource(MR.strings.action_retry))
             }
         }
     }

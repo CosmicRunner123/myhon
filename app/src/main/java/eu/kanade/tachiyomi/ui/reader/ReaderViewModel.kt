@@ -16,7 +16,6 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import eu.kanade.domain.base.BasePreferences
-import eu.kanade.domain.chapter.model.toSChapter
 import eu.kanade.domain.manga.interactor.SetMangaViewerFlags
 import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.domain.manga.model.readerOrientation
@@ -27,11 +26,8 @@ import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.saver.Image
 import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.saver.Location
-import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.reader.loader.ChapterLoader
-import eu.kanade.tachiyomi.ui.reader.loader.HttpPageLoader
 import eu.kanade.tachiyomi.ui.reader.model.InsertPage
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
@@ -44,7 +40,6 @@ import eu.kanade.tachiyomi.util.editCover
 import eu.kanade.tachiyomi.util.lang.byteSize
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.cacheImageDir
-import eu.kanade.tachiyomi.util.system.activeNetworkState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +51,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -68,7 +62,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import mihon.core.metro.AppCoroutineScope
-import mihon.data.cache.ChapterCache
 import tachiyomi.core.common.preference.toggle
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
@@ -83,7 +76,6 @@ import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.source.local.image.LocalCoverManager
-import tachiyomi.source.local.isLocal
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -111,7 +103,6 @@ class ReaderViewModel(
     private val coverManager: LocalCoverManager,
     private val updateManga: UpdateManga,
     private val coverCache: CoverCache,
-    private val chapterCache: ChapterCache,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -144,12 +135,6 @@ class ReaderViewModel(
      */
     val manga: Manga?
         get() = state.value.manga
-
-    /**
-     * The source of the manga loaded in the reader. Null until it has been resolved.
-     */
-    val source: Source?
-        get() = state.value.source
 
     /**
      * The chapter id of the currently loaded chapter. Used to restore from process kill.
@@ -288,16 +273,10 @@ class ReaderViewModel(
                 val manga = getManga.await(mangaId) ?: error("Requested manga of id $mangaId not found")
                 val source = sourceManager.getOrStub(manga.source)
                 incognitoMode = basePreferences.incognitoMode.get()
-                mutableState.update { it.copy(manga = manga, source = source) }
+                mutableState.update { it.copy(manga = manga) }
                 if (chapterId == -1L) chapterId = initialChapterId
 
-                loader = ChapterLoader(
-                    context,
-                    chapterCache,
-                    appScope,
-                    ::canLoadAhead,
-                    source,
-                )
+                loader = ChapterLoader(context, source)
 
                 chapterList = loadChapterList()
                 loadChapter(loader!!, chapterList.first { chapterId == it.chapter.id })
@@ -326,7 +305,7 @@ class ReaderViewModel(
             chapterList.getOrNull(chapterPos - 1),
             chapterList.getOrNull(chapterPos + 1),
         )
-        preloadNextChapterAfter(newChapters)
+        preloadNextChapter(newChapters)
 
         withContext(Dispatchers.Main) {
             mutableState.update {
@@ -392,31 +371,11 @@ class ReaderViewModel(
 
     private var nextChapterPreloadJob: Job? = null
 
-    /**
-     * Preloads the next chapter of [chapters] once the current one has loaded, so it doesn't take bandwidth from the
-     * pages being read. Skipped when loading ahead isn't allowed on this network.
-     */
-    private fun preloadNextChapterAfter(chapters: ViewerChapters) {
+    private fun preloadNextChapter(chapters: ViewerChapters) {
         val nextChapter = chapters.nextChapter ?: return
         nextChapterPreloadJob?.cancel()
-        nextChapterPreloadJob = viewModelScope.launch(Dispatchers.IO) {
-            if (!canLoadAhead()) return@launch
-            val current = chapters.currChapter
-            // Only online pages load in the background; other loaders load a page once it's shown
-            if (current.pageLoader is HttpPageLoader) {
-                current.pages.orEmpty().forEach { page ->
-                    page.statusFlow.first { it == Page.State.Ready || it is Page.State.Error }
-                }
-            }
-            preload(nextChapter)
-        }
+        nextChapterPreloadJob = viewModelScope.launch(Dispatchers.IO) { preload(nextChapter) }
     }
-
-    /**
-     * Whether online chapters may load past the pages near the one being read.
-     */
-    private fun canLoadAhead(): Boolean =
-        !readerPreferences.loadAheadOnlyOverWifi.get() || context.activeNetworkState().isWifi
 
     /**
      * Called when the viewers decide it's a good time to preload a [chapter] and improve the UX so
@@ -485,7 +444,7 @@ class ReaderViewModel(
         readerChapter.requestedPage = pageIndex
         chapterPageIndex = pageIndex
 
-        if (incognitoMode || page.status is Page.State.Error) return
+        if (incognitoMode) return
 
         val read = readerChapter.chapter.read || readerChapter.pages?.lastIndex == pageIndex
         // A page change in another chapter would replace that chapter's pending save
@@ -606,20 +565,6 @@ class ReaderViewModel(
      */
     private fun getCurrentChapter(): ReaderChapter? {
         return state.value.currentChapter
-    }
-
-    fun getSource() = state.value.source as? HttpSource
-
-    fun getChapterUrl(): String? {
-        val sChapter = getCurrentChapter()?.chapter?.toSChapter() ?: return null
-        val source = getSource() ?: return null
-
-        return try {
-            source.getChapterUrl(sChapter)
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e)
-            null
-        }
     }
 
     /**
@@ -772,8 +717,7 @@ class ReaderViewModel(
      * There's also a notification to allow sharing the image somewhere else or deleting it.
      */
     fun saveImage() {
-        val page = (state.value.dialog as? Dialog.PageActions)?.page
-        if (page?.status != Page.State.Ready) return
+        val page = (state.value.dialog as? Dialog.PageActions)?.page ?: return
         val manga = manga ?: return
 
         val notifier = SaveImageNotifier(context)
@@ -820,8 +764,7 @@ class ReaderViewModel(
      * image will be kept so it won't be taking lots of internal disk space.
      */
     fun shareImage(copyToClipboard: Boolean) {
-        val page = (state.value.dialog as? Dialog.PageActions)?.page
-        if (page?.status != Page.State.Ready) return
+        val page = (state.value.dialog as? Dialog.PageActions)?.page ?: return
         val manga = manga ?: return
 
         val destDir = context.cacheImageDir
@@ -850,8 +793,7 @@ class ReaderViewModel(
      * Sets the image of the selected page as cover and notifies the UI of the result.
      */
     fun setAsCover() {
-        val page = (state.value.dialog as? Dialog.PageActions)?.page
-        if (page?.status != Page.State.Ready) return
+        val page = (state.value.dialog as? Dialog.PageActions)?.page ?: return
         val manga = manga ?: return
         val stream = page.stream ?: return
 
@@ -859,11 +801,7 @@ class ReaderViewModel(
             val result = appScope.async {
                 try {
                     manga.editCover(coverManager, stream(), updateManga, coverCache)
-                    if (manga.isLocal() || manga.favorite) {
-                        SetAsCoverResult.Success
-                    } else {
-                        SetAsCoverResult.AddToLibraryFirst
-                    }
+                    SetAsCoverResult.Success
                 } catch (e: Exception) {
                     SetAsCoverResult.Error
                 }
@@ -874,7 +812,6 @@ class ReaderViewModel(
 
     enum class SetAsCoverResult {
         Success,
-        AddToLibraryFirst,
         Error,
     }
 
@@ -902,7 +839,6 @@ class ReaderViewModel(
     @Immutable
     data class State(
         val manga: Manga? = null,
-        val source: Source? = null,
         val initError: Throwable? = null,
         val viewerChapters: ViewerChapters? = null,
         val bookmarked: Boolean = false,

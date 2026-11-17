@@ -16,10 +16,6 @@ class LocalSourceFileSystem(
         return storageManager.getLocalSourceDirectory()
     }
 
-    fun getFilesInBaseDirectory(): List<UniFile> {
-        return getBaseDirectory()?.listFiles().orEmpty().toList()
-    }
-
     fun getMangaDirectory(name: String): UniFile? {
         return getBaseDirectory()
             ?.findFile(name)

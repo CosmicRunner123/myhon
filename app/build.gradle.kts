@@ -139,7 +139,6 @@ android {
                 "libarchive-jni",
                 "libconscrypt_jni",
                 "libimagedecoder",
-                "libquickjs",
                 "libsqlite3x",
             )
                 .map { "**/$it.so" }
@@ -231,8 +230,6 @@ dependencies {
 
     implementation(libs.androidx.interpolator)
 
-    implementation(libs.kotlin.reflect)
-
     implementation(libs.bundles.kotlinx.coroutines)
 
     implementation(libs.kotlinx.datetime)
@@ -253,9 +250,6 @@ dependencies {
     // Job scheduling
     implementation(libs.androidx.work)
 
-    // RxJava
-    implementation(libs.rxJava)
-
     // Networking
     implementation(libs.bundles.okhttp)
     implementation(libs.okio)
@@ -263,9 +257,6 @@ dependencies {
 
     // Data serialization (JSON, protobuf, xml)
     implementation(libs.bundles.serialization)
-
-    // HTML parser
-    implementation(libs.jsoup)
 
     // Disk
     implementation(libs.unifile)
@@ -298,7 +289,6 @@ dependencies {
     implementation(libs.bundles.voyager)
     implementation(libs.composeMaterialMotion)
     implementation(libs.swipe)
-    implementation(libs.composeWebview)
     implementation(libs.composeGrid)
     implementation(libs.reorderable)
     implementation(libs.bundles.markdown)

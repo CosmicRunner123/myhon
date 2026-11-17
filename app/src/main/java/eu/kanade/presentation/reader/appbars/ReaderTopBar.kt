@@ -18,9 +18,6 @@ fun ReaderTopBar(
     navigateUp: () -> Unit,
     bookmarked: Boolean,
     onToggleBookmarked: () -> Unit,
-    onOpenInWebView: (() -> Unit)?,
-    onOpenInBrowser: (() -> Unit)?,
-    onShare: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     AppBar(
@@ -31,49 +28,23 @@ fun ReaderTopBar(
         navigateUp = navigateUp,
         actions = {
             AppBarActions(
-                actions = buildList {
-                    add(
-                        AppBar.Action(
-                            title = stringResource(
-                                if (bookmarked) {
-                                    MR.strings.action_remove_bookmark
-                                } else {
-                                    MR.strings.action_bookmark
-                                },
-                            ),
-                            icon = if (bookmarked) {
-                                MaterialSymbols.RoundedFilled.Bookmark
+                actions = listOf(
+                    AppBar.Action(
+                        title = stringResource(
+                            if (bookmarked) {
+                                MR.strings.action_remove_bookmark
                             } else {
-                                MaterialSymbols.Rounded.Bookmark
+                                MR.strings.action_bookmark
                             },
-                            onClick = onToggleBookmarked,
                         ),
-                    )
-                    onOpenInWebView?.let {
-                        add(
-                            AppBar.OverflowAction(
-                                title = stringResource(MR.strings.action_open_in_web_view),
-                                onClick = it,
-                            ),
-                        )
-                    }
-                    onOpenInBrowser?.let {
-                        add(
-                            AppBar.OverflowAction(
-                                title = stringResource(MR.strings.action_open_in_browser),
-                                onClick = it,
-                            ),
-                        )
-                    }
-                    onShare?.let {
-                        add(
-                            AppBar.OverflowAction(
-                                title = stringResource(MR.strings.action_share),
-                                onClick = it,
-                            ),
-                        )
-                    }
-                },
+                        icon = if (bookmarked) {
+                            MaterialSymbols.RoundedFilled.Bookmark
+                        } else {
+                            MaterialSymbols.Rounded.Bookmark
+                        },
+                        onClick = onToggleBookmarked,
+                    ),
+                ),
             )
         },
     )

@@ -4,11 +4,8 @@ import android.content.Context
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
-import eu.kanade.tachiyomi.network.interceptor.CloudflareInterceptor
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor
-import kotlinx.coroutines.CoroutineScope
-import mihon.core.metro.AppCoroutineScope
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -19,7 +16,6 @@ import kotlin.time.Duration.Companion.seconds
 @Inject
 @SingleIn(AppScope::class)
 class NetworkHelper(
-    @AppCoroutineScope private val scope: CoroutineScope,
     private val context: Context,
     private val preferences: NetworkPreferences,
 ) {
@@ -69,20 +65,7 @@ class NetworkHelper(
         }
     }
 
-    val client: OkHttpClient by lazy {
-        clientBuilder()
-            .addInterceptor(
-                CloudflareInterceptor(context, cookieJar, scope, ::defaultUserAgentProvider),
-            )
-            .build()
-    }
+    val client: OkHttpClient by lazy { clientBuilder().build() }
 
-    /**
-     * @deprecated Since extension-lib 1.5
-     */
-    @Deprecated("The regular client handles Cloudflare by default")
-    @Suppress("UNUSED")
-    val cloudflareClient: OkHttpClient get() = client
-
-    fun defaultUserAgentProvider() = preferences.defaultUserAgent.get().trim()
+    private fun defaultUserAgentProvider() = preferences.defaultUserAgent.get().trim()
 }

@@ -25,8 +25,6 @@ dependencies {
 
     api(libs.logcat)
 
-    api(libs.rxJava)
-
     api(libs.okhttp.core)
     api(libs.okhttp.logging)
     api(libs.okhttp.brotli)
@@ -45,19 +43,9 @@ dependencies {
     api(libs.kotlinx.serialization.jsonOkio)
 
     api(libs.androidx.preference)
-    implementation(libs.androidx.webkit)
-
-    implementation(libs.jsoup)
 
     // Sort
     implementation(libs.natural.comparator)
-
-    // JavaScript engine
-    implementation(libs.quickJs)
-
-    testImplementation(libs.bundles.test)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testRuntimeOnly(libs.junit.platform.launcher)
 
     implementation(libs.metro.runtime)
 }

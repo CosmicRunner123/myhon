@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.ui.main
 
 import android.animation.ValueAnimator
-import android.app.assist.AssistContent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -39,7 +38,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.animation.doOnEnd
-import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Consumer
@@ -58,7 +56,6 @@ import eu.kanade.presentation.components.AppStateBanners
 import eu.kanade.presentation.components.IncognitoModeBannerBackgroundColor
 import eu.kanade.presentation.more.AppMigratingScreen
 import eu.kanade.presentation.more.settings.screen.data.RestoreBackupScreen
-import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.DefaultNavigatorScreenTransition
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
@@ -83,11 +80,9 @@ import mihon.app.di.AppGraph
 import mihon.app.di.appGraph
 import mihon.core.metro.metroGraph
 import mihon.core.migration.Migrator
-import mihon.data.cache.ChapterCache
 import mihon.domain.database.repository.DatabaseRepository
 import tachiyomi.core.common.Constants
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.release.interactor.GetApplicationRelease
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.util.collectAsState
@@ -99,11 +94,7 @@ class MainActivity : BaseActivity() {
 
     private val graph: AppGraph by lazy { metroGraph() }
 
-    @Inject private lateinit var libraryPreferences: LibraryPreferences
-
     @Inject private lateinit var preferences: BasePreferences
-
-    @Inject private lateinit var chapterCache: ChapterCache
 
     @Inject private lateinit var databaseRepository: DatabaseRepository
 
@@ -111,8 +102,6 @@ class MainActivity : BaseActivity() {
 
     // To be checked by splash screen. If true then splash screen will be removed.
     var ready = false
-
-    private var navigator: Navigator? = null
 
     init {
         registerSecureActivity(this)
@@ -197,8 +186,6 @@ class MainActivity : BaseActivity() {
                 disposeBehavior = NavigatorDisposeBehavior(disposeNestedNavigators = false, disposeSteps = true),
             ) { navigator ->
                 LaunchedEffect(navigator) {
-                    this@MainActivity.navigator = navigator
-
                     if (isLaunch) {
                         // Set start screen
                         handleIntentAction(intent, navigator)
@@ -257,19 +244,6 @@ class MainActivity : BaseActivity() {
             elapsed <= SPLASH_MIN_DURATION || (!ready && elapsed <= SPLASH_MAX_DURATION)
         }
         setSplashScreenExitAnimation(splashScreen)
-
-        if (isLaunch && libraryPreferences.autoClearChapterCache.get()) {
-            lifecycleScope.launch { chapterCache.clear() }
-        }
-    }
-
-    override fun onProvideAssistContent(outContent: AssistContent) {
-        super.onProvideAssistContent(outContent)
-        when (val screen = navigator?.lastItem) {
-            is AssistContentScreen -> {
-                screen.onProvideAssistUrl()?.let { outContent.webUri = it.toUri() }
-            }
-        }
     }
 
     override fun reportFullyDrawn() {

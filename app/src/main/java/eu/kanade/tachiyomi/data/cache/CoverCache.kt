@@ -107,22 +107,6 @@ class CoverCache(
     }
 
     /**
-     * Delete the cover file of the manga from the cache.
-     *
-     * @param manga the manga.
-     * @return number of files that were deleted.
-     */
-    fun deleteFromCache(manga: Manga): Int {
-        var deleted = 0
-
-        getCoverFile(manga.thumbnailUrl)?.let {
-            if (it.exists() && it.delete()) ++deleted
-        }
-
-        return deleted
-    }
-
-    /**
      * Delete custom cover of the manga from the cache
      *
      * @param mangaId the manga id.

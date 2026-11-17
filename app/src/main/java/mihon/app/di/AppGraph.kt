@@ -29,10 +29,8 @@ import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.ui.setting.track.BaseOAuthLoginActivity
-import eu.kanade.tachiyomi.ui.webview.WebViewActivity
 import eu.kanade.tachiyomi.util.CrashLogUtil
 import mihon.core.metro.IsDebugBuild
-import mihon.data.cache.ChapterCache
 import tachiyomi.domain.backup.service.BackupPreferences
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.interactor.ResetCategoryFlags
@@ -50,7 +48,6 @@ interface AppGraph : ViewModelGraph {
     fun inject(app: App)
     fun inject(mainActivity: MainActivity)
     fun inject(readerActivity: ReaderActivity)
-    fun inject(webViewActivity: WebViewActivity)
     fun inject(baseOAuthLoginActivity: BaseOAuthLoginActivity)
     fun inject(libraryUpdateWorker: LibraryUpdateWorker)
     fun inject(metadataUpdateWorker: MetadataUpdateWorker)
@@ -80,7 +77,6 @@ interface AppGraph : ViewModelGraph {
     val updateChecker: AppUpdateChecker
 
     val trackerManager: TrackerManager
-    val chapterCache: ChapterCache
     val coverCache: CoverCache
 
     val networkHelper: NetworkHelper

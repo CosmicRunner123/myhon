@@ -3,9 +3,7 @@ package mihon.domain.source.interactor
 import dev.zacsweers.metro.Inject
 import eu.kanade.domain.chapter.interactor.SyncChaptersWithSource
 import eu.kanade.domain.chapter.model.toSChapter
-import eu.kanade.domain.manga.model.hasCustomCover
 import eu.kanade.domain.manga.model.toSManga
-import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +18,6 @@ import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaRemoteUpdate
 import tachiyomi.domain.manga.repository.MangaRepository
 import tachiyomi.domain.source.service.SourceManager
-import tachiyomi.source.local.isLocal
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -30,7 +27,6 @@ class UpdateMangaFromRemote(
     private val chapterRepository: ChapterRepository,
     private val mangaRepository: MangaRepository,
     private val syncChaptersWithSource: SyncChaptersWithSource,
-    private val coverCache: CoverCache,
     private val libraryPreferences: LibraryPreferences,
 ) {
     suspend operator fun invoke(
@@ -71,7 +67,6 @@ class UpdateMangaFromRemote(
             val newChapters = syncChaptersWithSource.await(
                 rawSourceChapters = update.chapters,
                 manga = manga,
-                source = source,
                 manualFetch = manualFetch,
                 fetchWindow = fetchWindow,
             )
@@ -107,15 +102,7 @@ class UpdateMangaFromRemote(
             // Never refresh covers if the url is empty to avoid "losing" existing covers
             remoteManga.thumbnail_url.isNullOrEmpty() -> null
             !manualFetch && localManga.thumbnailUrl == remoteManga.thumbnail_url -> null
-            localManga.isLocal() -> Clock.System.now()
-            localManga.hasCustomCover(coverCache) -> {
-                coverCache.deleteFromCache(localManga)
-                null
-            }
-            else -> {
-                coverCache.deleteFromCache(localManga)
-                Clock.System.now()
-            }
+            else -> Clock.System.now()
         }
 
         val thumbnailUrl = remoteManga.thumbnail_url?.takeIf { it.isNotEmpty() }

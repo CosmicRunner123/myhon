@@ -8,19 +8,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastCoerceIn
 import ca.mpreg.webgpuviewer.viewer.ComposePageSize
 import ca.mpreg.webgpuviewer.viewer.ImagePage
 import eu.kanade.presentation.reader.ChapterTransition
@@ -29,8 +26,6 @@ import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderThemedContent
-import eu.kanade.tachiyomi.ui.webview.WebViewActivity
-import tachiyomi.presentation.core.components.CombinedCircularProgressIndicator
 
 /** The side padding `PagerTransitionHolder` gave the same transition view. */
 private const val TRANSITION_SIDE_PADDING = 64
@@ -69,8 +64,7 @@ abstract class ReaderComposePage(
 }
 
 /**
- * A page that failed to load or decode, with the pager's error layout: the message, Retry, and
- * Open in WebView for an image that came off the web.
+ * A page that failed to decode, with the pager's error layout: the message and Retry.
  */
 class ErrorPage internal constructor(
     viewer: WebGpuViewer,
@@ -85,8 +79,6 @@ class ErrorPage internal constructor(
     @Composable
     override fun PageContent() {
         val context = LocalContext.current
-        // As the pager's own error layout: only offered for an image that came off the web.
-        val imageUrl = viewerPage?.page?.imageUrl?.takeIf { it.startsWith("http", ignoreCase = true) }
         val strip = if (viewer is WebGpuViewerContinuous) {
             Modifier.fillMaxHeight(STRIP_ERROR_HEIGHT_FRACTION).wrapContentHeight()
         } else {
@@ -97,38 +89,20 @@ class ErrorPage internal constructor(
             modifier = strip,
             message = with(context) { error?.formattedMessage },
             onRetry = { viewerPage?.let { viewer.retryLoad(it) } },
-            onOpenInWebView = imageUrl?.let {
-                {
-                    val sourceId = viewer.activity.viewModel.manga?.source
-                    context.startActivity(WebViewActivity.newIntent(context, it, sourceId))
-                }
-            },
         )
     }
 }
 
-/** A page still downloading: the reader's progress ring. */
+/** A page still decoding: the reader's progress ring. */
 class ProgressPage(viewer: WebGpuViewer) : ReaderComposePage(viewer) {
     init {
         isPlaceholder = true
     }
 
-    /**
-     * 0 to 1. On the page, not in the composition, which is dropped when the page goes out of
-     * reach. Written from the loader's collector; snapshot state takes writes from any thread.
-     */
-    var progress: Float
-        get() = progressState
-        set(value) {
-            progressState = value.fastCoerceIn(0f, 1f)
-        }
-
-    private var progressState by mutableFloatStateOf(0f)
-
     @Composable
     override fun PageContent() {
         if (viewer !is WebGpuViewerContinuous) {
-            CombinedCircularProgressIndicator(progress = { progress })
+            CircularProgressIndicator()
             return
         }
         // WebtoonPageHolder centred its spinner below a quarter-height top margin, which puts it
@@ -140,7 +114,7 @@ class ProgressPage(viewer: WebGpuViewer) : ReaderComposePage(viewer) {
                     .padding(top = maxHeight * STRIP_PROGRESS_TOP_FRACTION),
                 contentAlignment = Alignment.Center,
             ) {
-                CombinedCircularProgressIndicator(progress = { progress })
+                CircularProgressIndicator()
             }
         }
     }

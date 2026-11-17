@@ -2,42 +2,23 @@ package eu.kanade.tachiyomi.data.backup.create.creators
 
 import dev.zacsweers.metro.Inject
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
-import eu.kanade.tachiyomi.data.backup.models.BackupSourcePreferences
 import eu.kanade.tachiyomi.data.backup.models.BooleanPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.FloatPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.IntPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.LongPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.StringPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.StringSetPreferenceValue
-import eu.kanade.tachiyomi.source.ConfigurableSource
-import eu.kanade.tachiyomi.source.preferenceKey
-import eu.kanade.tachiyomi.source.sourcePreferences
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.PreferenceStore
-import tachiyomi.domain.source.service.SourceManager
 
 @Inject
 class PreferenceBackupCreator(
-    private val sourceManager: SourceManager,
     private val preferenceStore: PreferenceStore,
 ) {
 
     fun createApp(includePrivatePreferences: Boolean): List<BackupPreference> {
         return preferenceStore.getAll().toBackupPreferences()
             .withPrivatePreferences(includePrivatePreferences)
-    }
-
-    suspend fun createSource(includePrivatePreferences: Boolean): List<BackupSourcePreferences> {
-        return sourceManager.getAll()
-            .filterIsInstance<ConfigurableSource>()
-            .map {
-                BackupSourcePreferences(
-                    it.preferenceKey(),
-                    it.sourcePreferences().all.toBackupPreferences()
-                        .withPrivatePreferences(includePrivatePreferences),
-                )
-            }
-            .filter { it.prefs.isNotEmpty() }
     }
 
     @Suppress("UNCHECKED_CAST")

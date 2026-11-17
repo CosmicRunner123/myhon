@@ -8,7 +8,6 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updateMargins
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderPageErrorView
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderPageImageView
@@ -18,9 +17,7 @@ import eu.kanade.tachiyomi.util.system.dpToPx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import okio.Buffer
@@ -40,15 +37,10 @@ class WebtoonPageHolder(
 ) : WebtoonBaseHolder(frame, viewer) {
 
     /**
-     * Loading progress bar to indicate the current progress.
-     */
-    private val progressIndicator = createProgressIndicator()
-
-    /**
      * Progress bar container. Needed to keep a minimum height size of the holder, otherwise the
      * adapter would create more views to fill the screen, which is not wanted.
      */
-    private lateinit var progressContainer: ViewGroup
+    private val progressContainer = createProgressContainer()
 
     /**
      * Error layout to show when the image fails to load.
@@ -88,7 +80,7 @@ class WebtoonPageHolder(
         this.page = page
         frame.pageColorFilter = viewer.pageColorFilter
         loadJob?.cancel()
-        loadJob = scope.launch { loadPageAndProcessStatus() }
+        loadJob = scope.launch { setImage() }
         refreshLayoutParams()
     }
 
@@ -112,75 +104,14 @@ class WebtoonPageHolder(
 
         removeErrorLayout()
         frame.recycle()
-        progressIndicator.setProgress(0)
         progressContainer.isVisible = true
     }
 
-    /**
-     * Loads the page and processes changes to the page's status.
-     *
-     * Returns immediately if there is no page or the page has no PageLoader.
-     * Otherwise, this function does not return. It will continue to process status changes until
-     * the Job is cancelled.
-     */
-    private suspend fun loadPageAndProcessStatus() {
-        val page = page ?: return
-        val loader = page.chapter.pageLoader ?: return
-        supervisorScope {
-            launch(Dispatchers.IO) {
-                loader.loadPage(page)
-            }
-            page.statusFlow.collectLatest { state ->
-                when (state) {
-                    Page.State.Queue -> setQueued()
-                    Page.State.LoadPage -> setLoading()
-                    Page.State.DownloadImage -> {
-                        setDownloading()
-                        page.progressFlow.collectLatest { value ->
-                            progressIndicator.setProgress(value)
-                        }
-                    }
-                    Page.State.Ready -> setImage()
-                    is Page.State.Error -> setError(state.error)
-                }
-            }
-        }
-    }
-
-    /**
-     * Called when the page is queued.
-     */
-    private fun setQueued() {
-        progressContainer.isVisible = true
-        progressIndicator.show()
-        removeErrorLayout()
-    }
-
-    /**
-     * Called when the page is loading.
-     */
-    private fun setLoading() {
-        progressContainer.isVisible = true
-        progressIndicator.show()
-        removeErrorLayout()
-    }
-
-    /**
-     * Called when the page is downloading
-     */
-    private fun setDownloading() {
-        progressContainer.isVisible = true
-        progressIndicator.show()
-        removeErrorLayout()
-    }
-
-    /**
-     * Called when the page is ready.
-     */
     private suspend fun setImage() {
-        progressIndicator.setProgress(0)
-
-        val streamFn = page?.stream ?: return
+        val page = page ?: return
+        // An unloaded chapter has closed the files its pages read from
+        if (page.chapter.pageLoader == null) return
+        val streamFn = page.stream ?: return
 
         try {
             val buffer = withContext(Dispatchers.IO) { streamFn().use { Buffer().readFrom(it) } }
@@ -226,32 +157,28 @@ class WebtoonPageHolder(
         removeErrorLayout()
     }
 
-    /**
-     * Creates a new progress bar.
-     */
-    private fun createProgressIndicator(): ReaderProgressIndicator {
-        progressContainer = FrameLayout(context)
-        frame.addView(progressContainer, MATCH_PARENT, parentHeight)
+    private fun createProgressContainer(): ViewGroup {
+        val container = FrameLayout(context)
+        frame.addView(container, MATCH_PARENT, parentHeight)
 
         val progress = ReaderProgressIndicator(context).apply {
             updateLayoutParams<FrameLayout.LayoutParams> {
                 updateMargins(top = parentHeight / 4)
             }
         }
-        progressContainer.addView(progress)
-        return progress
+        container.addView(progress)
+        return container
     }
 
     /**
      * Shows the error of the page.
      */
     private fun initErrorLayout(error: Throwable?) {
-        val page = page ?: return
         val errorLayout = errorLayout ?: ReaderPageErrorView(context).also {
             frame.addView(it, FrameLayout.LayoutParams(MATCH_PARENT, (parentHeight * 0.8).toInt()))
             errorLayout = it
         }
-        errorLayout.bind(page = page, error = error, sourceId = viewer.activity.viewModel.manga?.source)
+        errorLayout.bind(error)
     }
 
     /**

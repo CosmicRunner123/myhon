@@ -71,7 +71,6 @@ import tachiyomi.domain.chapter.interactor.SetMangaDefaultChapterFlags
 import tachiyomi.domain.chapter.interactor.UpdateChapter
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.model.ChapterUpdate
-import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.chapter.service.calculateChapterGap
 import tachiyomi.domain.chapter.service.getChapterSort
 import tachiyomi.domain.chapter.service.missingChaptersCount
@@ -125,12 +124,6 @@ class MangaViewModel(
 
     private val successState: State.Success?
         get() = state.value as? State.Success
-
-    val manga: Manga?
-        get() = successState?.manga
-
-    val source: Source?
-        get() = successState?.source
 
     private val allChapters: List<ChapterList.Item>?
         get() = successState?.chapters
@@ -288,12 +281,8 @@ class MangaViewModel(
         } catch (_: CancellationException) {
             // ignore
         } catch (e: Exception) {
-            val message = if (e is NoChaptersException) {
-                context.stringResource(MR.strings.no_chapters_error)
-            } else {
-                logcat(LogPriority.ERROR, e)
-                with(context) { e.formattedMessage }
-            }
+            logcat(LogPriority.ERROR, e)
+            val message = with(context) { e.formattedMessage }
 
             viewModelScope.launch {
                 snackbarHostState.showSnackbar(message = message)
