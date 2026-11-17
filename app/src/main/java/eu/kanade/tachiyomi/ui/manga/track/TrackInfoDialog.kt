@@ -53,7 +53,6 @@ import eu.kanade.presentation.track.TrackStatusSelector
 import eu.kanade.presentation.track.TrackerSearch
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.data.track.DeletableTracker
-import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import eu.kanade.tachiyomi.util.lang.convertEpochMillisZone
@@ -82,8 +81,6 @@ import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.roundedfilled.Delete
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.manga.interactor.GetManga
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.DeleteTrack
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.model.Track
@@ -98,7 +95,6 @@ import kotlin.time.Instant
 data class TrackInfoDialogHomeScreen(
     private val mangaId: Long,
     private val mangaTitle: String,
-    private val sourceId: Long,
 ) : Screen() {
 
     @Composable
@@ -106,7 +102,7 @@ data class TrackInfoDialogHomeScreen(
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
         val locale = LocalLocale.current
-        val viewModel = assistedMetroViewModel<Model, Model.Factory> { create(mangaId = mangaId, sourceId = sourceId) }
+        val viewModel = assistedMetroViewModel<Model, Model.Factory> { create(mangaId = mangaId) }
 
         val dateFormat = remember {
             UiPreferences.dateFormat(
@@ -162,18 +158,14 @@ data class TrackInfoDialogHomeScreen(
                 )
             },
             onNewSearch = {
-                if (it.tracker is EnhancedTracker) {
-                    viewModel.registerEnhancedTracking(it)
-                } else {
-                    navigator.push(
-                        TrackerSearchScreen(
-                            mangaId = mangaId,
-                            initialQuery = it.track?.title ?: mangaTitle,
-                            currentUrl = it.track?.remoteUrl,
-                            serviceId = it.tracker.id,
-                        ),
-                    )
-                }
+                navigator.push(
+                    TrackerSearchScreen(
+                        mangaId = mangaId,
+                        initialQuery = it.track?.title ?: mangaTitle,
+                        currentUrl = it.track?.remoteUrl,
+                        serviceId = it.tracker.id,
+                    ),
+                )
             },
             onOpenInBrowser = { openTrackerInBrowser(context, it) },
             onRemoved = {
@@ -210,13 +202,10 @@ data class TrackInfoDialogHomeScreen(
     @AssistedInject
     class Model(
         @Assisted private val mangaId: Long,
-        @Assisted private val sourceId: Long,
         @AppCoroutineScope private val appScope: CoroutineScope,
         private val context: Context,
         private val getTracks: GetTracks,
-        private val getManga: GetManga,
         private val trackerManager: TrackerManager,
-        private val sourceManager: SourceManager,
         private val refreshTracks: RefreshTracks,
     ) : ViewModel() {
 
@@ -227,7 +216,7 @@ data class TrackInfoDialogHomeScreen(
         @ManualViewModelAssistedFactoryKey
         @ContributesIntoMap(AppScope::class)
         interface Factory : ManualViewModelAssistedFactory {
-            fun create(mangaId: Long, sourceId: Long): Model
+            fun create(mangaId: Long): Model
         }
 
         init {
@@ -241,21 +230,6 @@ data class TrackInfoDialogHomeScreen(
                     .distinctUntilChanged()
                     .map { it.mapToTrackItem() }
                     .collectLatest { trackItems -> state.update { it.copy(trackItems = trackItems) } }
-            }
-        }
-
-        fun registerEnhancedTracking(item: TrackItem) {
-            item.tracker as EnhancedTracker
-            appScope.launch {
-                val manga = getManga.await(mangaId) ?: return@launch
-                try {
-                    val matchResult = item.tracker.match(manga) ?: throw Exception()
-                    item.tracker.register(matchResult, mangaId)
-                } catch (_: Exception) {
-                    withContext(Dispatchers.Main) {
-                        context.toast(MR.strings.error_no_match)
-                    }
-                }
             }
         }
 
@@ -284,14 +258,9 @@ data class TrackInfoDialogHomeScreen(
             }
         }
 
-        private suspend fun List<Track>.mapToTrackItem(): List<TrackItem> {
-            val loggedInTrackers = trackerManager.loggedInTrackers()
-            val source = sourceManager.getOrStub(sourceId)
-            return loggedInTrackers
-                // Map to TrackItem
+        private fun List<Track>.mapToTrackItem(): List<TrackItem> {
+            return trackerManager.loggedInTrackers()
                 .map { service -> TrackItem(find { it.trackerId == service.id }, service) }
-                // Show only if the service supports this manga's source
-                .filter { (it.tracker as? EnhancedTracker)?.accept(source) ?: true }
         }
 
         @Immutable

@@ -48,7 +48,7 @@ interface Tracker {
 
     suspend fun update(track: Track, didReadChapter: Boolean = false): Track
 
-    suspend fun bind(track: Track, hasReadChapters: Boolean = false): Track
+    suspend fun bind(track: Track, hasReadChapters: Boolean): Track
 
     suspend fun search(query: String): List<TrackSearch>
 

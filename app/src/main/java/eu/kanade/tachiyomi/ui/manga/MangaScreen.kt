@@ -206,7 +206,6 @@ class MangaScreen(
                     screen = TrackInfoDialogHomeScreen(
                         mangaId = successState.manga.id,
                         mangaTitle = successState.manga.title,
-                        sourceId = successState.source.id,
                     ),
                     enableSwipeDismiss = { it.lastItem is TrackInfoDialogHomeScreen },
                     onDismissRequest = onDismissRequest,

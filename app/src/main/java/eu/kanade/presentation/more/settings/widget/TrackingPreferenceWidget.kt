@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.more.settings.LocalPreferenceHighlighted
 import eu.kanade.presentation.track.components.TrackLogoIcon
-import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.Tracker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -83,27 +82,25 @@ fun TrackingPreferenceWidget(
                 }
             }
             if (isLoggedIn) {
-                if (tracker !is EnhancedTracker) {
-                    IconButton(
-                        enabled = !isRefreshing,
-                        onClick = {
-                            scope.launch { tracker.refreshUser() }
-                        },
-                    ) {
-                        if (!isRefreshing) {
-                            Icon(
-                                imageVector = MaterialSymbols.Rounded.Refresh,
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(32.dp),
-                                contentDescription = stringResource(MR.strings.refresh_tracker_profile),
-                            )
-                        } else {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        }
+                IconButton(
+                    enabled = !isRefreshing,
+                    onClick = {
+                        scope.launch { tracker.refreshUser() }
+                    },
+                ) {
+                    if (!isRefreshing) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.Refresh,
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .size(32.dp),
+                            contentDescription = stringResource(MR.strings.refresh_tracker_profile),
+                        )
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                        )
                     }
                 }
                 Icon(

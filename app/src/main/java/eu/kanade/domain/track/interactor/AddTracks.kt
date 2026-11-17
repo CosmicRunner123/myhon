@@ -4,26 +4,18 @@ import dev.zacsweers.metro.Inject
 import eu.kanade.domain.track.model.toDbTrack
 import eu.kanade.domain.track.model.toDomainTrack
 import eu.kanade.tachiyomi.data.database.models.Track
-import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.Tracker
-import eu.kanade.tachiyomi.data.track.TrackerManager
-import eu.kanade.tachiyomi.source.Source
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import logcat.LogPriority
-import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
 import tachiyomi.domain.history.interactor.GetHistory
-import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.track.interactor.UpsertTrack
 import kotlin.time.Instant
 
 @Inject
 class AddTracks(
     private val upsertTrack: UpsertTrack,
-    private val syncChapterProgressWithTrack: SyncChapterProgressWithTrack,
     private val getChaptersByMangaId: GetChaptersByMangaId,
-    private val trackerManager: TrackerManager,
     private val getHistory: GetHistory,
 ) {
 
@@ -37,7 +29,6 @@ class AddTracks(
 
         upsertTrack.await(track)
 
-        // TODO: merge into [SyncChapterProgressWithTrack]?
         // Update chapter progress if newer chapters marked read locally
         if (hasReadChapters) {
             val latestLocalReadChapterNumber = allChapters
@@ -67,33 +58,5 @@ class AddTracks(
                 }
             }
         }
-
-        syncChapterProgressWithTrack.await(mangaId, track, tracker)
-    }
-
-    suspend fun bindEnhancedTrackers(manga: Manga, source: Source) = withContext(Dispatchers.IO) {
-        trackerManager.loggedInTrackers()
-            .filterIsInstance<EnhancedTracker>()
-            .filter { it.accept(source) }
-            .forEach { service ->
-                try {
-                    service.match(manga)?.let { track ->
-                        track.manga_id = manga.id
-                        (service as Tracker).bind(track)
-                        upsertTrack.await(track.toDomainTrack(idRequired = false)!!)
-
-                        syncChapterProgressWithTrack.await(
-                            manga.id,
-                            track.toDomainTrack(idRequired = false)!!,
-                            service,
-                        )
-                    }
-                } catch (e: Exception) {
-                    logcat(
-                        LogPriority.WARN,
-                        e,
-                    ) { "Could not match manga: ${manga.title} with service $service" }
-                }
-            }
     }
 }

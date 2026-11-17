@@ -379,17 +379,6 @@ apollo {
         // An ISO 8601-encoded date
         mapScalarToKotlinString("ISO8601Date")
     }
-
-    service("suwayomi") {
-        packageName.set("mihon.graphql.suwayomi")
-        val srcDir = "$schemaBasePath/suwayomi"
-        srcDir(file(srcDir))
-
-        introspection {
-            endpointUrl.set("http://localhost:4567/api/graphql")
-            schemaFile.set(file("$srcDir/suwayomi.graphqls"))
-        }
-    }
 }
 
 val latestCommitCount = getLatestCommitCount()

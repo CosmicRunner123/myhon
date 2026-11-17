@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.domain.track.model.AutoTrackState
 import eu.kanade.presentation.more.settings.Preference
-import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.Tracker
 import eu.kanade.tachiyomi.data.track.anilist.AnilistApi
 import eu.kanade.tachiyomi.data.track.bangumi.BangumiApi
@@ -88,7 +86,6 @@ object SettingsTrackingScreen : SearchableSettings {
         val context = LocalContext.current
         val trackPreferences = remember { context.appGraph.trackPreferences }
         val trackerManager = remember { context.appGraph.trackerManager }
-        val sourceManager = remember { context.appGraph.sourceManager }
 
         var dialog by remember { mutableStateOf<Any?>(null) }
         dialog?.run {
@@ -107,22 +104,6 @@ object SettingsTrackingScreen : SearchableSettings {
                     )
                 }
             }
-        }
-
-        val installedSources by produceState(initialValue = emptyList()) { value = sourceManager.getAll() }
-        val enhancedTrackers = trackerManager.trackers
-            .filter { it is EnhancedTracker }
-            .partition { service ->
-                val acceptedSources = (service as EnhancedTracker).getAcceptedSources()
-                installedSources.any { it::class.qualifiedName in acceptedSources }
-            }
-        var enhancedTrackerInfo = stringResource(MR.strings.enhanced_tracking_info)
-        if (enhancedTrackers.second.isNotEmpty()) {
-            val missingSourcesInfo = stringResource(
-                MR.strings.enhanced_services_not_installed,
-                enhancedTrackers.second.joinToString { it.name },
-            )
-            enhancedTrackerInfo += "\n\n$missingSourcesInfo"
         }
 
         return listOf(
@@ -186,19 +167,6 @@ object SettingsTrackingScreen : SearchableSettings {
                     ),
                     Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.tracking_info)),
                 ),
-            ),
-            Preference.PreferenceGroup(
-                title = stringResource(MR.strings.enhanced_services),
-                preferenceItems = (
-                    enhancedTrackers.first
-                        .map { service ->
-                            Preference.PreferenceItem.TrackerPreference(
-                                tracker = service,
-                                login = { (service as EnhancedTracker).loginNoop() },
-                                logout = service::logout,
-                            )
-                        } + listOf(Preference.PreferenceItem.InfoPreference(enhancedTrackerInfo))
-                    ),
             ),
         )
     }

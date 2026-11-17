@@ -25,14 +25,12 @@ import eu.kanade.domain.manga.interactor.GetExcludedScanlators
 import eu.kanade.domain.manga.interactor.SetExcludedScanlators
 import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.domain.manga.model.chaptersFiltered
-import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.interactor.RefreshTracks
 import eu.kanade.domain.track.interactor.TrackChapter
 import eu.kanade.domain.track.model.AutoTrackState
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.data.cache.CoverCache
-import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
@@ -50,7 +48,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -114,7 +111,6 @@ class MangaViewModel(
     private val updateManga: UpdateManga,
     private val getCategories: GetCategories,
     private val getTracks: GetTracks,
-    private val addTracks: AddTracks,
     private val setMangaCategories: SetMangaCategories,
     private val updateMangaFromRemote: UpdateMangaFromRemote,
     private val sourceManager: SourceManager,
@@ -196,19 +192,13 @@ class MangaViewModel(
         ::Pair,
     )
 
-    private val trackers = flow { emit(sourceManager.getOrStub(getMangaAndChapters.awaitManga(mangaId).source)) }
-        .flatMapLatest { source ->
-            combine(
-                getTracks.subscribe(mangaId).catch { logcat(LogPriority.ERROR, it) },
-                trackerManager.loggedInTrackersFlow(),
-            ) { mangaTracks, loggedInTrackers ->
-                // Show only if the service supports this manga's source
-                val supportedTrackers = loggedInTrackers.filter { (it as? EnhancedTracker)?.accept(source) ?: true }
-                val supportedTrackerIds = supportedTrackers.map { it.id }.toHashSet()
-                val supportedTrackerTracks = mangaTracks.filter { it.trackerId in supportedTrackerIds }
-                supportedTrackerTracks.size to supportedTrackers.isNotEmpty()
-            }
-        }
+    private val trackers = combine(
+        getTracks.subscribe(mangaId).catch { logcat(LogPriority.ERROR, it) },
+        trackerManager.loggedInTrackersFlow(),
+    ) { mangaTracks, loggedInTrackers ->
+        val loggedInTrackerIds = loggedInTrackers.map { it.id }.toHashSet()
+        mangaTracks.count { it.trackerId in loggedInTrackerIds } to loggedInTrackers.isNotEmpty()
+    }
         .distinctUntilChanged()
         .onStart { emit(0 to false) }
 
@@ -369,9 +359,6 @@ class MangaViewModel(
                     // Choose a category
                     else -> showChangeCategoryDialog()
                 }
-
-                // Finally match with enhanced tracking when available
-                appScope.launch { addTracks.bindEnhancedTrackers(manga, state.source) }
             }
         }
     }

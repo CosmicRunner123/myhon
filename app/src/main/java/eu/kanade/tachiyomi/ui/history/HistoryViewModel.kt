@@ -11,10 +11,8 @@ import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import eu.kanade.core.util.insertSeparators
 import eu.kanade.domain.manga.interactor.UpdateManga
-import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.presentation.history.HistoryUiModel
 import eu.kanade.tachiyomi.util.lang.toLocalDate
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +31,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import logcat.LogPriority
-import mihon.core.metro.AppCoroutineScope
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.mapAsCheckboxState
 import tachiyomi.core.common.util.lang.SubscriberGate
@@ -51,15 +48,12 @@ import tachiyomi.domain.manga.interactor.GetDuplicateLibraryManga
 import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaWithChapterCount
-import tachiyomi.domain.source.service.SourceManager
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
 @ViewModelKey
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class HistoryViewModel(
-    @AppCoroutineScope private val appScope: CoroutineScope,
-    private val addTracks: AddTracks,
     private val getCategories: GetCategories,
     private val getDuplicateLibraryManga: GetDuplicateLibraryManga,
     private val getHistory: GetHistory,
@@ -69,7 +63,6 @@ class HistoryViewModel(
     private val removeHistory: RemoveHistory,
     private val setMangaCategories: SetMangaCategories,
     private val updateManga: UpdateManga,
-    private val sourceManager: SourceManager,
 ) : ViewModel() {
 
     private val subscriberGate = SubscriberGate()
@@ -234,9 +227,6 @@ class HistoryViewModel(
                 // Choose a category
                 else -> showChangeCategoryDialog(manga)
             }
-
-            // Sync with tracking services if applicable
-            appScope.launch { addTracks.bindEnhancedTrackers(manga, sourceManager.getOrStub(manga.source)) }
         }
     }
 

@@ -7,14 +7,11 @@ import eu.kanade.tachiyomi.data.track.anilist.Anilist
 import eu.kanade.tachiyomi.data.track.bangumi.Bangumi
 import eu.kanade.tachiyomi.data.track.comick.Comick
 import eu.kanade.tachiyomi.data.track.hikka.Hikka
-import eu.kanade.tachiyomi.data.track.kavita.Kavita
 import eu.kanade.tachiyomi.data.track.kitsu.Kitsu
-import eu.kanade.tachiyomi.data.track.komga.Komga
 import eu.kanade.tachiyomi.data.track.mangabaka.MangaBaka
 import eu.kanade.tachiyomi.data.track.mangaupdates.MangaUpdates
 import eu.kanade.tachiyomi.data.track.myanimelist.MyAnimeList
 import eu.kanade.tachiyomi.data.track.shikimori.Shikimori
-import eu.kanade.tachiyomi.data.track.suwayomi.Suwayomi
 import kotlinx.coroutines.flow.combine
 
 @Inject
@@ -25,10 +22,7 @@ class TrackerManager(
     val kitsu: Kitsu,
     val shikimori: Shikimori,
     val bangumi: Bangumi,
-    val komga: Komga,
     val mangaUpdates: MangaUpdates,
-    val kavita: Kavita,
-    val suwayomi: Suwayomi,
     val hikka: Hikka,
     val mangaBaka: MangaBaka,
     val comick: Comick,
@@ -41,10 +35,7 @@ class TrackerManager(
         kitsu,
         shikimori,
         bangumi,
-        komga,
         mangaUpdates,
-        kavita,
-        suwayomi,
         hikka,
         comick,
     )
