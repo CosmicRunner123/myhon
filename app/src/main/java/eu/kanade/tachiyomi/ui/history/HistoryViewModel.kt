@@ -10,7 +10,6 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import eu.kanade.core.util.insertSeparators
-import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.presentation.history.HistoryUiModel
 import eu.kanade.tachiyomi.util.lang.toLocalDate
 import kotlinx.coroutines.Dispatchers
@@ -31,38 +30,22 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import logcat.LogPriority
-import tachiyomi.core.common.preference.CheckboxState
-import tachiyomi.core.common.preference.mapAsCheckboxState
 import tachiyomi.core.common.util.lang.SubscriberGate
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.category.interactor.SetMangaCategories
-import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.history.interactor.GetHistory
 import tachiyomi.domain.history.interactor.GetNextChapters
 import tachiyomi.domain.history.interactor.RemoveHistory
 import tachiyomi.domain.history.model.HistoryWithRelations
-import tachiyomi.domain.library.service.LibraryPreferences
-import tachiyomi.domain.manga.interactor.GetDuplicateLibraryManga
-import tachiyomi.domain.manga.interactor.GetManga
-import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.manga.model.MangaWithChapterCount
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
 @ViewModelKey
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class HistoryViewModel(
-    private val getCategories: GetCategories,
-    private val getDuplicateLibraryManga: GetDuplicateLibraryManga,
     private val getHistory: GetHistory,
-    private val getManga: GetManga,
     private val getNextChapters: GetNextChapters,
-    private val libraryPreferences: LibraryPreferences,
     private val removeHistory: RemoveHistory,
-    private val setMangaCategories: SetMangaCategories,
-    private val updateManga: UpdateManga,
 ) : ViewModel() {
 
     private val subscriberGate = SubscriberGate()
@@ -154,95 +137,6 @@ class HistoryViewModel(
         this.dialog.update { dialog }
     }
 
-    /**
-     * Get user categories.
-     *
-     * @return List of categories, not including the default category
-     */
-    suspend fun getCategories(): List<Category> {
-        return getCategories.await().filterNot { it.isSystemCategory }
-    }
-
-    private fun moveMangaToCategory(mangaId: Long, categories: Category?) {
-        val categoryIds = listOfNotNull(categories).map { it.id }
-        moveMangaToCategory(mangaId, categoryIds)
-    }
-
-    private fun moveMangaToCategory(mangaId: Long, categoryIds: List<Long>) {
-        viewModelScope.launch {
-            setMangaCategories.await(mangaId, categoryIds)
-        }
-    }
-
-    fun moveMangaToCategoriesAndAddToLibrary(manga: Manga, categories: List<Long>) {
-        moveMangaToCategory(manga.id, categories)
-        if (manga.favorite) return
-
-        viewModelScope.launch {
-            updateManga.awaitUpdateFavorite(manga.id, true)
-        }
-    }
-
-    private suspend fun getMangaCategoryIds(manga: Manga): List<Long> {
-        return getCategories.await(manga.id)
-            .map { it.id }
-    }
-
-    fun addFavorite(mangaId: Long) {
-        viewModelScope.launch {
-            val manga = getManga.await(mangaId) ?: return@launch
-
-            val duplicates = getDuplicateLibraryManga(manga)
-            if (duplicates.isNotEmpty()) {
-                dialog.update { Dialog.DuplicateManga(manga, duplicates) }
-                return@launch
-            }
-
-            addFavorite(manga)
-        }
-    }
-
-    fun addFavorite(manga: Manga) {
-        viewModelScope.launch {
-            // Move to default category if applicable
-            val categories = getCategories()
-            val defaultCategoryId = libraryPreferences.defaultCategory.get().toLong()
-            val defaultCategory = categories.find { it.id == defaultCategoryId }
-
-            when {
-                // Default category set
-                defaultCategory != null -> {
-                    val result = updateManga.awaitUpdateFavorite(manga.id, true)
-                    if (!result) return@launch
-                    moveMangaToCategory(manga.id, defaultCategory)
-                }
-
-                // Automatic 'Default' or no categories
-                defaultCategoryId == 0L || categories.isEmpty() -> {
-                    val result = updateManga.awaitUpdateFavorite(manga.id, true)
-                    if (!result) return@launch
-                    moveMangaToCategory(manga.id, null)
-                }
-
-                // Choose a category
-                else -> showChangeCategoryDialog(manga)
-            }
-        }
-    }
-
-    fun showChangeCategoryDialog(manga: Manga) {
-        viewModelScope.launch {
-            val categories = getCategories()
-            val selection = getMangaCategoryIds(manga)
-            dialog.update {
-                Dialog.ChangeCategory(
-                    manga = manga,
-                    initialSelection = categories.mapAsCheckboxState { it.id in selection },
-                )
-            }
-        }
-    }
-
     @Immutable
     data class State(
         val searchQuery: String? = null,
@@ -253,11 +147,6 @@ class HistoryViewModel(
     sealed interface Dialog {
         data object DeleteAll : Dialog
         data class Delete(val history: HistoryWithRelations) : Dialog
-        data class DuplicateManga(val manga: Manga, val duplicates: List<MangaWithChapterCount>) : Dialog
-        data class ChangeCategory(
-            val manga: Manga,
-            val initialSelection: List<CheckboxState<Category>>,
-        ) : Dialog
     }
 
     sealed interface Event {

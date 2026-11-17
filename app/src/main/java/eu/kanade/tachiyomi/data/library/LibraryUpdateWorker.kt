@@ -45,6 +45,7 @@ import logcat.LogPriority
 import mihon.app.di.AppGraph
 import mihon.app.di.appGraph
 import mihon.core.metro.metroGraph
+import mihon.domain.source.interactor.SyncLocalLibrary
 import mihon.domain.source.interactor.UpdateMangaFromRemote
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.getAndSet
@@ -95,6 +96,8 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
 
     @Inject private lateinit var updateMangaFromRemote: UpdateMangaFromRemote
 
+    @Inject private lateinit var syncLocalLibrary: SyncLocalLibrary
+
     @Inject private lateinit var notifier: LibraryUpdateNotifier
 
     private var mangaToUpdate: List<LibraryManga> = mutableListOf()
@@ -119,6 +122,8 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
         setForegroundSafely()
 
         libraryPreferences.lastUpdatedTimestamp.set(Clock.System.now().toEpochMilliseconds())
+
+        syncLocalLibrary()
 
         val categoryId = inputData.getLong(KEY_CATEGORY, -1L)
         addMangaToQueue(categoryId)

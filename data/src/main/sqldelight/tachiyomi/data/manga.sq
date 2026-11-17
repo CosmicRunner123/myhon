@@ -79,43 +79,6 @@ AND EXISTS (
     AND (user_read = 1 OR user_last_page_read != 0)
 );
 
-getDuplicateLibraryManga:
-WITH
-track_dupes AS (
-    SELECT DISTINCT T2.manga_id
-    FROM manga_track T1
-    JOIN manga_track T2
-    ON T1.tracker_id = T2.tracker_id
-    AND T1.remote_id = T2.remote_id
-    AND T1.remote_id != 0
-    AND T1.manga_id != T2.manga_id
-    WHERE T1.manga_id = :id
-)
-SELECT
-    M.id, M.source_id, M.remote_url, M.remote_title, M.remote_author, M.remote_artist,
-    M.remote_description, M.remote_genre, M.remote_status, M.remote_cover,
-    M.remote_update_strategy, M.remote_memo, M.user_favorite_at, M.user_notes,
-    M.user_reader_flags, M.user_chapter_flags, M.state_chapter_last_update,
-    M.state_chapter_next_update, M.state_chapter_fetch_interval,
-    M.state_cover_last_modified, M.state_initialized,
-    (
-        SELECT count(*)
-        FROM chapter C
-        LEFT JOIN excluded_scanlator ES
-        ON C.manga_id = ES.manga_id
-        AND C.remote_scanlator = ES.scanlator
-        WHERE C.manga_id = M.id
-        AND ES.scanlator IS NULL
-    ) AS chapter_count
-FROM manga M
-WHERE M.user_favorite_at IS NOT NULL
-AND M.id != :id
--- A blank title would match every title
-AND (
-    (trim(:remoteTitle) != '' AND lower(M.remote_title) LIKE '%' || lower(:remoteTitle) || '%')
-    OR M.id IN (SELECT manga_id FROM track_dupes)
-);
-
 getUpcomingManga:
 SELECT
     id, source_id, remote_url, remote_title, remote_author, remote_artist, remote_description,

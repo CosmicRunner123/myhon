@@ -12,9 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -22,11 +20,9 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import eu.kanade.domain.manga.model.toSManga
-import eu.kanade.presentation.browse.components.RemoveMangaDialog
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
 import eu.kanade.presentation.components.NavigatorAdaptiveSheet
 import eu.kanade.presentation.manga.ChapterSettingsDialog
-import eu.kanade.presentation.manga.DuplicateMangaDialog
 import eu.kanade.presentation.manga.EditCoverAction
 import eu.kanade.presentation.manga.MangaScreen
 import eu.kanade.presentation.manga.components.MangaCoverDialog
@@ -55,6 +51,7 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.source.local.isLocal
 
 class MangaScreen(
     private val mangaId: Long,
@@ -68,7 +65,6 @@ class MangaScreen(
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
-        val haptic = LocalHapticFeedback.current
         val scope = rememberCoroutineScope()
         val viewModel =
             assistedMetroViewModel<MangaViewModel, MangaViewModel.Factory> {
@@ -106,14 +102,6 @@ class MangaScreen(
             chapterSwipeEndAction = viewModel.chapterSwipeEndAction,
             navigateUp = navigator::pop,
             onChapterClicked = { openChapter(context, it) },
-            onAddToLibraryClicked = {
-                if (successState.manga.favorite) {
-                    viewModel.showRemoveFromLibraryDialog()
-                } else {
-                    viewModel.toggleFavorite()
-                }
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            },
             onWebViewClicked = {
                 openMangaInWebView(
                     navigator,
@@ -161,32 +149,12 @@ class MangaScreen(
         val onDismissRequest = { viewModel.dismissDialog() }
         when (val dialog = successState.dialog) {
             null -> {}
-            MangaViewModel.Dialog.RemoveFromLibrary -> {
-                RemoveMangaDialog(
-                    onDismissRequest = onDismissRequest,
-                    onConfirm = {
-                        if (successState.manga.favorite) viewModel.toggleFavorite()
-                    },
-                    mangaToRemove = successState.manga,
-                )
-            }
             is MangaViewModel.Dialog.ChangeCategory -> {
                 ChangeCategoryDialog(
                     initialSelection = dialog.initialSelection,
                     onDismissRequest = onDismissRequest,
                     onEditCategories = { navigator.push(CategoryScreen()) },
-                    onConfirm = { include, _ ->
-                        viewModel.moveMangaToCategoriesAndAddToLibrary(dialog.manga, include)
-                    },
-                )
-            }
-
-            is MangaViewModel.Dialog.DuplicateManga -> {
-                DuplicateMangaDialog(
-                    duplicates = dialog.duplicates,
-                    onDismissRequest = onDismissRequest,
-                    onConfirm = { viewModel.toggleFavorite(checkDuplicate = false) },
-                    onOpenManga = { navigator.push(MangaScreen(it.id)) },
+                    onConfirm = { include, _ -> viewModel.moveMangaToCategories(include) },
                 )
             }
             MangaViewModel.Dialog.SettingsSheet -> ChapterSettingsDialog(
@@ -228,13 +196,13 @@ class MangaScreen(
                         isCustomCover = remember(manga) { vm.hasCustomCover() },
                         onShareClick = { vm.shareCover(context) },
                         onSaveClick = { vm.saveCover(context) },
-                        onEditClick = {
-                            when (it) {
+                        // Only local series and library entries can take a custom cover
+                        onEditClick = { action: EditCoverAction ->
+                            when (action) {
                                 EditCoverAction.EDIT -> getContent.launch("image/*")
                                 EditCoverAction.DELETE -> vm.deleteCustomCover(context)
-                                EditCoverAction.ADD_TO_LIBRARY -> vm.addToLibraryWarning(context)
                             }
-                        },
+                        }.takeIf { manga!!.isLocal() || manga!!.favorite },
                         onDismissRequest = onDismissRequest,
                     )
                 } else {

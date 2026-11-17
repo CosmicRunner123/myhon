@@ -3,7 +3,6 @@ package eu.kanade.presentation.manga
 enum class EditCoverAction {
     EDIT,
     DELETE,
-    ADD_TO_LIBRARY,
 }
 
 enum class MangaScreenItem {

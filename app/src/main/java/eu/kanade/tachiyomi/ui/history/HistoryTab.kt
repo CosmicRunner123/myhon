@@ -16,14 +16,11 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import eu.kanade.presentation.category.components.ChangeCategoryDialog
 import eu.kanade.presentation.history.HistoryScreen
 import eu.kanade.presentation.history.components.HistoryDeleteAllDialog
 import eu.kanade.presentation.history.components.HistoryDeleteDialog
-import eu.kanade.presentation.manga.DuplicateMangaDialog
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
@@ -71,7 +68,6 @@ data object HistoryTab : Tab {
             onClickCover = { navigator.push(MangaScreen(it)) },
             onClickResume = viewModel::getNextChapterForManga,
             onDialogChange = viewModel::setDialog,
-            onClickFavorite = viewModel::addFavorite,
         )
 
         val onDismissRequest = { viewModel.setDialog(null) }
@@ -92,24 +88,6 @@ data object HistoryTab : Tab {
                 HistoryDeleteAllDialog(
                     onDismissRequest = onDismissRequest,
                     onDelete = viewModel::removeAllHistory,
-                )
-            }
-            is HistoryViewModel.Dialog.DuplicateManga -> {
-                DuplicateMangaDialog(
-                    duplicates = dialog.duplicates,
-                    onDismissRequest = onDismissRequest,
-                    onConfirm = { viewModel.addFavorite(dialog.manga) },
-                    onOpenManga = { navigator.push(MangaScreen(it.id)) },
-                )
-            }
-            is HistoryViewModel.Dialog.ChangeCategory -> {
-                ChangeCategoryDialog(
-                    initialSelection = dialog.initialSelection,
-                    onDismissRequest = onDismissRequest,
-                    onEditCategories = { navigator.push(CategoryScreen()) },
-                    onConfirm = { include, _ ->
-                        viewModel.moveMangaToCategoriesAndAddToLibrary(dialog.manga, include)
-                    },
                 )
             }
             null -> {}

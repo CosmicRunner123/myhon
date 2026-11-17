@@ -51,7 +51,6 @@ import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.Label
 import mihon.icons.materialsymbols.rounded.BookmarkAdd
 import mihon.icons.materialsymbols.rounded.BookmarkRemove
-import mihon.icons.materialsymbols.rounded.Delete
 import mihon.icons.materialsymbols.rounded.DoneAll
 import mihon.icons.materialsymbols.rounded.RemoveDone
 import tachiyomi.i18n.MR
@@ -204,7 +203,6 @@ fun LibraryBottomActionMenu(
     onChangeCategoryClicked: () -> Unit,
     onMarkAsReadClicked: () -> Unit,
     onMarkAsUnreadClicked: () -> Unit,
-    onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -219,7 +217,7 @@ fun LibraryBottomActionMenu(
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             val haptic = LocalHapticFeedback.current
-            val confirm = remember { mutableStateListOf(false, false, false, false) }
+            val confirm = remember { mutableStateListOf(false, false, false) }
             var resetJob by remember { mutableStateOf<Job?>(null) }
             val onLongClickItem: (Int) -> Unit = { toConfirmIndex ->
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -258,13 +256,6 @@ fun LibraryBottomActionMenu(
                     toConfirm = confirm[2],
                     onLongClick = { onLongClickItem(2) },
                     onClick = onMarkAsUnreadClicked,
-                )
-                Button(
-                    title = stringResource(MR.strings.action_delete),
-                    icon = MaterialSymbols.Rounded.Delete,
-                    toConfirm = confirm[3],
-                    onLongClick = { onLongClickItem(3) },
-                    onClick = onDeleteClicked,
                 )
             }
         }

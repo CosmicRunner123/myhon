@@ -67,7 +67,6 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.clickableNoIndication
-import tachiyomi.source.local.isLocal
 
 @Composable
 fun MangaCoverDialog(
@@ -128,12 +127,10 @@ fun MangaCoverDialog(
                                 var expanded by remember { mutableStateOf(false) }
                                 IconButton(
                                     onClick = {
-                                        when {
-                                            !manga.favorite && !manga.isLocal() -> {
-                                                onEditClick(EditCoverAction.ADD_TO_LIBRARY)
-                                            }
-                                            isCustomCover -> expanded = true
-                                            else -> onEditClick(EditCoverAction.EDIT)
+                                        if (isCustomCover) {
+                                            expanded = true
+                                        } else {
+                                            onEditClick(EditCoverAction.EDIT)
                                         }
                                     },
                                 ) {

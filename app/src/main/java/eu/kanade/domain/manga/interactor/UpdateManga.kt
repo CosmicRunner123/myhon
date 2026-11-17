@@ -60,12 +60,4 @@ class UpdateManga(
             },
         )
     }
-
-    suspend fun awaitUpdateFavorite(mangaId: Long, favorite: Boolean): Boolean {
-        val update = when (favorite) {
-            true -> MangaUpdate(mangaId) { favoriteAt = Clock.System.now() }
-            false -> MangaUpdate(mangaId) { favoriteAt = null }
-        }
-        return mangaRepository.update(update)
-    }
 }

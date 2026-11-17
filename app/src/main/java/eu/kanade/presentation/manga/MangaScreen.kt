@@ -83,7 +83,6 @@ fun MangaScreen(
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     navigateUp: () -> Unit,
     onChapterClicked: (Chapter) -> Unit,
-    onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
@@ -134,7 +133,6 @@ fun MangaScreen(
             chapterSwipeEndAction = chapterSwipeEndAction,
             navigateUp = navigateUp,
             onChapterClicked = onChapterClicked,
-            onAddToLibraryClicked = onAddToLibraryClicked,
             onWebViewClicked = onWebViewClicked,
             onWebViewLongClicked = onWebViewLongClicked,
             onTrackingClicked = onTrackingClicked,
@@ -166,7 +164,6 @@ fun MangaScreen(
             nextUpdate = nextUpdate,
             navigateUp = navigateUp,
             onChapterClicked = onChapterClicked,
-            onAddToLibraryClicked = onAddToLibraryClicked,
             onWebViewClicked = onWebViewClicked,
             onWebViewLongClicked = onWebViewLongClicked,
             onTrackingClicked = onTrackingClicked,
@@ -201,7 +198,6 @@ private fun MangaScreenSmallImpl(
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     navigateUp: () -> Unit,
     onChapterClicked: (Chapter) -> Unit,
-    onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
@@ -358,16 +354,13 @@ private fun MangaScreenSmallImpl(
                         contentType = MangaScreenItem.ACTION_ROW,
                     ) {
                         MangaActionRow(
-                            favorite = state.manga.favorite,
                             trackingCount = state.trackingCount,
                             nextUpdate = nextUpdate,
                             isUserIntervalMode = state.manga.fetchInterval < 0,
-                            onAddToLibraryClicked = onAddToLibraryClicked,
                             onWebViewClicked = onWebViewClicked,
                             onWebViewLongClicked = onWebViewLongClicked,
                             onTrackingClicked = onTrackingClicked,
                             onEditIntervalClicked = onEditIntervalClicked,
-                            onEditCategory = onEditCategoryClicked,
                         )
                     }
 
@@ -423,7 +416,6 @@ fun MangaScreenLargeImpl(
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     navigateUp: () -> Unit,
     onChapterClicked: (Chapter) -> Unit,
-    onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
@@ -566,16 +558,13 @@ fun MangaScreenLargeImpl(
                             doSearch = onSearch,
                         )
                         MangaActionRow(
-                            favorite = state.manga.favorite,
                             trackingCount = state.trackingCount,
                             nextUpdate = nextUpdate,
                             isUserIntervalMode = state.manga.fetchInterval < 0,
-                            onAddToLibraryClicked = onAddToLibraryClicked,
                             onWebViewClicked = onWebViewClicked,
                             onWebViewLongClicked = onWebViewLongClicked,
                             onTrackingClicked = onTrackingClicked,
                             onEditIntervalClicked = onEditIntervalClicked,
-                            onEditCategory = onEditCategoryClicked,
                         )
                         ExpandableMangaDescription(
                             defaultExpandState = true,

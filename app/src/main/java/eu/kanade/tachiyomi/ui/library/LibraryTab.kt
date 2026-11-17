@@ -26,7 +26,6 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
-import eu.kanade.presentation.library.DeleteLibraryMangaDialog
 import eu.kanade.presentation.library.LibrarySettingsDialog
 import eu.kanade.presentation.library.components.LibraryContent
 import eu.kanade.presentation.library.components.LibraryToolbar
@@ -142,7 +141,6 @@ data object LibraryTab : Tab {
                     onChangeCategoryClicked = viewModel::openChangeCategoryDialog,
                     onMarkAsReadClicked = { viewModel.markReadSelection(true) },
                     onMarkAsUnreadClicked = { viewModel.markReadSelection(false) },
-                    onDeleteClicked = viewModel::openDeleteMangaDialog,
                 )
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -154,7 +152,7 @@ data object LibraryTab : Tab {
                 state.searchQuery.isNullOrEmpty() && !state.hasActiveFilters && state.isLibraryEmpty -> {
                     val handler = LocalUriHandler.current
                     EmptyScreen(
-                        stringRes = MR.strings.information_empty_library,
+                        stringRes = MR.strings.information_empty_local_library,
                         modifier = Modifier.padding(contentPadding),
                         actions = listOf(
                             EmptyScreenAction(
@@ -224,15 +222,6 @@ data object LibraryTab : Tab {
                     onConfirm = { include, exclude ->
                         viewModel.clearSelection()
                         viewModel.setMangaCategories(dialog.manga, include, exclude)
-                    },
-                )
-            }
-            is LibraryViewModel.Dialog.DeleteManga -> {
-                DeleteLibraryMangaDialog(
-                    onDismissRequest = onDismissRequest,
-                    onConfirm = {
-                        viewModel.removeMangas(dialog.manga)
-                        viewModel.clearSelection()
                     },
                 )
             }

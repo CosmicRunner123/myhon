@@ -14,19 +14,17 @@ import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import eu.kanade.core.preference.PreferenceMutableState
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.chapter.interactor.SetReadStatus
-import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.presentation.library.components.LibraryToolbarTitle
-import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
-import eu.kanade.tachiyomi.util.removeCovers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -34,6 +32,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -42,6 +41,7 @@ import kotlinx.coroutines.withContext
 import mihon.core.common.utils.mutate
 import mihon.core.metro.AppCoroutineScope
 import mihon.domain.library.model.search.QueryNode
+import mihon.domain.source.interactor.SyncLocalLibrary
 import mihon.feature.library.matches
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.TriState
@@ -59,9 +59,9 @@ import tachiyomi.domain.library.model.sort
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetLibraryManga
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.domain.manga.model.applyFilter
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.domain.track.interactor.GetTracksPerManga
 import tachiyomi.domain.track.model.Track
 import tachiyomi.source.local.isLocal
@@ -78,12 +78,12 @@ class LibraryViewModel(
     private val getTracksPerManga: GetTracksPerManga,
     private val getChaptersByMangaId: GetChaptersByMangaId,
     private val setReadStatus: SetReadStatus,
-    private val updateManga: UpdateManga,
     private val setMangaCategories: SetMangaCategories,
     private val libraryPreferences: LibraryPreferences,
-    private val coverCache: CoverCache,
     private val sourceManager: SourceManager,
     private val trackerManager: TrackerManager,
+    storageManager: StorageManager,
+    syncLocalLibrary: SyncLocalLibrary,
 ) : ViewModel() {
 
     private val subscriberGate = SubscriberGate()
@@ -190,6 +190,14 @@ class LibraryViewModel(
         )
     }
         .stateIn(viewModelScope + subscriberGate, subscriberGate.whileSubscribed(5.seconds), State())
+
+    init {
+        viewModelScope.launch {
+            storageManager.changes
+                .onStart { emit(Unit) }
+                .collectLatest { syncLocalLibrary() }
+        }
+    }
 
     private data class DisplayPreferences(
         val showCategoryTabs: Boolean,
@@ -474,23 +482,6 @@ class LibraryViewModel(
     }
 
     /**
-     * Remove the selected manga.
-     *
-     * @param mangas the list of manga to delete.
-     */
-    fun removeMangas(mangas: List<Manga>) {
-        appScope.launch {
-            val toDelete = mangas.map {
-                it.removeCovers(coverCache)
-                MangaUpdate(it.id) {
-                    favoriteAt = null
-                }
-            }
-            updateManga.awaitAll(toDelete)
-        }
-    }
-
-    /**
      * Bulk update categories of manga using old and new common categories.
      *
      * @param mangaList the list of manga to move.
@@ -646,10 +637,6 @@ class LibraryViewModel(
         }
     }
 
-    fun openDeleteMangaDialog() {
-        dialog.update { Dialog.DeleteManga(selectedManga) }
-    }
-
     fun closeDialog() {
         dialog.update { null }
     }
@@ -660,8 +647,6 @@ class LibraryViewModel(
             val manga: List<Manga>,
             val initialSelection: List<CheckboxState<Category>>,
         ) : Dialog
-
-        data class DeleteManga(val manga: List<Manga>) : Dialog
     }
 
     @Immutable

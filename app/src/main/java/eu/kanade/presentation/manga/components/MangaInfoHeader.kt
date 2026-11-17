@@ -84,14 +84,12 @@ import mihon.icons.materialsymbols.rounded.Block
 import mihon.icons.materialsymbols.rounded.Check
 import mihon.icons.materialsymbols.rounded.Close
 import mihon.icons.materialsymbols.rounded.DoneAll
-import mihon.icons.materialsymbols.rounded.Favorite
 import mihon.icons.materialsymbols.rounded.HourglassEmpty
 import mihon.icons.materialsymbols.rounded.Person
 import mihon.icons.materialsymbols.rounded.Public
 import mihon.icons.materialsymbols.rounded.Schedule
 import mihon.icons.materialsymbols.rounded.Sync
 import mihon.icons.materialsymbols.roundedfilled.Brush
-import mihon.icons.materialsymbols.roundedfilled.Favorite
 import mihon.icons.materialsymbols.roundedfilled.Pause
 import mihon.icons.materialsymbols.roundedfilled.Warning
 import org.intellij.markdown.MarkdownElementTypes
@@ -176,16 +174,13 @@ fun MangaInfoBox(
 
 @Composable
 fun MangaActionRow(
-    favorite: Boolean,
     trackingCount: Int,
     nextUpdate: Instant?,
     isUserIntervalMode: Boolean,
-    onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
     onEditIntervalClicked: (() -> Unit)?,
-    onEditCategory: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val defaultActionButtonColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
@@ -201,17 +196,6 @@ fun MangaActionRow(
     }
 
     Row(modifier = modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp)) {
-        MangaActionButton(
-            title = if (favorite) {
-                stringResource(MR.strings.in_library)
-            } else {
-                stringResource(MR.strings.add_to_library)
-            },
-            icon = if (favorite) MaterialSymbols.RoundedFilled.Favorite else MaterialSymbols.Rounded.Favorite,
-            color = if (favorite) MaterialTheme.colorScheme.primary else defaultActionButtonColor,
-            onClick = onAddToLibraryClicked,
-            onLongClick = onEditCategory,
-        )
         MangaActionButton(
             title = when (nextUpdateDays) {
                 null -> stringResource(MR.strings.not_applicable)

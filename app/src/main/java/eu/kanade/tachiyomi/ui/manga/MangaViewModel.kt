@@ -30,11 +30,9 @@ import eu.kanade.domain.track.interactor.TrackChapter
 import eu.kanade.domain.track.model.AutoTrackState
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.presentation.util.formattedMessage
-import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
-import eu.kanade.tachiyomi.util.removeCovers
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -78,11 +76,9 @@ import tachiyomi.domain.chapter.service.calculateChapterGap
 import tachiyomi.domain.chapter.service.getChapterSort
 import tachiyomi.domain.chapter.service.missingChaptersCount
 import tachiyomi.domain.library.service.LibraryPreferences
-import tachiyomi.domain.manga.interactor.GetDuplicateLibraryManga
 import tachiyomi.domain.manga.interactor.GetMangaWithChapters
 import tachiyomi.domain.manga.interactor.SetMangaChapterFlags
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.manga.model.MangaWithChapterCount
 import tachiyomi.domain.manga.model.applyFilter
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
@@ -100,7 +96,6 @@ class MangaViewModel(
     private val trackerManager: TrackerManager,
     private val trackChapter: TrackChapter,
     private val getMangaAndChapters: GetMangaWithChapters,
-    private val getDuplicateLibraryManga: GetDuplicateLibraryManga,
     private val getAvailableScanlators: GetAvailableScanlators,
     private val getExcludedScanlators: GetExcludedScanlators,
     private val setExcludedScanlators: SetExcludedScanlators,
@@ -115,7 +110,6 @@ class MangaViewModel(
     private val updateMangaFromRemote: UpdateMangaFromRemote,
     private val sourceManager: SourceManager,
     private val refreshTracks: RefreshTracks,
-    private val coverCache: CoverCache,
 ) : ViewModel() {
 
     private val subscriberGate = SubscriberGate()
@@ -137,9 +131,6 @@ class MangaViewModel(
 
     val source: Source?
         get() = successState?.source
-
-    private val isFavorited: Boolean
-        get() = manga?.favorite ?: false
 
     private val allChapters: List<ChapterList.Item>?
         get() = successState?.chapters
@@ -312,68 +303,12 @@ class MangaViewModel(
 
     // Manga info - start
 
-    /**
-     * Update favorite status of manga, (removes / adds) manga (to / from) library.
-     */
-    fun toggleFavorite(checkDuplicate: Boolean = true) {
-        val state = successState ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            val manga = state.manga
-
-            if (isFavorited) {
-                // Remove from library
-                if (updateManga.awaitUpdateFavorite(manga.id, false)) {
-                    manga.removeCovers(coverCache)
-                }
-            } else {
-                // Add to library
-                // First, check if duplicate exists if callback is provided
-                if (checkDuplicate) {
-                    val duplicates = getDuplicateLibraryManga(manga)
-
-                    if (duplicates.isNotEmpty()) {
-                        dialog.value = Dialog.DuplicateManga(manga, duplicates)
-                        return@launch
-                    }
-                }
-
-                // Now check if user previously set categories, when available
-                val categories = getCategories()
-                val defaultCategoryId = libraryPreferences.defaultCategory.get().toLong()
-                val defaultCategory = categories.find { it.id == defaultCategoryId }
-                when {
-                    // Default category set
-                    defaultCategory != null -> {
-                        val result = updateManga.awaitUpdateFavorite(manga.id, true)
-                        if (!result) return@launch
-                        moveMangaToCategory(defaultCategory)
-                    }
-
-                    // Automatic 'Default' or no categories
-                    defaultCategoryId == 0L || categories.isEmpty() -> {
-                        val result = updateManga.awaitUpdateFavorite(manga.id, true)
-                        if (!result) return@launch
-                        moveMangaToCategory(null)
-                    }
-
-                    // Choose a category
-                    else -> showChangeCategoryDialog()
-                }
-            }
-        }
-    }
-
-    fun showRemoveFromLibraryDialog() {
-        if (successState?.manga?.favorite == true) dialog.value = Dialog.RemoveFromLibrary
-    }
-
     fun showChangeCategoryDialog() {
         val manga = successState?.manga ?: return
         viewModelScope.launch {
             val categories = getCategories()
             val selection = getMangaCategoryIds(manga)
             dialog.value = Dialog.ChangeCategory(
-                manga = manga,
                 initialSelection = categories.mapAsCheckboxState { it.id in selection },
             )
         }
@@ -413,38 +348,10 @@ class MangaViewModel(
             .map { it.id }
     }
 
-    fun moveMangaToCategoriesAndAddToLibrary(manga: Manga, categories: List<Long>) {
-        moveMangaToCategory(categories)
-        if (manga.favorite) return
-
-        viewModelScope.launch {
-            updateManga.awaitUpdateFavorite(manga.id, true)
-        }
-    }
-
-    /**
-     * Move the given manga to categories.
-     *
-     * @param categories the selected categories.
-     */
-    private fun moveMangaToCategories(categories: List<Category>) {
-        val categoryIds = categories.map { it.id }
-        moveMangaToCategory(categoryIds)
-    }
-
-    private fun moveMangaToCategory(categoryIds: List<Long>) {
+    fun moveMangaToCategories(categoryIds: List<Long>) {
         viewModelScope.launch {
             setMangaCategories.await(mangaId, categoryIds)
         }
-    }
-
-    /**
-     * Move the given manga to the category.
-     *
-     * @param category the selected category, or null for default category.
-     */
-    private fun moveMangaToCategory(category: Category?) {
-        moveMangaToCategories(listOfNotNull(category))
     }
 
     // Manga info - end
@@ -724,13 +631,8 @@ class MangaViewModel(
     // Chapters list - end
 
     sealed interface Dialog {
-        data class ChangeCategory(
-            val manga: Manga,
-            val initialSelection: List<CheckboxState<Category>>,
-        ) : Dialog
-        data class DuplicateManga(val manga: Manga, val duplicates: List<MangaWithChapterCount>) : Dialog
+        data class ChangeCategory(val initialSelection: List<CheckboxState<Category>>) : Dialog
         data class SetFetchInterval(val manga: Manga) : Dialog
-        data object RemoveFromLibrary : Dialog
         data object SettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog

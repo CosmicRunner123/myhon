@@ -109,11 +109,11 @@ class UpdateMangaFromRemote(
             !manualFetch && localManga.thumbnailUrl == remoteManga.thumbnail_url -> null
             localManga.isLocal() -> Clock.System.now()
             localManga.hasCustomCover(coverCache) -> {
-                coverCache.deleteFromCache(localManga, false)
+                coverCache.deleteFromCache(localManga)
                 null
             }
             else -> {
-                coverCache.deleteFromCache(localManga, false)
+                coverCache.deleteFromCache(localManga)
                 Clock.System.now()
             }
         }

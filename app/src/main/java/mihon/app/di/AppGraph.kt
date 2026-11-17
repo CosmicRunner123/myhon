@@ -39,7 +39,6 @@ import tachiyomi.domain.category.interactor.ResetCategoryFlags
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetFavorites
 import tachiyomi.domain.manga.interactor.ResetViewerFlags
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.domain.track.interactor.UpsertTrack
 
@@ -80,7 +79,6 @@ interface AppGraph : ViewModelGraph {
 
     val updateChecker: AppUpdateChecker
 
-    val sourceManager: SourceManager
     val trackerManager: TrackerManager
     val chapterCache: ChapterCache
     val coverCache: CoverCache

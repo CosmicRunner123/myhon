@@ -22,7 +22,6 @@ import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaRemoteUpdate
 import tachiyomi.domain.manga.model.MangaUpdate
-import tachiyomi.domain.manga.model.MangaWithChapterCount
 import tachiyomi.domain.manga.repository.MangaRepository
 import kotlin.time.Clock
 
@@ -73,12 +72,6 @@ class MangaRepositoryImpl(
         return database.libraryViewQueries
             .library(MangaMapper::mapLibraryManga)
             .subscribeToList()
-    }
-
-    override suspend fun getDuplicateLibraryManga(id: Long, title: String): List<MangaWithChapterCount> {
-        return database.mangaQueries
-            .getDuplicateLibraryManga(id, title, MangaMapper::mapMangaWithChapterCount)
-            .awaitAsList()
     }
 
     override suspend fun getUpcomingManga(

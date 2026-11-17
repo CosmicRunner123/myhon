@@ -71,7 +71,7 @@ object SettingsLibraryScreen : SearchableSettings {
         // For default category
         val ids = listOf(libraryPreferences.defaultCategory.defaultValue()) +
             allCategories.fastMap { it.id.toInt() }
-        val labels = listOf(stringResource(MR.strings.default_category_summary)) +
+        val labels = listOf(stringResource(MR.strings.none)) +
             allCategories.fastMap { it.visualName }
 
         return Preference.PreferenceGroup(

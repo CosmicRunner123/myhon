@@ -5,7 +5,6 @@ import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaRemoteUpdate
 import tachiyomi.domain.manga.model.MangaUpdate
-import tachiyomi.domain.manga.model.MangaWithChapterCount
 
 interface MangaRepository {
 
@@ -22,8 +21,6 @@ interface MangaRepository {
     suspend fun getLibraryManga(): List<LibraryManga>
 
     fun getLibraryMangaAsFlow(): Flow<List<LibraryManga>>
-
-    suspend fun getDuplicateLibraryManga(id: Long, title: String): List<MangaWithChapterCount>
 
     suspend fun getUpcomingManga(
         statuses: Set<Long>,

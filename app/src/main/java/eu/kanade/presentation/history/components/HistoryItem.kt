@@ -26,7 +26,6 @@ import eu.kanade.presentation.util.formatChapterNumber
 import eu.kanade.tachiyomi.util.lang.toTimestampString
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Delete
-import mihon.icons.materialsymbols.rounded.Favorite
 import tachiyomi.domain.history.model.HistoryWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
@@ -43,7 +42,6 @@ fun HistoryItem(
     onClickCover: () -> Unit,
     onClickResume: () -> Unit,
     onClickDelete: () -> Unit,
-    onClickFavorite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -89,16 +87,6 @@ fun HistoryItem(
             )
         }
 
-        if (!history.coverData.isMangaFavorite) {
-            IconButton(onClick = onClickFavorite) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.Favorite,
-                    contentDescription = stringResource(MR.strings.add_to_library),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-
         IconButton(onClick = onClickDelete) {
             Icon(
                 imageVector = MaterialSymbols.Rounded.Delete,
@@ -123,7 +111,6 @@ private fun HistoryItemPreviews(
                 onClickCover = {},
                 onClickResume = {},
                 onClickDelete = {},
-                onClickFavorite = {},
             )
         }
     }

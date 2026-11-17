@@ -80,6 +80,19 @@ class LocalSource(
 
     override val supportsLatest: Boolean = true
 
+    /**
+     * Names of the series folders, or null when the local folder could not be listed.
+     */
+    suspend fun getSeriesNames(): List<String>? = withContext(Dispatchers.IO) {
+        val directory = fileSystem.getBaseDirectory()
+        directory?.listFiles()
+            ?.filter { !it.name.orEmpty().startsWith('.') && it.isDirectory }
+            ?.mapNotNull { it.name }
+            ?.distinct()
+            // UniFile answers a failed query with "no files" and "not a directory"
+            ?.takeIf { directory.exists() }
+    }
+
     // Browse related
     override suspend fun getPopularManga(page: Int) = getSearchManga(page, "", PopularFilters)
 
@@ -289,10 +302,17 @@ class LocalSource(
 
     // Chapters
     private suspend fun getChapterList(manga: SManga): List<SChapter> = withContext(Dispatchers.IO) {
-        val chapters = fileSystem.getFilesInMangaDirectory(manga.url)
+        val mangaDir = fileSystem.getMangaDirectory(manga.url)
+        val chapterFiles = mangaDir?.listFiles()
             // Only keep supported formats
-            .filterNot { it.name.orEmpty().startsWith('.') }
-            .filter { it.isDirectory || Archive.isSupported(it) || it.extension.equals("epub", true) }
+            ?.filterNot { it.name.orEmpty().startsWith('.') }
+            ?.filter { it.isDirectory || Archive.isSupported(it) || it.extension.equals("epub", true) }
+            // The chapter sync deletes the chapters that are not listed, and UniFile answers a failed query
+            // with "no files" and "not a directory"
+            ?.takeIf { mangaDir.exists() }
+            ?: throw Exception(context.stringResource(MR.strings.local_series_folder_not_found))
+
+        val chapters = chapterFiles
             .map { chapterFile ->
                 SChapter.create().apply {
                     url = "${manga.url}/${chapterFile.name}"

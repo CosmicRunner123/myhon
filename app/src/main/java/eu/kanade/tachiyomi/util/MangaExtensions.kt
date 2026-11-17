@@ -8,11 +8,6 @@ import tachiyomi.source.local.image.LocalCoverManager
 import tachiyomi.source.local.isLocal
 import java.io.InputStream
 
-fun Manga.removeCovers(coverCache: CoverCache) {
-    if (isLocal()) return
-    coverCache.deleteFromCache(this, true)
-}
-
 suspend fun Manga.editCover(
     coverManager: LocalCoverManager,
     stream: InputStream,

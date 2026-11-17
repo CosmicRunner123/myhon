@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import kotlinx.serialization.json.JsonObject
 import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.manga.model.MangaWithChapterCount
 import kotlin.time.Instant
 
 object MangaMapper {
@@ -114,55 +113,5 @@ object MangaMapper {
         latestUpload = latestUpload,
         chapterFetchedAt = chapterFetchedAt,
         lastRead = lastRead,
-    )
-
-    fun mapMangaWithChapterCount(
-        id: Long,
-        sourceId: Long,
-        remoteUrl: String,
-        remoteTitle: String,
-        remoteAuthor: String?,
-        remoteArtist: String?,
-        remoteDescription: String?,
-        remoteGenre: List<String>?,
-        remoteStatus: Long,
-        remoteCover: String?,
-        remoteUpdateStrategy: UpdateStrategy,
-        remoteMemo: JsonObject,
-        userFavoriteAt: Instant?,
-        userNotes: String,
-        userReaderFlags: Long,
-        userChapterFlags: Long,
-        stateChapterLastUpdate: Instant?,
-        stateChapterNextUpdate: Instant?,
-        stateChapterFetchInterval: Long,
-        stateCoverLastModified: Instant?,
-        stateInitialized: Boolean,
-        chapterCount: Long,
-    ): MangaWithChapterCount = MangaWithChapterCount(
-        manga = mapManga(
-            id = id,
-            sourceId = sourceId,
-            remoteUrl = remoteUrl,
-            remoteTitle = remoteTitle,
-            remoteAuthor = remoteAuthor,
-            remoteArtist = remoteArtist,
-            remoteDescription = remoteDescription,
-            remoteGenre = remoteGenre,
-            remoteStatus = remoteStatus,
-            remoteCover = remoteCover,
-            remoteUpdateStrategy = remoteUpdateStrategy,
-            remoteMemo = remoteMemo,
-            userFavoriteAt = userFavoriteAt,
-            userNotes = userNotes,
-            userReaderFlags = userReaderFlags,
-            userChapterFlags = userChapterFlags,
-            stateChapterLastUpdate = stateChapterLastUpdate,
-            stateChapterNextUpdate = stateChapterNextUpdate,
-            stateChapterFetchInterval = stateChapterFetchInterval,
-            stateCoverLastModified = stateCoverLastModified,
-            stateInitialized = stateInitialized,
-        ),
-        chapterCount = chapterCount,
     )
 }
