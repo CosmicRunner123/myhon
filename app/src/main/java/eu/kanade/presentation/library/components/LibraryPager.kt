@@ -4,7 +4,6 @@ import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -34,7 +33,6 @@ fun LibraryPager(
     hasActiveFilters: Boolean,
     selection: Set<Long>,
     searchQuery: String?,
-    onGlobalSearchClicked: () -> Unit,
     getCategoryForPage: (Int) -> Category,
     getDisplayMode: (Int) -> PreferenceMutableState<LibraryDisplayMode>,
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
@@ -60,7 +58,6 @@ fun LibraryPager(
                 searchQuery = searchQuery,
                 hasActiveFilters = hasActiveFilters,
                 contentPadding = contentPadding,
-                onGlobalSearchClicked = onGlobalSearchClicked,
             )
             return@HorizontalPager
         }
@@ -87,8 +84,6 @@ fun LibraryPager(
                     onClick = onClickManga,
                     onLongClick = onLongClickManga,
                     onClickContinueReading = onClickContinueReading,
-                    searchQuery = searchQuery,
-                    onGlobalSearchClicked = onGlobalSearchClicked,
                 )
             }
             LibraryDisplayMode.CompactGrid, LibraryDisplayMode.CoverOnlyGrid -> {
@@ -101,8 +96,6 @@ fun LibraryPager(
                     onClick = onClickManga,
                     onLongClick = onLongClickManga,
                     onClickContinueReading = onClickContinueReading,
-                    searchQuery = searchQuery,
-                    onGlobalSearchClicked = onGlobalSearchClicked,
                 )
             }
             LibraryDisplayMode.ComfortableGrid -> {
@@ -114,8 +107,6 @@ fun LibraryPager(
                     onClick = onClickManga,
                     onLongClick = onLongClickManga,
                     onClickContinueReading = onClickContinueReading,
-                    searchQuery = searchQuery,
-                    onGlobalSearchClicked = onGlobalSearchClicked,
                 )
             }
         }
@@ -127,7 +118,6 @@ private fun LibraryPagerEmptyScreen(
     searchQuery: String?,
     hasActiveFilters: Boolean,
     contentPadding: PaddingValues,
-    onGlobalSearchClicked: () -> Unit,
 ) {
     val msg = when {
         !searchQuery.isNullOrEmpty() -> MR.strings.no_results_found
@@ -141,16 +131,6 @@ private fun LibraryPagerEmptyScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        if (!searchQuery.isNullOrEmpty()) {
-            GlobalSearchItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.CenterHorizontally),
-                searchQuery = searchQuery,
-                onClick = onGlobalSearchClicked,
-            )
-        }
-
         EmptyScreen(
             stringRes = msg,
             modifier = Modifier.weight(1f),

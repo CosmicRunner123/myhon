@@ -5,9 +5,7 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import mihon.core.metro.AppCoroutineScope
 import tachiyomi.domain.source.model.StubSource
@@ -26,8 +24,6 @@ class AndroidSourceManager(
 ) : SourceManager {
 
     private val stubSourcesMap = ConcurrentHashMap<Long, StubSource>()
-
-    override val sources: Flow<List<Source>> = flowOf(listOf(localSource))
 
     init {
         scope.launch {

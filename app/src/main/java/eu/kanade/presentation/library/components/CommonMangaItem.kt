@@ -48,9 +48,6 @@ import tachiyomi.domain.manga.model.MangaCover as MangaCoverModel
 object CommonMangaItemDefaults {
     val GridHorizontalSpacer = 4.dp
     val GridVerticalSpacer = 4.dp
-
-    @Suppress("ConstPropertyName")
-    const val BrowseFavoriteCoverAlpha = 0.34f
 }
 
 private val ContinueReadingButtonSizeSmall = 28.dp
@@ -76,7 +73,6 @@ fun MangaCompactGridItem(
     isSelected: Boolean = false,
     title: String? = null,
     onClickContinueReading: (() -> Unit)? = null,
-    coverAlpha: Float = 1f,
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
 ) {
@@ -90,7 +86,7 @@ fun MangaCompactGridItem(
                 MangaCover.Book(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .alpha(if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha),
+                        .alpha(if (isSelected) GRID_SELECTED_COVER_ALPHA else 1f),
                     data = coverData,
                 )
             },
@@ -180,8 +176,6 @@ fun MangaComfortableGridItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     isSelected: Boolean = false,
-    titleMaxLines: Int = 2,
-    coverAlpha: Float = 1f,
     coverBadgeStart: (@Composable RowScope.() -> Unit)? = null,
     coverBadgeEnd: (@Composable RowScope.() -> Unit)? = null,
     onClickContinueReading: (() -> Unit)? = null,
@@ -197,7 +191,7 @@ fun MangaComfortableGridItem(
                     MangaCover.Book(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .alpha(if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha),
+                            .alpha(if (isSelected) GRID_SELECTED_COVER_ALPHA else 1f),
                         data = coverData,
                     )
                 },
@@ -221,7 +215,7 @@ fun MangaComfortableGridItem(
                 title = title,
                 style = MaterialTheme.typography.titleSmall,
                 minLines = 2,
-                maxLines = titleMaxLines,
+                maxLines = 2,
             )
         }
     }
@@ -336,7 +330,6 @@ fun MangaListItem(
     onLongClick: () -> Unit,
     badge: @Composable (RowScope.() -> Unit),
     isSelected: Boolean = false,
-    coverAlpha: Float = 1f,
     onClickContinueReading: (() -> Unit)? = null,
 ) {
     Row(
@@ -351,9 +344,7 @@ fun MangaListItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MangaCover.Square(
-            modifier = Modifier
-                .fillMaxHeight()
-                .alpha(coverAlpha),
+            modifier = Modifier.fillMaxHeight(),
             data = coverData,
         )
         Text(

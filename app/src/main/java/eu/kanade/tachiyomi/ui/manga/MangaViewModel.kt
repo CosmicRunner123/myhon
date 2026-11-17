@@ -30,7 +30,6 @@ import eu.kanade.domain.manga.interactor.SetExcludedScanlators
 import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.domain.manga.model.chaptersFiltered
 import eu.kanade.domain.manga.model.downloadedFilter
-import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.interactor.RefreshTracks
 import eu.kanade.domain.track.interactor.TrackChapter
@@ -46,7 +45,6 @@ import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.Source
-import eu.kanade.tachiyomi.source.getNameForMangaInfo
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
 import eu.kanade.tachiyomi.util.removeCovers
@@ -113,11 +111,9 @@ import kotlin.time.Duration.Companion.seconds
 @AssistedInject
 class MangaViewModel(
     @Assisted private val mangaId: Long,
-    @Assisted private val isFromSource: Boolean,
     @AppCoroutineScope private val appScope: CoroutineScope,
     private val context: Context,
     private val basePreferences: BasePreferences,
-    private val sourcePreferences: SourcePreferences,
     private val libraryPreferences: LibraryPreferences,
     trackPreferences: TrackPreferences,
     readerPreferences: ReaderPreferences,
@@ -152,7 +148,7 @@ class MangaViewModel(
     @ManualViewModelAssistedFactoryKey
     @ContributesIntoMap(AppScope::class)
     interface Factory : ManualViewModelAssistedFactory {
-        fun create(mangaId: Long, isFromSource: Boolean): MangaViewModel
+        fun create(mangaId: Long): MangaViewModel
     }
 
     val snackbarHostState: SnackbarHostState = SnackbarHostState()
@@ -229,7 +225,7 @@ class MangaViewModel(
         MangaAndChapters(
             manga = manga,
             source = source,
-            sourceName = source.getNameForMangaInfo(sourcePreferences),
+            sourceName = source.toString(),
             chapters = chapters.toChapterListItems(manga),
         )
     }
@@ -273,7 +269,6 @@ class MangaViewModel(
             manga = mangaAndChapters.manga,
             source = mangaAndChapters.source,
             sourceName = mangaAndChapters.sourceName,
-            isFromSource = isFromSource,
             chapters = mangaAndChapters.chapters.map { item ->
                 val downloadState = downloads[item.id]
                 val selected = item.id in selectedIds
@@ -1110,7 +1105,6 @@ class MangaViewModel(
             val manga: Manga,
             val source: Source,
             val sourceName: String,
-            val isFromSource: Boolean,
             val chapters: List<ChapterList.Item>,
             val availableScanlators: Set<String>,
             val excludedScanlators: Set<String>,

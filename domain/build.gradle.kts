@@ -29,8 +29,6 @@ dependencies {
 
     implementation(libs.unifile)
 
-    api(libs.androidx.paging.runtime)
-
     compileOnly(platform(libs.androidx.compose.bom))
     compileOnly(libs.androidx.compose.runtimeAnnotation)
 

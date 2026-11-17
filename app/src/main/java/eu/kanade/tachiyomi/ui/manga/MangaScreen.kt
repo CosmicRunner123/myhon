@@ -39,8 +39,6 @@ import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
-import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.manga.notes.MangaNotesScreen
@@ -62,7 +60,6 @@ import tachiyomi.presentation.core.screens.LoadingScreen
 
 class MangaScreen(
     private val mangaId: Long,
-    val fromSource: Boolean = false,
 ) : Screen(), AssistContentScreen {
 
     private var assistUrl: String? = null
@@ -77,7 +74,7 @@ class MangaScreen(
         val scope = rememberCoroutineScope()
         val viewModel =
             assistedMetroViewModel<MangaViewModel, MangaViewModel.Factory> {
-                create(mangaId = mangaId, isFromSource = fromSource)
+                create(mangaId = mangaId)
             }
 
         val state by viewModel.state.collectAsStateWithLifecycle()
@@ -142,11 +139,11 @@ class MangaScreen(
                     viewModel.showTrackDialog()
                 }
             },
-            onTagSearch = { scope.launch { performGenreSearch(navigator, it, viewModel.source!!) } },
+            onTagSearch = { scope.launch { performSearch(navigator, it) } },
             onFilterButtonClicked = viewModel::showSettingsDialog,
             onRefresh = viewModel::fetchAllFromSource,
             onContinueReading = { continueReading(context, viewModel.getNextUnreadChapter()) },
-            onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
+            onSearch = { scope.launch { performSearch(navigator, it) } },
             onCoverClicked = viewModel::showCoverDialog,
             onShareClicked = { shareManga(context, viewModel.manga, viewModel.source) }.takeIf { isHttpSource },
             onDownloadActionClicked = viewModel::runDownloadAction.takeIf { !successState.source.isLocalOrStub() },
@@ -330,44 +327,15 @@ class MangaScreen(
      *
      * @param query the search query to the parent controller
      */
-    private suspend fun performSearch(navigator: Navigator, query: String, global: Boolean) {
-        if (global) {
-            navigator.push(GlobalSearchScreen(query))
-            return
-        }
-
-        if (navigator.size < 2) {
-            return
-        }
-
-        when (val previousController = navigator.items[navigator.size - 2]) {
-            is HomeScreen -> {
-                navigator.pop()
-                previousController.search(query)
-            }
-            is BrowseSourceScreen -> {
-                navigator.pop()
-                previousController.search(query)
-            }
-        }
-    }
-
-    /**
-     * Performs a genre search using the provided genre name.
-     *
-     * @param genreName the search genre to the parent controller
-     */
-    private suspend fun performGenreSearch(navigator: Navigator, genreName: String, source: Source) {
+    private suspend fun performSearch(navigator: Navigator, query: String) {
         if (navigator.size < 2) {
             return
         }
 
         val previousController = navigator.items[navigator.size - 2]
-        if (previousController is BrowseSourceScreen && source is HttpSource) {
+        if (previousController is HomeScreen) {
             navigator.pop()
-            previousController.searchGenre(genreName)
-        } else {
-            performSearch(navigator, genreName, global = false)
+            previousController.search(query)
         }
     }
 

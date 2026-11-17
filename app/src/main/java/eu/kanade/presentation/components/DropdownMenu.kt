@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,10 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.ArrowRight
-import mihon.icons.materialsymbols.rounded.RadioButtonChecked
-import mihon.icons.materialsymbols.rounded.RadioButtonUnchecked
-import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.i18n.stringResource
 import androidx.compose.material3.DropdownMenu as ComposeDropdownMenu
 
 /**
@@ -47,34 +42,6 @@ fun DropdownMenu(
         scrollState = scrollState,
         properties = properties,
         content = content,
-    )
-}
-
-@Composable
-fun RadioMenuItem(
-    text: @Composable () -> Unit,
-    isChecked: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    DropdownMenuItem(
-        text = text,
-        onClick = onClick,
-        trailingIcon = {
-            if (isChecked) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.RadioButtonChecked,
-                    contentDescription = stringResource(MR.strings.selected),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            } else {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.RadioButtonUnchecked,
-                    contentDescription = stringResource(MR.strings.not_selected),
-                )
-            }
-        },
-        modifier = modifier,
     )
 }
 

@@ -119,7 +119,7 @@ fun MangaInfoBox(
     sourceName: String,
     isStubSource: Boolean,
     onCoverClick: () -> Unit,
-    doSearch: (query: String, global: Boolean) -> Unit,
+    doSearch: (query: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -352,7 +352,7 @@ private fun MangaAndSourceTitlesLarge(
     sourceName: String,
     isStubSource: Boolean,
     onCoverClick: () -> Unit,
-    doSearch: (query: String, global: Boolean) -> Unit,
+    doSearch: (query: String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -392,7 +392,7 @@ private fun MangaAndSourceTitlesSmall(
     sourceName: String,
     isStubSource: Boolean,
     onCoverClick: () -> Unit,
-    doSearch: (query: String, global: Boolean) -> Unit,
+    doSearch: (query: String) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -438,7 +438,7 @@ private fun ColumnScope.MangaContentInfo(
     source: Source,
     sourceName: String,
     isStubSource: Boolean,
-    doSearch: (query: String, global: Boolean) -> Unit,
+    doSearch: (query: String) -> Unit,
     textAlign: TextAlign? = LocalTextStyle.current.textAlign,
 ) {
     val context = LocalContext.current
@@ -454,7 +454,7 @@ private fun ColumnScope.MangaContentInfo(
                     )
                 }
             },
-            onClick = { if (title.isNotBlank()) doSearch(title, true) },
+            onClick = { if (title.isNotBlank()) doSearch(title) },
         ),
         textAlign = textAlign,
     )
@@ -485,7 +485,7 @@ private fun ColumnScope.MangaContentInfo(
                             )
                         }
                     },
-                    onClick = { if (!author.isNullOrBlank()) doSearch(author, true) },
+                    onClick = { if (!author.isNullOrBlank()) doSearch(author) },
                 ),
             textAlign = textAlign,
         )
@@ -508,7 +508,7 @@ private fun ColumnScope.MangaContentInfo(
                 modifier = Modifier
                     .clickableNoIndication(
                         onLongClick = { context.copyToClipboard(artist, artist) },
-                        onClick = { doSearch(artist, true) },
+                        onClick = { doSearch(artist) },
                     ),
                 textAlign = textAlign,
             )
@@ -564,7 +564,7 @@ private fun ColumnScope.MangaContentInfo(
             Text(
                 text = sourceName,
                 modifier = Modifier.clickableNoIndication {
-                    doSearch(source.query(), false)
+                    doSearch(source.query())
                 },
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,

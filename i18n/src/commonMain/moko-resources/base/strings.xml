@@ -27,7 +27,6 @@
     <string name="label_recent_updates">Updates</string>
     <string name="label_upcoming">Upcoming</string>
     <string name="label_recent_manga">History</string>
-    <string name="label_sources">Sources</string>
     <string name="label_backup">Backup and restore</string>
     <string name="label_data_storage">Data and storage</string>
     <string name="label_stats">Statistics</string>
@@ -66,7 +65,6 @@
     <string name="action_search">Search</string>
     <string name="action_search_hint">Search…</string>
     <string name="action_search_settings">Search settings</string>
-    <string name="action_global_search">Global search</string>
     <string name="action_select_all">Select all</string>
     <string name="action_select_inverse">Select inverse</string>
     <string name="action_mark_as_read">Mark as read</string>
@@ -117,9 +115,6 @@
     <string name="action_display_show_tabs">Show category tabs</string>
     <string name="action_display_show_number_of_items">Show number of items</string>
     <string name="action_display_show_continue_reading_button">Continue reading button</string>
-    <string name="action_disable">Disable</string>
-    <string name="action_pin">Pin</string>
-    <string name="action_unpin">Unpin</string>
     <string name="action_apply">Apply</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_ok">OK</string>
@@ -202,7 +197,6 @@
     <string name="pref_reader_summary">Reading mode, display, navigation</string>
     <string name="pref_downloads_summary">Automatic download, download ahead</string>
     <string name="pref_tracking_summary">One-way progress sync, enhanced sync</string>
-    <string name="pref_browse_sources_summary">Sources, global search</string>
     <string name="pref_backup_summary">Manual &amp; automatic backups, storage space</string>
     <string name="pref_security_summary">App lock, secure screen</string>
     <string name="pref_advanced_summary">Dump crash logs, battery optimizations</string>
@@ -313,7 +307,6 @@
     <string name="pref_enable_chapter_name_hash">Enable chapter name hash suffix</string>
     <string name="pref_enable_chapter_name_hash_details">Ensures a unique hash suffix is added to chapter names to prevent naming conflicts. If disabled, chapters with identical names cannot be downloaded.</string>
 
-    <string name="multi_lang">Multi</string>
     <string name="downloading_with_progress">Downloading… (%d%%)</string>
 
       <!-- Reader section -->
@@ -520,9 +513,6 @@
     <string name="refresh_tracker_success">%s profile refreshed</string>
     <string name="refresh_tracker_error">%1$s refresh error: %2$s</string>
 
-      <!-- Browse section -->
-    <string name="pref_hide_in_library_items">Hide entries already in library</string>
-
       <!-- Data and storage section -->
     <string name="pref_storage_location">Storage location</string>
     <string name="pref_storage_location_info">Used for automatic backups, chapter downloads, and local source.</string>
@@ -658,16 +648,6 @@
     <!-- missing prompt after Compose rewrite #7901 -->
     <string name="no_results_found">No results found</string>
     <string name="local_source">Local source</string>
-    <string name="other_source">Other</string>
-    <string name="last_used_source">Last used</string>
-    <string name="pinned_sources">Pinned</string>
-    <string name="action_global_search_hint">Global search…</string>
-    <string name="action_global_search_query">Search for \"%1$s\" globally</string>
-    <string name="latest">Latest</string>
-    <string name="popular">Popular</string>
-    <string name="browse">Browse</string>
-    <string name="has_results">Has results</string>
-    <string name="local_source_help_guide">Local source guide</string>
     <string name="chapter_not_found">Chapter not found</string>
     <string name="local_invalid_format">Invalid chapter format</string>
     <string name="local_filter_order_by">Order by</string>
@@ -825,12 +805,6 @@
     <string name="pref_clear_history">Clear history</string>
     <string name="clear_history_completed">History deleted</string>
     <string name="clear_history_confirmation">Are you sure? All history will be lost.</string>
-
-    <!-- Source Screen -->
-    <string name="source_empty_screen">No source found</string>
-
-    <!-- Source Filter Screen -->
-    <string name="source_filter_empty_screen">No installed source found</string>
 
     <string name="migration_dialog_what_to_include">Select data to include</string>
     <string name="empty_screen">Well, this is awkward</string>

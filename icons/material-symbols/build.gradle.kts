@@ -51,12 +51,6 @@ valkyrie {
             sourceFolder = "autoMirroredRounded"
             autoMirror = true
         }
-
-        nested {
-            name = "AutoMirroredRoundedFilled"
-            sourceFolder = "autoMirroredRoundedFilled"
-            autoMirror = true
-        }
     }
 }
 

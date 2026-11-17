@@ -271,11 +271,8 @@ fun SearchToolbar(
     onChangeSearchQuery: (String?) -> Unit,
     modifier: Modifier = Modifier,
     titleContent: @Composable () -> Unit = {},
-    navigateUp: (() -> Unit)? = null,
     searchEnabled: Boolean = true,
     placeholderText: String? = null,
-    onSearch: (String) -> Unit = {},
-    onClickCloseSearch: () -> Unit = { onChangeSearchQuery(null) },
     actions: @Composable RowScope.() -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -307,10 +304,8 @@ fun SearchToolbar(
             val keyboardController = LocalSoftwareKeyboardController.current
             val focusManager = LocalFocusManager.current
 
-            val searchAndClearFocus: () -> Unit = f@{
-                val query = searchFieldState.text.toString()
-                if (query.isBlank()) return@f
-                onSearch(query)
+            val clearFocus: () -> Unit = f@{
+                if (searchFieldState.text.isBlank()) return@f
                 focusManager.clearFocus()
                 keyboardController?.hide()
                 focusManager.moveFocus(FocusDirection.Next)
@@ -321,7 +316,7 @@ fun SearchToolbar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
-                    .runOnEnterKeyPressed(action = searchAndClearFocus)
+                    .runOnEnterKeyPressed(action = clearFocus)
                     .showSoftKeyboard(remember { searchQuery.isEmpty() })
                     .clearFocusOnSoftKeyboardHide(),
                 textStyle = MaterialTheme.typography.titleMedium.copy(
@@ -330,7 +325,7 @@ fun SearchToolbar(
                     fontSize = 18.sp,
                 ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                onKeyboardAction = { searchAndClearFocus() },
+                onKeyboardAction = { clearFocus() },
                 lineLimits = TextFieldLineLimits.SingleLine,
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
                 interactionSource = interactionSource,
@@ -356,7 +351,7 @@ fun SearchToolbar(
                 ),
             )
         },
-        navigateUp = if (searchQuery == null) navigateUp else onClickCloseSearch,
+        navigateUp = { onChangeSearchQuery(null) }.takeIf { searchQuery != null },
         actions = {
             key("search") {
                 val onClick = { onChangeSearchQuery("") }

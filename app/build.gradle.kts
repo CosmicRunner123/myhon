@@ -232,9 +232,6 @@ dependencies {
 
     implementation(libs.androidx.interpolator)
 
-    implementation(libs.androidx.paging.runtime)
-    implementation(libs.androidx.paging.compose)
-
     implementation(libs.kotlin.reflect)
 
     implementation(libs.bundles.kotlinx.coroutines)

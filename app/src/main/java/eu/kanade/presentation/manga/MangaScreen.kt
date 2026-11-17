@@ -57,7 +57,6 @@ import eu.kanade.presentation.manga.components.MangaToolbar
 import eu.kanade.presentation.manga.components.MissingChapterCountListItem
 import eu.kanade.presentation.util.formatChapterNumber
 import eu.kanade.tachiyomi.data.download.model.Download
-import eu.kanade.tachiyomi.source.getNameForMangaInfo
 import eu.kanade.tachiyomi.ui.manga.ChapterList
 import eu.kanade.tachiyomi.ui.manga.MangaViewModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
@@ -100,7 +99,7 @@ fun MangaScreen(
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
-    onSearch: (query: String, global: Boolean) -> Unit,
+    onSearch: (query: String) -> Unit,
 
     // For cover dialog
     onCoverClicked: () -> Unit,
@@ -231,7 +230,7 @@ private fun MangaScreenSmallImpl(
     onFilterClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
-    onSearch: (query: String, global: Boolean) -> Unit,
+    onSearch: (query: String) -> Unit,
 
     // For cover dialog
     onCoverClicked: () -> Unit,
@@ -399,7 +398,7 @@ private fun MangaScreenSmallImpl(
                         contentType = MangaScreenItem.DESCRIPTION_WITH_TAG,
                     ) {
                         ExpandableMangaDescription(
-                            defaultExpandState = state.isFromSource,
+                            defaultExpandState = false,
                             description = state.manga.description,
                             tagsProvider = { state.manga.genre },
                             notes = state.manga.notes,
@@ -462,7 +461,7 @@ fun MangaScreenLargeImpl(
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
-    onSearch: (query: String, global: Boolean) -> Unit,
+    onSearch: (query: String) -> Unit,
 
     // For cover dialog
     onCoverClicked: () -> Unit,

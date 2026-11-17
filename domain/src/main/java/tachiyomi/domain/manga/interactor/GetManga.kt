@@ -24,8 +24,4 @@ class GetManga(
     fun subscribe(id: Long): Flow<Manga> {
         return mangaRepository.getMangaByIdAsFlow(id)
     }
-
-    fun subscribe(url: String, sourceId: Long): Flow<Manga?> {
-        return mangaRepository.getMangaByUrlAndSourceIdAsFlow(url, sourceId)
-    }
 }
