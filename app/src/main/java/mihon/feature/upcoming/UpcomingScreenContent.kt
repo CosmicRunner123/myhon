@@ -117,7 +117,7 @@ private fun UpcomingToolbar(
                     AppBar.Action(
                         title = stringResource(MR.strings.upcoming_guide),
                         icon = MaterialSymbols.AutoMirroredRounded.Help,
-                        onClick = { uriHandler.openUri(Constants.URL_HELP_UPCOMING) },
+                        onClick = { uriHandler.openUri(Constants.URL_HELP) },
                     ),
                 ),
             )

@@ -2,7 +2,6 @@ package tachiyomi.core.common
 
 object Constants {
     const val URL_HELP = "https://github.com/CosmicRunner123/myhon#readme"
-    const val URL_HELP_UPCOMING = "https://mihon.app/docs/faq/updates/upcoming"
 
     const val MANGA_EXTRA = "manga"
 

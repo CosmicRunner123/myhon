@@ -60,6 +60,7 @@ import mihon.icons.materialsymbols.automirroredrounded.Help
 import mihon.icons.materialsymbols.rounded.Close
 import mihon.icons.materialsymbols.roundedfilled.Visibility
 import mihon.icons.materialsymbols.roundedfilled.VisibilityOff
+import tachiyomi.core.common.Constants
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
@@ -73,7 +74,7 @@ object SettingsTrackingScreen : SearchableSettings {
     @Composable
     override fun RowScope.AppBarAction() {
         val uriHandler = LocalUriHandler.current
-        IconButton(onClick = { uriHandler.openUri("https://mihon.app/docs/guides/tracking") }) {
+        IconButton(onClick = { uriHandler.openUri(Constants.URL_HELP) }) {
             Icon(
                 imageVector = MaterialSymbols.AutoMirroredRounded.Help,
                 contentDescription = stringResource(MR.strings.tracking_guide),
