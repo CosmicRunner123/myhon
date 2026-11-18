@@ -45,18 +45,11 @@ class LibraryPreferences(
 
     val autoUpdateDeviceRestrictions: Preference<Set<String>> = preferenceStore.getStringSet(
         "library_update_restriction",
-        setOf(
-            DEVICE_ONLY_ON_WIFI,
-        ),
+        emptySet(),
     )
     val autoUpdateMangaRestrictions: Preference<Set<String>> = preferenceStore.getStringSet(
         "library_update_manga_restriction",
-        setOf(
-            MANGA_HAS_UNREAD,
-            MANGA_NON_COMPLETED,
-            MANGA_NON_READ,
-            MANGA_OUTSIDE_RELEASE_PERIOD,
-        ),
+        emptySet(),
     )
 
     val autoUpdateMetadata: Preference<Boolean> = preferenceStore.getBoolean("auto_update_metadata", false)
@@ -209,8 +202,6 @@ class LibraryPreferences(
     }
 
     companion object {
-        const val DEVICE_ONLY_ON_WIFI = "wifi"
-        const val DEVICE_NETWORK_NOT_METERED = "network_not_metered"
         const val DEVICE_CHARGING = "ac"
 
         const val MANGA_NON_COMPLETED = "manga_ongoing"
