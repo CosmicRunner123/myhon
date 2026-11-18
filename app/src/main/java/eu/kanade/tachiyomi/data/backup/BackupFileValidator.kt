@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.data.backup.models.BackupTracking
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
+import tachiyomi.source.local.LocalSource
 
 @Inject
 class BackupFileValidator(
@@ -22,7 +23,8 @@ class BackupFileValidator(
         val trackerIds = mutableSetOf<Int>()
         try {
             backupDecoder.decodeMetadata(uri, TrackedManga.serializer()) { manga ->
-                manga.tracking.mapTo(trackerIds) { it.syncId }
+                // Restore skips every other source, so only local series' trackers matter
+                if (manga.source == LocalSource.ID) manga.tracking.mapTo(trackerIds) { it.syncId }
             }
         } catch (e: Exception) {
             throw IllegalStateException(e)
@@ -41,9 +43,10 @@ class BackupFileValidator(
         val missingTrackers: List<String>,
     )
 
-    // Only the field validation reads, so decoding skips the rest of each entry
+    // Only the fields validation reads, so decoding skips the rest of each entry
     @Serializable
     private class TrackedManga(
+        @ProtoNumber(1) val source: Long,
         @ProtoNumber(18) val tracking: List<BackupTracking> = emptyList(),
     )
 }
