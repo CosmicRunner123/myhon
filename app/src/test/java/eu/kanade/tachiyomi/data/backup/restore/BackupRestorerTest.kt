@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
+import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.LocalSource
 
 @Execution(ExecutionMode.CONCURRENT)
@@ -13,6 +14,11 @@ class BackupRestorerTest {
     @Test
     fun `series of the local source are restored`() {
         BackupManga(source = LocalSource.ID, url = "Series").isRestorable() shouldBe true
+    }
+
+    @Test
+    fun `series of directory view are restored`() {
+        BackupManga(source = DirectorySource.ID, url = "file:///storage/Comics").isRestorable() shouldBe true
     }
 
     @Test

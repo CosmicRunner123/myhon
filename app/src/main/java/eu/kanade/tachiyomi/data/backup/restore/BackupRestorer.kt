@@ -25,6 +25,7 @@ import logcat.LogPriority
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.i18n.MR
+import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.LocalSource
 import java.io.File
 import java.text.SimpleDateFormat
@@ -233,4 +234,6 @@ class BackupRestorer(
 /**
  * Series of any other source can't be read by this app.
  */
-internal fun BackupManga.isRestorable(): Boolean = source == LocalSource.ID
+internal fun isRestorableSource(sourceId: Long): Boolean = sourceId == LocalSource.ID || sourceId == DirectorySource.ID
+
+internal fun BackupManga.isRestorable(): Boolean = isRestorableSource(source)

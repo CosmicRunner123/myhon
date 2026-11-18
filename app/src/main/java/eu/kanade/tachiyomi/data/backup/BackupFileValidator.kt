@@ -3,10 +3,10 @@ package eu.kanade.tachiyomi.data.backup
 import android.net.Uri
 import dev.zacsweers.metro.Inject
 import eu.kanade.tachiyomi.data.backup.models.BackupTracking
+import eu.kanade.tachiyomi.data.backup.restore.isRestorableSource
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
-import tachiyomi.source.local.LocalSource
 
 @Inject
 class BackupFileValidator(
@@ -23,8 +23,8 @@ class BackupFileValidator(
         val trackerIds = mutableSetOf<Int>()
         try {
             backupDecoder.decodeMetadata(uri, TrackedManga.serializer()) { manga ->
-                // Restore skips every other source, so only local series' trackers matter
-                if (manga.source == LocalSource.ID) manga.tracking.mapTo(trackerIds) { it.syncId }
+                // Restore skips the series of other sources, so their trackers don't matter
+                if (isRestorableSource(manga.source)) manga.tracking.mapTo(trackerIds) { it.syncId }
             }
         } catch (e: Exception) {
             throw IllegalStateException(e)

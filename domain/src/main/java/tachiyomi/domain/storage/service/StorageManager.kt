@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import mihon.core.metro.AppCoroutineScope
+import tachiyomi.domain.storage.model.LocalSourceFolder
 import java.util.concurrent.ConcurrentHashMap
 
 @Inject
@@ -74,9 +75,27 @@ class StorageManager(
      * the folders the user added, sorted by URI. A folder that can't be reached now is null.
      */
     fun getLocalSourceDirectories(): List<UniFile?> {
-        val addedDirectories = storagePreferences.localSourceDirectories.get().sorted()
-            .map { uri -> UniFile.fromUri(context, uri.toUri())?.takeIf { it.exists() } }
-        return listOf(getChildDirectory(LOCAL_SOURCE_PATH)) + addedDirectories
+        return getLocalSourceFolders().map { it.directory }
+    }
+
+    /**
+     * [getLocalSourceDirectories] with the URI each folder was chosen with, so one that can't be reached can be named.
+     */
+    fun getLocalSourceFolders(): List<LocalSourceFolder> {
+        val defaultFolder = LocalSourceFolder(
+            uri = storagePreferences.baseStorageDirectory.get(),
+            directory = getChildDirectory(LOCAL_SOURCE_PATH),
+            isDefault = true,
+        )
+        val addedFolders = storagePreferences.localSourceDirectories.get().sorted()
+            .map { uri ->
+                LocalSourceFolder(
+                    uri = uri,
+                    directory = UniFile.fromUri(context, uri.toUri())?.takeIf { it.exists() },
+                    isDefault = false,
+                )
+            }
+        return listOf(defaultFolder) + addedFolders
     }
 
     /**

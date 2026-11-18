@@ -11,6 +11,7 @@ import mihon.core.metro.AppCoroutineScope
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.domain.source.repository.StubSourceRepository
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.LocalSource
 import java.util.concurrent.ConcurrentHashMap
 
@@ -21,6 +22,7 @@ class AndroidSourceManager(
     @AppCoroutineScope private val scope: CoroutineScope,
     private val sourceRepository: StubSourceRepository,
     private val localSource: LocalSource,
+    private val directorySource: DirectorySource,
 ) : SourceManager {
 
     private val stubSourcesMap = ConcurrentHashMap<Long, StubSource>()
@@ -37,7 +39,11 @@ class AndroidSourceManager(
     }
 
     override suspend fun get(sourceKey: Long): Source? {
-        return localSource.takeIf { sourceKey == LocalSource.ID }
+        return when (sourceKey) {
+            LocalSource.ID -> localSource
+            DirectorySource.ID -> directorySource
+            else -> null
+        }
     }
 
     override suspend fun getOrStub(sourceKey: Long): Source {

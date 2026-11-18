@@ -584,6 +584,8 @@
     <string name="local_invalid_format">Invalid chapter format</string>
     <string name="local_series_folder_not_found">Series folder not found</string>
     <string name="local_series_folders_unavailable">Not all series folders are available</string>
+    <string name="directory_source">Directory view</string>
+    <string name="directory_folder_unreadable">Couldn\'t read the folder</string>
 
     <!-- Manga info -->
     <string name="ongoing">Ongoing</string>
