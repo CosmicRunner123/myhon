@@ -113,13 +113,14 @@ class DirectoryViewModel(
     fun goUp() {
         if (state.value.path.isEmpty()) return
         setPath(state.value.path.dropLast(1))
-        load()
+        // Access or the inserted volumes may have changed while in a folder
+        load(reloadVolumes = state.value.path.isEmpty())
     }
 
     fun goToTopLevel() {
         if (state.value.path.isEmpty()) return
         setPath(emptyList())
-        load()
+        load(reloadVolumes = true)
     }
 
     private fun setPath(path: List<DirectoryFolder>) {
