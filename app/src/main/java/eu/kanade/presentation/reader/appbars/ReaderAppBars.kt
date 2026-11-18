@@ -51,7 +51,7 @@ fun ReaderAppBars(
     navigateUp: () -> Unit,
     onClickTopAppBar: (() -> Unit)?,
     bookmarked: Boolean,
-    onToggleBookmarked: () -> Unit,
+    onToggleBookmarked: (() -> Unit)?,
 
     chapterNavigatorType: ChapterNavigatorType,
     verticalNavigatorHeight: Float,

@@ -254,7 +254,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
                 // Fetcher.Factory
                 add(BufferedSourceFetcher.Factory())
                 add(ComicThumbnailFetcher.Factory(comicThumbnailCacheLazy))
-                add(ComicThumbnailFetcher.DirectoryCoverFactory(comicThumbnailCacheLazy))
                 add(MangaCoverFetcher.MangaCoverFactory(callFactoryLazy, coverCache))
                 add(MangaCoverFetcher.MangaFactory(callFactoryLazy, coverCache))
                 // Keyer

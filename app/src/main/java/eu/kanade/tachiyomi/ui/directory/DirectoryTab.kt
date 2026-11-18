@@ -88,8 +88,8 @@ data object DirectoryTab : Tab {
             launch {
                 viewModel.events.collect { event ->
                     when (event) {
-                        is DirectoryViewModel.Event.OpenChapter -> context.startActivity(
-                            ReaderActivity.newIntent(context, event.chapter.mangaId, event.chapter.id),
+                        is DirectoryViewModel.Event.OpenFile -> context.startActivity(
+                            ReaderActivity.newIntent(context, event.folderUri, event.folderName, event.fileUri),
                         )
                         is DirectoryViewModel.Event.OpenFailed -> context.toast(
                             event.message ?: context.stringResource(MR.strings.unknown_error),

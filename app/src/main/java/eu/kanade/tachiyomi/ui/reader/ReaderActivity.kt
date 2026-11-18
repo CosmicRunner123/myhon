@@ -129,6 +129,19 @@ class ReaderActivity : BaseActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
         }
+
+        /**
+         * Reads the comic file [fileUri] of the folder [folderUri] named [folderName] of directory view, going on with
+         * the folder's other files.
+         */
+        fun newIntent(context: Context, folderUri: String, folderName: String, fileUri: String): Intent {
+            return Intent(context, ReaderActivity::class.java).apply {
+                putExtra("folder", folderUri)
+                putExtra("folder_name", folderName)
+                putExtra("file", fileUri)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+        }
     }
 
     @Inject private lateinit var readerPreferences: ReaderPreferences
@@ -310,7 +323,7 @@ class ReaderActivity : BaseActivity() {
                 is ReaderViewModel.Dialog.PageActions -> {
                     ReaderPageActionsDialog(
                         onDismissRequest = onDismissRequest,
-                        // Covers in directory view are the first page of the file opened last
+                        // Directory view stores no series to keep a cover for
                         onSetAsCover = viewModel::setAsCover.takeUnless { state.manga?.source == DirectorySource.ID },
                         onShare = viewModel::shareImage,
                         onSave = viewModel::saveImage,
@@ -554,7 +567,9 @@ class ReaderActivity : BaseActivity() {
             // Directory view has no series pages
             onClickTopAppBar = ::openMangaScreen.takeUnless { state.manga?.source == DirectorySource.ID },
             bookmarked = state.bookmarked,
-            onToggleBookmarked = viewModel::toggleChapterBookmark,
+            // Files of directory view can't be bookmarked
+            onToggleBookmarked = viewModel::toggleChapterBookmark
+                .takeUnless { state.manga?.source == DirectorySource.ID },
 
             chapterNavigatorType = if (!verticalNavigator) {
                 if (readingMode == ReadingMode.RIGHT_TO_LEFT) {

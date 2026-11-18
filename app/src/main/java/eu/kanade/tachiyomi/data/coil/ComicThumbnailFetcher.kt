@@ -18,8 +18,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import mihon.core.archive.EpubReader
 import mihon.core.archive.archiveReader
-import tachiyomi.domain.manga.model.MangaCover
-import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.io.Format
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -134,26 +132,6 @@ class ComicThumbnailFetcher(
 
         override fun create(data: ComicThumbnail, options: Options, imageLoader: ImageLoader): Fetcher {
             return ComicThumbnailFetcher(data, options, diskCacheLazy, imageLoader.components.key(data, options)!!)
-        }
-    }
-
-    /**
-     * Fetches the cover of a directory view series, which is the comic file last opened in it, as that file's
-     * thumbnail. It has to come before [MangaCoverFetcher.MangaCoverFactory], which would decode the file as an image.
-     */
-    class DirectoryCoverFactory(private val diskCacheLazy: Lazy<DiskCache>) : Fetcher.Factory<MangaCover> {
-
-        override fun create(data: MangaCover, options: Options, imageLoader: ImageLoader): Fetcher? {
-            if (data.sourceId != DirectorySource.ID) return null
-            return object : Fetcher {
-                override suspend fun fetch(): FetchResult {
-                    val url = data.url ?: error("No cover specified")
-                    val file = UniFile.fromUri(options.context, url.toUri()) ?: error("Invalid cover $url")
-                    val thumbnail = ComicThumbnail(url, file.lastModified(), file.length())
-                    val diskCacheKey = imageLoader.components.key(thumbnail, options)!!
-                    return ComicThumbnailFetcher(thumbnail, options, diskCacheLazy, diskCacheKey).fetch()
-                }
-            }
         }
     }
 }

@@ -34,12 +34,12 @@ data class DirectoryEntry(
 }
 
 /**
- * The order a folder's entries are shown in: folders, then files, each in natural order of their title. The chapters
- * of a folder are its files in reverse, so the next chapter is the next file shown.
+ * The order a folder's entries are shown in: folders, then files, each in natural order of their title. The reader
+ * goes through a folder's files in this order too, so the next chapter is the next file shown.
  */
 internal val directoryEntryOrder: Comparator<DirectoryEntry> = compareBy<DirectoryEntry> { !it.isDirectory }
     .thenComparator { e1, e2 -> e1.title.compareToCaseInsensitiveNaturalOrder(e2.title) }
-    // Names are unique in a folder, so this makes the order total and the chapters exactly its reverse
+    // Names are unique in a folder, so this makes the order total and the same on every listing
     .thenBy { it.name }
 
 /**
@@ -61,7 +61,7 @@ suspend fun listDirectory(context: Context, uri: Uri): List<DirectoryEntry>? = w
     val entries = try {
         when {
             uri.scheme != ContentResolver.SCHEME_FILE -> listDocuments(context, uri)
-            // Without it, Android 11+ lists a folder without other apps' files, whose chapters the sync would delete
+            // Without it, Android 11+ lists a folder without other apps' files instead of failing
             context.hasAllFilesAccess() -> listFiles(uri)
             else -> null
         }

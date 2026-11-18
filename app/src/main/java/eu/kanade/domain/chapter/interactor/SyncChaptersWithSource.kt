@@ -16,7 +16,6 @@ import tachiyomi.domain.chapter.repository.ChapterRepository
 import tachiyomi.domain.chapter.service.ChapterRecognition
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.source.local.DirectorySource
 import java.lang.Long.max
 import java.util.TreeSet
 import kotlin.time.Clock
@@ -52,15 +51,9 @@ class SyncChaptersWithSource(
         val sourceChapters = rawSourceChapters
             .distinctBy { it.url }
             .mapIndexed { i, sChapter ->
-                // Files keep the name the directory view lists them under, even one starting with the folder's name
-                val name = if (manga.source == DirectorySource.ID) {
-                    sChapter.name.trim()
-                } else {
-                    with(ChapterSanitizer) { sChapter.name.sanitize(manga.title) }
-                }
                 Chapter.create()
                     .copyFromSChapter(sChapter)
-                    .copy(name = name)
+                    .copy(name = with(ChapterSanitizer) { sChapter.name.sanitize(manga.title) })
                     .copy(mangaId = manga.id, sourceOrder = i.toLong())
             }
 
@@ -149,11 +142,8 @@ class SyncChaptersWithSource(
         val deletedChapterNumberDateFetchMap = removedChapters.sortedByDescending { it.dateFetch }
             .associate { it.chapterNumber to it.dateFetch }
 
-        // The numbers in the names of files in directory view are not chapter numbers
-        val hasChapterNumbers = manga.source != DirectorySource.ID
-        val markDuplicateAsRead = hasChapterNumbers &&
-            libraryPreferences.markDuplicateReadChapterAsRead.get()
-                .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_NEW)
+        val markDuplicateAsRead = libraryPreferences.markDuplicateReadChapterAsRead.get()
+            .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_NEW)
 
         // Date fetch is set in such a way that the upper ones will have bigger value than the lower ones
         // Sources MUST return the chapters from most to less recent, which is common.
@@ -166,9 +156,7 @@ class SyncChaptersWithSource(
                 chapter = chapter.copy(read = true)
             }
 
-            if (!hasChapterNumbers || !chapter.isRecognizedNumber || chapter.chapterNumber !in deletedChapterNumbers) {
-                return@map chapter
-            }
+            if (!chapter.isRecognizedNumber || chapter.chapterNumber !in deletedChapterNumbers) return@map chapter
 
             chapter = chapter.copy(
                 read = chapter.chapterNumber in deletedReadChapterNumbers,

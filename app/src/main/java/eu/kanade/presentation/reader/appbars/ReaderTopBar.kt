@@ -17,7 +17,7 @@ fun ReaderTopBar(
     chapterTitle: String?,
     navigateUp: () -> Unit,
     bookmarked: Boolean,
-    onToggleBookmarked: () -> Unit,
+    onToggleBookmarked: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     AppBar(
@@ -27,25 +27,27 @@ fun ReaderTopBar(
         subtitle = chapterTitle,
         navigateUp = navigateUp,
         actions = {
-            AppBarActions(
-                actions = listOf(
-                    AppBar.Action(
-                        title = stringResource(
-                            if (bookmarked) {
-                                MR.strings.action_remove_bookmark
+            if (onToggleBookmarked != null) {
+                AppBarActions(
+                    actions = listOf(
+                        AppBar.Action(
+                            title = stringResource(
+                                if (bookmarked) {
+                                    MR.strings.action_remove_bookmark
+                                } else {
+                                    MR.strings.action_bookmark
+                                },
+                            ),
+                            icon = if (bookmarked) {
+                                MaterialSymbols.RoundedFilled.Bookmark
                             } else {
-                                MR.strings.action_bookmark
+                                MaterialSymbols.Rounded.Bookmark
                             },
+                            onClick = onToggleBookmarked,
                         ),
-                        icon = if (bookmarked) {
-                            MaterialSymbols.RoundedFilled.Bookmark
-                        } else {
-                            MaterialSymbols.Rounded.Bookmark
-                        },
-                        onClick = onToggleBookmarked,
                     ),
-                ),
-            )
+                )
+            }
         },
     )
 }

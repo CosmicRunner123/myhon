@@ -4,6 +4,7 @@ import dev.zacsweers.metro.Inject
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.service.getChapterSort
+import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.manga.interactor.GetManga
 import kotlin.math.max
 
@@ -11,7 +12,13 @@ import kotlin.math.max
 class GetNextChapters(
     private val getChaptersByMangaId: GetChaptersByMangaId,
     private val getManga: GetManga,
+    private val historyRepository: HistoryRepository,
 ) {
+
+    suspend fun await(): List<Chapter> {
+        val history = historyRepository.getLastHistory() ?: return emptyList()
+        return await(history.mangaId, history.chapterId)
+    }
 
     suspend fun await(mangaId: Long, fromChapterId: Long): List<Chapter> {
         val manga = getManga.await(mangaId) ?: return emptyList()

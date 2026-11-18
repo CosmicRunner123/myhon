@@ -1,7 +1,6 @@
 package tachiyomi.domain.chapter.interactor
 
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.flow.Flow
 import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
@@ -19,9 +18,5 @@ class GetChaptersByMangaId(
             logcat(LogPriority.ERROR, e)
             emptyList()
         }
-    }
-
-    suspend fun subscribe(mangaId: Long): Flow<List<Chapter>> {
-        return chapterRepository.getChapterByMangaIdAsFlow(mangaId)
     }
 }

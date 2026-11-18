@@ -17,36 +17,17 @@ import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.repository.ChapterRepository
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.LocalSource
 
 @Execution(ExecutionMode.CONCURRENT)
 class SyncChaptersWithSourceTest {
 
     @Test
-    fun `a new file in a directory view folder does not take the state of a removed file with the same number`() =
-        runTest {
-            val added = replaceReadChapter(DirectorySource.ID)
-
-            added.read shouldBe false
-            added.bookmark shouldBe false
-        }
-
-    @Test
     fun `a new chapter takes the state of a removed chapter with the same number`() = runTest {
-        val added = replaceReadChapter(LocalSource.ID)
+        val added = replaceReadChapter()
 
         added.read shouldBe true
         added.bookmark shouldBe true
-    }
-
-    @Test
-    fun `a file in directory view keeps the folder's name at the start of its own`() = runTest {
-        val manga = Manga.create().copy(id = 1, source = DirectorySource.ID, title = "Spider")
-
-        val added = sync(manga, emptyList(), listOf(sChapter("file:///Spider/Spider-Man%2001.cbz", "Spider-Man 01")))
-
-        added.single().name shouldBe "Spider-Man 01"
     }
 
     @Test
@@ -59,8 +40,8 @@ class SyncChaptersWithSourceTest {
     }
 
     /** Syncs a list holding only "Superman 001" for a series whose read and bookmarked "Batman 001" is gone. */
-    private suspend fun replaceReadChapter(source: Long): Chapter {
-        val manga = Manga.create().copy(id = 1, source = source, title = "Downloads")
+    private suspend fun replaceReadChapter(): Chapter {
+        val manga = Manga.create().copy(id = 1, source = LocalSource.ID, title = "Downloads")
         val removed = Chapter.create().copy(
             id = 1,
             mangaId = manga.id,

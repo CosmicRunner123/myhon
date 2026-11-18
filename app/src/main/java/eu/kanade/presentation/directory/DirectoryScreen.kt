@@ -47,7 +47,7 @@ import mihon.icons.materialsymbols.rounded.Refresh
 import mihon.icons.materialsymbols.rounded.Security
 import mihon.icons.materialsymbols.rounded.Storage
 import mihon.icons.materialsymbols.roundedfilled.PlayArrow
-import tachiyomi.domain.chapter.model.Chapter
+import tachiyomi.domain.history.model.DirectoryHistory
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
@@ -82,7 +82,7 @@ fun DirectoryScreen(
         floatingActionButton = {
             val lastRead = state.lastRead
             if (lastRead != null) {
-                val description = stringResource(MR.strings.directory_resume, lastRead.title)
+                val description = stringResource(MR.strings.directory_resume, lastRead.folderName)
                 SmallExtendedFloatingActionButton(
                     text = { Text(text = stringResource(MR.strings.action_resume)) },
                     icon = { Icon(imageVector = MaterialSymbols.RoundedFilled.PlayArrow, contentDescription = null) },
@@ -161,7 +161,7 @@ fun DirectoryScreen(
                             } else {
                                 EntryList(
                                     entries = listing.entries,
-                                    chapters = state.chapters,
+                                    history = state.history,
                                     listState = listState,
                                     contentPadding = contentPadding,
                                     onClickFolder = onClickFolder,
@@ -233,7 +233,7 @@ private fun VolumeList(
 @Composable
 private fun EntryList(
     entries: List<DirectoryEntry>,
-    chapters: Map<String, Chapter>,
+    history: Map<String, DirectoryHistory>,
     listState: LazyListState,
     contentPadding: PaddingValues,
     onClickFolder: (DirectoryViewModel.DirectoryFolder) -> Unit,
@@ -260,20 +260,20 @@ private fun EntryList(
                     ItemIcon(MaterialSymbols.Rounded.Folder)
                 }
             } else {
-                val chapter = chapters[entry.uri]
+                val progress = history[entry.uri]
                 DirectoryItem(
                     title = entry.title,
                     subtitle = when {
-                        chapter == null -> null
-                        chapter.read -> stringResource(MR.strings.directory_comic_read)
-                        chapter.lastPageRead > 0 -> stringResource(
+                        progress == null -> null
+                        progress.read -> stringResource(MR.strings.directory_comic_read)
+                        progress.lastPageRead > 0 -> stringResource(
                             MR.strings.chapter_progress,
-                            chapter.lastPageRead + 1,
+                            progress.lastPageRead + 1,
                         )
                         else -> null
                     },
                     onClick = { onClickComic(entry) },
-                    dimmed = chapter?.read == true,
+                    dimmed = progress?.read == true,
                 ) {
                     MangaCover.Book(
                         data = ComicThumbnail(entry.uri, entry.lastModified, entry.size),

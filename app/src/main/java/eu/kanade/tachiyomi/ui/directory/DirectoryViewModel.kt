@@ -23,25 +23,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
-import mihon.domain.source.interactor.OpenDirectoryComic
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.storage.hasAllFilesAccess
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
-import tachiyomi.domain.chapter.model.Chapter
-import tachiyomi.domain.history.interactor.GetHistory
-import tachiyomi.domain.history.model.HistoryWithRelations
-import tachiyomi.domain.manga.interactor.GetManga
+import tachiyomi.domain.history.interactor.GetDirectoryHistory
+import tachiyomi.domain.history.model.DirectoryHistory
 import tachiyomi.i18n.MR
-import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.io.DirectoryEntry
 import tachiyomi.source.local.io.listDirectory
 
@@ -49,10 +46,7 @@ import tachiyomi.source.local.io.listDirectory
 class DirectoryViewModel(
     @Assisted private val savedState: SavedStateHandle,
     private val context: Context,
-    private val getManga: GetManga,
-    private val getChaptersByMangaId: GetChaptersByMangaId,
-    private val getHistory: GetHistory,
-    private val openDirectoryComic: OpenDirectoryComic,
+    private val getDirectoryHistory: GetDirectoryHistory,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -78,9 +72,6 @@ class DirectoryViewModel(
     private val _events = Channel<Event>(Channel.UNLIMITED)
     val events: Flow<Event> = _events.receiveAsFlow()
 
-    /** The entry of the folder shown, whose chapters tell how far its files were read. */
-    private val folderMangaId = MutableStateFlow<Long?>(null)
-
     private var loadJob: Job? = null
 
     // Kept until the volumes are listed, so a listing cancelled by navigating doesn't leave them stale
@@ -89,17 +80,19 @@ class DirectoryViewModel(
     init {
         load(reloadVolumes = true)
         viewModelScope.launch {
-            folderMangaId
-                .flatMapLatest { mangaId ->
-                    if (mangaId != null) getChaptersByMangaId.subscribe(mangaId) else flowOf(emptyList())
+            state
+                .map { it.folder?.uri }
+                .distinctUntilChanged()
+                .flatMapLatest { folderUri ->
+                    if (folderUri != null) getDirectoryHistory.subscribeByFolder(folderUri) else flowOf(emptyList())
                 }
                 .flowOn(Dispatchers.IO)
-                .collect { chapters ->
-                    _state.update { state -> state.copy(chapters = chapters.associateBy { it.url }) }
+                .collect { history ->
+                    _state.update { state -> state.copy(history = history.associateBy { it.uri }) }
                 }
         }
         viewModelScope.launch {
-            getHistory.subscribeLast(DirectorySource.ID)
+            getDirectoryHistory.subscribeLast()
                 .flowOn(Dispatchers.IO)
                 .collect { history -> _state.update { it.copy(lastRead = history) } }
         }
@@ -166,60 +159,49 @@ class DirectoryViewModel(
             }
 
             val folder = state.value.folder
-            val (listing, mangaId) = if (folder != null) {
-                withContext(Dispatchers.IO) {
-                    val entries = listDirectory(context, folder.uri.toUri())
-                    val listing = entries?.let(Listing::Entries) ?: Listing.Unreadable
-                    listing to getManga.await(folder.uri, DirectorySource.ID)?.id
-                }
+            val listing = if (folder != null) {
+                listDirectory(context, folder.uri.toUri())?.let(Listing::Entries) ?: Listing.Unreadable
             } else {
-                Listing.Loading to null
+                Listing.Loading
             }
-            folderMangaId.value = mangaId
             _state.update { it.copy(listing = listing, isRefreshing = false) }
         }
     }
 
     fun openComic(file: DirectoryEntry) {
         val folder = state.value.folder ?: return
+        // A resume is about to open a file
         if (state.value.isOpening) return
-        _state.update { it.copy(isOpening = true) }
-        viewModelScope.launch {
-            try {
-                val chapter = withContext(Dispatchers.IO) {
-                    openDirectoryComic.await(folder.uri, folder.name, file.uri)
-                }
-                // Its entry may have been made just now
-                if (state.value.folder == folder) folderMangaId.value = chapter.mangaId
-                _events.send(Event.OpenChapter(chapter))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to open ${file.uri}" }
-                _events.send(Event.OpenFailed(e.message))
-            } finally {
-                _state.update { it.copy(isOpening = false) }
-            }
-        }
+        _events.trySend(Event.OpenFile(folder.uri, folder.name, file.uri))
     }
 
-    /** Goes on reading the folder of [State.lastRead] like History does. */
+    /**
+     * Goes on reading where [State.lastRead] was left: the file itself if it wasn't read to the end, otherwise the
+     * file after it in its folder.
+     */
     fun resumeLastRead() {
         val lastRead = state.value.lastRead ?: return
         if (state.value.isOpening) return
         _state.update { it.copy(isOpening = true) }
         viewModelScope.launch {
             try {
-                val chapter = withContext(Dispatchers.IO) {
-                    val manga = getManga.await(lastRead.mangaId)
-                        ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
-                    openDirectoryComic.resume(manga, lastRead.chapterId)
-                }
-                _events.send(if (chapter != null) Event.OpenChapter(chapter) else Event.NoNextChapter)
+                val files = listDirectory(context, lastRead.folderUri.toUri())
+                    ?.filterNot { it.isDirectory }
+                    ?: throw Exception(context.stringResource(MR.strings.directory_folder_unreadable))
+                val index = files.indexOfFirst { it.uri == lastRead.uri }
+                if (index == -1) throw Exception(context.stringResource(MR.strings.chapter_not_found))
+                val file = if (lastRead.read) files.getOrNull(index + 1) else files[index]
+                _events.send(
+                    if (file != null) {
+                        Event.OpenFile(lastRead.folderUri, lastRead.folderName, file.uri)
+                    } else {
+                        Event.NoNextChapter
+                    },
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to resume ${lastRead.title}" }
+                logcat(LogPriority.ERROR, e) { "Failed to resume ${lastRead.uri}" }
                 _events.send(Event.OpenFailed(e.message))
             } finally {
                 _state.update { it.copy(isOpening = false) }
@@ -235,10 +217,10 @@ class DirectoryViewModel(
         val path: List<DirectoryFolder> = emptyList(),
         /** The contents of [folder]. */
         val listing: Listing = Listing.Loading,
-        /** The chapters of the folder shown, by the URI of their file, once one of its files was opened. */
-        val chapters: Map<String, Chapter> = emptyMap(),
-        /** The History entry of the folder read last, if any. */
-        val lastRead: HistoryWithRelations? = null,
+        /** How far the files of [folder] were read, by their URI. */
+        val history: Map<String, DirectoryHistory> = emptyMap(),
+        /** The file read last, if any. */
+        val lastRead: DirectoryHistory? = null,
         val isRefreshing: Boolean = false,
         val isOpening: Boolean = false,
     ) {
@@ -266,7 +248,7 @@ class DirectoryViewModel(
     }
 
     sealed interface Event {
-        data class OpenChapter(val chapter: Chapter) : Event
+        data class OpenFile(val folderUri: String, val folderName: String, val fileUri: String) : Event
         data class OpenFailed(val message: String?) : Event
         data object NoNextChapter : Event
     }
