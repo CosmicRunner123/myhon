@@ -1,0 +1,62 @@
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+
+CREATE TABLE directory_history(
+    uri TEXT NOT NULL PRIMARY KEY,
+    folder_uri TEXT NOT NULL,
+    folder_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    last_modified INTEGER NOT NULL,
+    size INTEGER NOT NULL,
+    last_page_read INTEGER AS Int NOT NULL,
+    read INTEGER AS Boolean NOT NULL,
+    last_read INTEGER AS Instant NOT NULL
+);
+
+CREATE INDEX directory_history_folder_uri_index ON directory_history(folder_uri);
+CREATE INDEX directory_history_last_read_index ON directory_history(last_read);
+
+getByUri:
+SELECT uri, folder_uri, folder_name, name, last_modified, size, last_page_read, read, last_read
+FROM directory_history
+WHERE uri = :uri;
+
+getByFolderUri:
+SELECT uri, folder_uri, folder_name, name, last_modified, size, last_page_read, read, last_read
+FROM directory_history
+WHERE folder_uri = :folderUri;
+
+getLatest:
+SELECT uri, folder_uri, folder_name, name, last_modified, size, last_page_read, read, last_read
+FROM directory_history
+ORDER BY last_read DESC
+LIMIT 1;
+
+getHistory:
+SELECT uri, folder_uri, folder_name, name, last_modified, size, last_page_read, read, last_read
+FROM directory_history
+WHERE lower(name) LIKE ('%' || :query || '%')
+ORDER BY last_read DESC;
+
+upsert:
+INSERT INTO directory_history(
+    uri, folder_uri, folder_name, name, last_modified, size, last_page_read, read, last_read
+)
+VALUES (:uri, :folderUri, :folderName, :name, :lastModified, :size, :lastPageRead, :read, :lastRead)
+ON CONFLICT(uri) DO UPDATE SET
+    folder_uri = excluded.folder_uri,
+    folder_name = excluded.folder_name,
+    name = excluded.name,
+    last_modified = excluded.last_modified,
+    size = excluded.size,
+    last_page_read = excluded.last_page_read,
+    read = excluded.read,
+    last_read = excluded.last_read;
+
+remove:
+DELETE FROM directory_history
+WHERE uri = :uri;
+
+removeAll:
+DELETE FROM directory_history;

@@ -147,7 +147,8 @@ class BackupRestorer(
             .filter { backupManga ->
                 backupManga.isRestorable().also { restorable ->
                     if (!restorable) {
-                        addError(backupManga, skippedReason)
+                        // Older backups hold directory view's hidden entries, which were never library series
+                        if (backupManga.source != DirectorySource.ID) addError(backupManga, skippedReason)
                         restoreProgress.incrementAndFetch()
                     }
                 }
@@ -234,6 +235,6 @@ class BackupRestorer(
 /**
  * Series of any other source can't be read by this app.
  */
-internal fun isRestorableSource(sourceId: Long): Boolean = sourceId == LocalSource.ID || sourceId == DirectorySource.ID
+internal fun isRestorableSource(sourceId: Long): Boolean = sourceId == LocalSource.ID
 
 internal fun BackupManga.isRestorable(): Boolean = isRestorableSource(source)

@@ -1,0 +1,76 @@
+import kotlin.Boolean;
+import kotlin.Int;
+import kotlin.time.Instant;
+
+-- Directory view keeps the progress of its files and the reader settings of its folders in tables of its own,
+-- instead of in hidden entries of its source (id 1), which move over here and are then removed
+
+CREATE TABLE directory_history(
+    uri TEXT NOT NULL PRIMARY KEY,
+    folder_uri TEXT NOT NULL,
+    folder_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    last_modified INTEGER NOT NULL,
+    size INTEGER NOT NULL,
+    last_page_read INTEGER AS Int NOT NULL,
+    read INTEGER AS Boolean NOT NULL,
+    last_read INTEGER AS Instant NOT NULL
+);
+
+CREATE INDEX directory_history_folder_uri_index ON directory_history(folder_uri);
+CREATE INDEX directory_history_last_read_index ON directory_history(last_read);
+
+CREATE TABLE directory_folders(
+    uri TEXT NOT NULL PRIMARY KEY,
+    viewer_flags INTEGER NOT NULL
+);
+
+-- A chapter keeps no time it last changed, so one without a read time takes the time it was first listed. The file
+-- date 1 stood in for an unknown one, which a listing gives as 0. A file listed under two folder URIs keeps the
+-- entry read last.
+INSERT INTO directory_history(
+    uri, folder_uri, folder_name, name, last_modified, size, last_page_read, read, last_read
+)
+SELECT
+    C.remote_url,
+    M.remote_url,
+    M.remote_title,
+    C.remote_name,
+    coalesce(nullif(C.remote_date_upload, 1), 0),
+    0,
+    C.user_last_page_read,
+    C.user_read,
+    max(coalesce(H.read_at, C.state_date_fetch))
+FROM chapter C
+JOIN manga M
+ON M.id = C.manga_id
+LEFT JOIN history H
+ON H.chapter_id = C.id
+WHERE M.source_id = 1
+AND (C.user_read = 1 OR C.user_last_page_read != 0 OR H.read_at IS NOT NULL)
+GROUP BY C.remote_url;
+
+INSERT INTO directory_folders(uri, viewer_flags)
+SELECT remote_url, user_reader_flags
+FROM manga
+WHERE source_id = 1
+AND user_reader_flags != 0;
+
+-- Foreign keys are off during migrations, so the rows hanging off the entries go explicitly
+DELETE FROM history
+WHERE manga_id IN (SELECT id FROM manga WHERE source_id = 1);
+
+DELETE FROM chapter
+WHERE manga_id IN (SELECT id FROM manga WHERE source_id = 1);
+
+DELETE FROM manga_track
+WHERE manga_id IN (SELECT id FROM manga WHERE source_id = 1);
+
+DELETE FROM manga_category
+WHERE manga_id IN (SELECT id FROM manga WHERE source_id = 1);
+
+DELETE FROM excluded_scanlator
+WHERE manga_id IN (SELECT id FROM manga WHERE source_id = 1);
+
+DELETE FROM manga
+WHERE source_id = 1;

@@ -17,8 +17,8 @@ class BackupRestorerTest {
     }
 
     @Test
-    fun `series of directory view are restored`() {
-        BackupManga(source = DirectorySource.ID, url = "file:///storage/Comics").isRestorable() shouldBe true
+    fun `series of directory view are skipped`() {
+        BackupManga(source = DirectorySource.ID, url = "file:///storage/Comics").isRestorable() shouldBe false
     }
 
     @Test

@@ -88,6 +88,10 @@ object DatabaseBindings {
                 start_dateAdapter = InstantColumnAdapter,
                 finish_dateAdapter = InstantColumnAdapter,
             ),
+            directory_historyAdapter = Directory_history.Adapter(
+                last_page_readAdapter = IntColumnAdapter,
+                last_readAdapter = InstantColumnAdapter,
+            ),
         )
     }
 }
