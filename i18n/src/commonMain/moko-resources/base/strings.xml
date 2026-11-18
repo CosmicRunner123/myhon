@@ -452,6 +452,13 @@
     <string name="pref_storage_location_usage_info">Used for automatic backups and local source.</string>
     <string name="no_location_set">No storage location set</string>
     <string name="invalid_location">Invalid location: %s</string>
+    <string name="pref_series_folders">Series folders</string>
+    <string name="pref_series_folders_default">Default folder</string>
+    <string name="pref_series_folders_default_summary">The \"local\" folder of the storage location</string>
+    <string name="pref_series_folders_add">Add folder</string>
+    <string name="pref_series_folders_info">Each folder holds one folder per series. Series with the same folder name in several folders are merged.</string>
+    <string name="series_folder_remove_title">Remove folder?</string>
+    <string name="series_folder_remove_message">%s\n\nSeries found only in this folder leave the library. No files are deleted.</string>
     <string name="pref_create_backup">Create backup</string>
     <string name="pref_restore_backup">Restore backup</string>
     <string name="pref_backup_interval">Automatic backup frequency</string>
@@ -571,6 +578,7 @@
     <string name="chapter_not_found">Chapter not found</string>
     <string name="local_invalid_format">Invalid chapter format</string>
     <string name="local_series_folder_not_found">Series folder not found</string>
+    <string name="local_series_folders_unavailable">Not all series folders are available</string>
 
     <!-- Manga info -->
     <string name="ongoing">Ongoing</string>
@@ -774,7 +782,7 @@
     <!-- Information Text -->
     <string name="information_no_recent">No recent updates</string>
     <string name="information_no_recent_manga">Nothing read recently</string>
-    <string name="information_empty_local_library">Your library is empty. Put each series in its own folder inside the \"local\" folder of the storage location, then update the library.</string>
+    <string name="information_empty_library_folders">Your library is empty. Put each series in its own folder inside the \"local\" folder of the storage location and update the library, or add your series folders in the Data and storage settings.</string>
     <string name="information_no_manga_category">Category is empty</string>
     <string name="information_no_entries_found">No entries found in this category</string>
     <string name="getting_started_guide">Getting started guide</string>

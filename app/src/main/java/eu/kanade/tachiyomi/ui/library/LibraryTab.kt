@@ -152,7 +152,7 @@ data object LibraryTab : Tab {
                 state.searchQuery.isNullOrEmpty() && !state.hasActiveFilters && state.isLibraryEmpty -> {
                     val handler = LocalUriHandler.current
                     EmptyScreen(
-                        stringRes = MR.strings.information_empty_local_library,
+                        stringRes = MR.strings.information_empty_library_folders,
                         modifier = Modifier.padding(contentPadding),
                         actions = listOf(
                             EmptyScreenAction(

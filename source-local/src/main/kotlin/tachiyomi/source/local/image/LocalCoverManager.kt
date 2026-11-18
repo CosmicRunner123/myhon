@@ -21,25 +21,31 @@ class LocalCoverManager(
     private val fileSystem: LocalSourceFileSystem,
 ) {
 
-    fun find(mangaUrl: String): UniFile? {
-        return fileSystem.getFilesInMangaDirectory(mangaUrl)
-            // Get all file whose names start with "cover"
-            .filter { it.isFile && it.nameWithoutExtension.equals("cover", ignoreCase = true) }
-            // Get the first actual image
-            .firstOrNull { ImageUtil.isImage(it.name) { it.openInputStream() } }
+    /**
+     * The cover in the first of [mangaDirectories] that has one.
+     */
+    fun find(mangaDirectories: List<UniFile>): UniFile? {
+        return mangaDirectories.firstNotNullOfOrNull { directory ->
+            directory.listFiles().orEmpty()
+                // Get all file whose names start with "cover"
+                .filter { it.isFile && it.nameWithoutExtension.equals("cover", ignoreCase = true) }
+                // Get the first actual image
+                .firstOrNull { ImageUtil.isImage(it.name) { it.openInputStream() } }
+        }
     }
 
     fun update(
         manga: SManga,
         inputStream: InputStream,
     ): UniFile? {
-        val directory = fileSystem.getMangaDirectory(manga.url)
+        // Written to the first folder of the series, where it takes precedence over a cover in a later one
+        val directory = fileSystem.getMangaDirectories(manga.url).firstOrNull()
         if (directory == null) {
             inputStream.close()
             return null
         }
 
-        val targetFile = find(manga.url) ?: directory.createFile(DEFAULT_COVER_NAME)!!
+        val targetFile = find(listOf(directory)) ?: directory.createFile(DEFAULT_COVER_NAME)!!
 
         inputStream.use { input ->
             targetFile.openOutputStream().use { output ->

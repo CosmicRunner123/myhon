@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 class StorageManager(
     @AppCoroutineScope private val scope: CoroutineScope,
     private val context: Context,
-    storagePreferences: StoragePreferences,
+    private val storagePreferences: StoragePreferences,
 ) {
 
     @Volatile
@@ -52,6 +52,12 @@ class StorageManager(
                 _changes.send(Unit)
             }
             .launchIn(scope)
+
+        storagePreferences.localSourceDirectories.changes()
+            .drop(1)
+            .distinctUntilChanged()
+            .onEach { _changes.send(Unit) }
+            .launchIn(scope)
     }
 
     private fun getBaseDir(uri: String): UniFile? {
@@ -63,8 +69,14 @@ class StorageManager(
         return getChildDirectory(AUTOMATIC_BACKUPS_PATH)
     }
 
-    fun getLocalSourceDirectory(): UniFile? {
-        return getChildDirectory(LOCAL_SOURCE_PATH)
+    /**
+     * The folders series are read from, in precedence order: the "local" folder of the storage location, then
+     * the folders the user added, sorted by URI. A folder that can't be reached now is null.
+     */
+    fun getLocalSourceDirectories(): List<UniFile?> {
+        val addedDirectories = storagePreferences.localSourceDirectories.get().sorted()
+            .map { uri -> UniFile.fromUri(context, uri.toUri())?.takeIf { it.exists() } }
+        return listOf(getChildDirectory(LOCAL_SOURCE_PATH)) + addedDirectories
     }
 
     private fun getChildDirectory(name: String): UniFile? {

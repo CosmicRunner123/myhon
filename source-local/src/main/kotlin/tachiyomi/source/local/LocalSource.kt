@@ -64,17 +64,15 @@ class LocalSource(
 
     override fun toString() = name
 
-    /**
-     * Names of the series folders, or null when the local folder could not be listed.
-     */
-    suspend fun getSeriesNames(): List<String>? = withContext(Dispatchers.IO) {
-        val directory = fileSystem.getBaseDirectory()
-        directory?.listFiles()
-            ?.filter { !it.name.orEmpty().startsWith('.') && it.isDirectory }
-            ?.mapNotNull { it.name }
-            ?.distinct()
-            // UniFile answers a failed query with "no files" and "not a directory"
-            ?.takeIf { directory.exists() }
+    suspend fun getSeriesListing(): SeriesListing = withContext(Dispatchers.IO) {
+        val namesByBaseDirectory = fileSystem.getBaseDirectories().map { directory ->
+            directory?.listFiles()
+                ?.filter { !it.name.orEmpty().startsWith('.') && it.isDirectory }
+                ?.mapNotNull { it.name }
+                // UniFile answers a failed query with "no files" and "not a directory"
+                ?.takeIf { directory.exists() }
+        }
+        mergeSeriesNames(namesByBaseDirectory)
     }
 
     override suspend fun getMangaUpdate(
@@ -83,21 +81,25 @@ class LocalSource(
         fetchDetails: Boolean,
         fetchChapters: Boolean,
     ): SMangaUpdate = supervisorScope {
-        val asyncManga = if (fetchDetails) async { getMangaDetails(manga) } else null
-        val asyncChapters = if (fetchChapters) async { getChapterList(manga) } else null
+        val baseDirs = withContext(Dispatchers.IO) { fileSystem.getBaseDirectories() }
+        val mangaDirs = withContext(Dispatchers.IO) { fileSystem.getMangaDirectories(manga.url, baseDirs) }
+        val asyncManga = if (fetchDetails) async { getMangaDetails(manga, mangaDirs) } else null
+        val asyncChapters = if (fetchChapters) async { getChapterList(manga, baseDirs, mangaDirs) } else null
         SMangaUpdate(asyncManga?.await() ?: manga, asyncChapters?.await() ?: chapters)
     }
 
     // Manga details related
-    private suspend fun getMangaDetails(manga: SManga): SManga = withContext(Dispatchers.IO) {
-        coverManager.find(manga.url)?.let {
+    private suspend fun getMangaDetails(manga: SManga, mangaDirs: List<UniFile>): SManga = withContext(Dispatchers.IO) {
+        coverManager.find(mangaDirs)?.let {
             manga.thumbnail_url = it.uri.toString()
         }
 
         // Augment manga details based on metadata files
         try {
-            val mangaDir = fileSystem.getMangaDirectory(manga.url) ?: error("${manga.url} is not a valid directory")
-            val mangaDirFiles = mangaDir.listFiles().orEmpty()
+            // The app's own files go to the first folder of the series
+            val mangaDir = mangaDirs.firstOrNull() ?: error("${manga.url} is not a valid directory")
+            // In precedence order, so a file is taken from the first folder that has it
+            val mangaDirFiles = mangaDirs.flatMap { it.listFiles().orEmpty().asList() }
 
             val comicInfoFile = mangaDirFiles
                 .firstOrNull { it.name == COMIC_INFO_FILE }
@@ -216,18 +218,30 @@ class LocalSource(
     }
 
     // Chapters
-    private suspend fun getChapterList(manga: SManga): List<SChapter> = withContext(Dispatchers.IO) {
-        val mangaDir = fileSystem.getMangaDirectory(manga.url)
-        val chapterFiles = mangaDir?.listFiles()
-            // Only keep supported formats
-            ?.filterNot { it.name.orEmpty().startsWith('.') }
-            ?.filter { it.isDirectory || Archive.isSupported(it) || it.extension.equals("epub", true) }
-            // The chapter sync deletes the chapters that are not listed, and UniFile answers a failed query
-            // with "no files" and "not a directory"
-            ?.takeIf { mangaDir.exists() }
-            ?: throw Exception(context.stringResource(MR.strings.local_series_folder_not_found))
+    private suspend fun getChapterList(
+        manga: SManga,
+        baseDirs: List<UniFile?>,
+        mangaDirs: List<UniFile>,
+    ): List<SChapter> = withContext(Dispatchers.IO) {
+        val filesByMangaDir = mangaDirs.map { mangaDir ->
+            mangaDir.listFiles()
+                // Only keep supported formats
+                ?.filterNot { it.name.orEmpty().startsWith('.') }
+                ?.filter { it.isDirectory || Archive.isSupported(it) || it.extension.equals("epub", true) }
+                // UniFile answers a failed query with "no files" and "not a directory"
+                ?.takeIf { mangaDir.exists() }
+        }
+        // The chapter sync deletes the chapters that are not listed, so nothing is listed unless every base
+        // directory could be reached when mangaDirs were looked up in it (else it is null) and still can be now,
+        // and every folder of the series could be read
+        if (baseDirs.any { it?.exists() != true }) {
+            throw Exception(context.stringResource(MR.strings.local_series_folders_unavailable))
+        }
+        if (filesByMangaDir.isEmpty() || null in filesByMangaDir) {
+            throw Exception(context.stringResource(MR.strings.local_series_folder_not_found))
+        }
 
-        val chapters = chapterFiles
+        val chapters = mergeSeriesFiles(filesByMangaDir.filterNotNull()) { it.name }
             .map { chapterFile ->
                 SChapter.create().apply {
                     url = "${manga.url}/${chapterFile.name}"
@@ -276,9 +290,8 @@ class LocalSource(
     fun getFormat(chapter: SChapter): Format {
         try {
             val (mangaDirName, chapterName) = chapter.url.split('/', limit = 2)
-            return fileSystem.getBaseDirectory()
-                ?.findFile(mangaDirName)
-                ?.findFile(chapterName)
+            return fileSystem.getMangaDirectories(mangaDirName)
+                .firstNotNullOfOrNull { it.findFile(chapterName) }
                 ?.let(Format.Companion::valueOf)
                 ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
         } catch (e: Format.UnknownFormatException) {
@@ -335,3 +348,30 @@ class LocalSource(
 }
 
 fun Manga.isLocal(): Boolean = source == LocalSource.ID
+
+/**
+ * The series found in the base directories that could be listed.
+ *
+ * @param complete false when a base directory could not be listed, so [names] may lack series.
+ */
+data class SeriesListing(val names: List<String>, val complete: Boolean)
+
+/**
+ * Series folders with the same name in several base directories are one series.
+ *
+ * @param namesByBaseDirectory the series folder names of each base directory, null where it could not be listed.
+ */
+internal fun mergeSeriesNames(namesByBaseDirectory: List<List<String>?>): SeriesListing {
+    return SeriesListing(
+        names = namesByBaseDirectory.filterNotNull().flatten().distinct(),
+        complete = null !in namesByBaseDirectory,
+    )
+}
+
+/**
+ * Merges the files of the folders of one series, given in precedence order: of the files with the same name, the
+ * one in the first folder is kept.
+ */
+internal fun <T> mergeSeriesFiles(filesByFolder: List<List<T>>, name: (T) -> String?): List<T> {
+    return filesByFolder.flatten().distinctBy(name)
+}

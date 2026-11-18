@@ -10,6 +10,7 @@ import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.source.local.LocalSource
+import tachiyomi.source.local.SeriesListing
 import kotlin.time.Instant
 
 @Execution(ExecutionMode.CONCURRENT)
@@ -18,7 +19,7 @@ class SyncLocalLibraryTest {
     @Test
     fun `series without a library entry are added`() {
         val changes = localLibraryChanges(
-            seriesNames = listOf("One", "Two", "Three"),
+            series = SeriesListing(listOf("One", "Two", "Three"), complete = true),
             favorites = listOf(entry(1, "Two")),
         )
 
@@ -31,7 +32,7 @@ class SyncLocalLibraryTest {
         val gone = entry(2, "Two")
 
         val changes = localLibraryChanges(
-            seriesNames = listOf("One"),
+            series = SeriesListing(listOf("One"), complete = true),
             favorites = listOf(entry(1, "One"), gone),
         )
 
@@ -40,19 +41,19 @@ class SyncLocalLibraryTest {
     }
 
     @Test
-    fun `an empty local folder removes every local entry`() {
+    fun `empty folders remove every local entry`() {
         val favorites = listOf(entry(1, "One"), entry(2, "Two"))
 
-        val changes = localLibraryChanges(seriesNames = emptyList(), favorites = favorites)
+        val changes = localLibraryChanges(SeriesListing(emptyList(), complete = true), favorites)
 
         changes.toAdd.shouldBeEmpty()
         changes.toRemove shouldContainExactly favorites
     }
 
     @Test
-    fun `nothing changes when the series could not be listed`() {
+    fun `nothing changes when no folder could be listed`() {
         val changes = localLibraryChanges(
-            seriesNames = null,
+            series = SeriesListing(emptyList(), complete = false),
             favorites = listOf(entry(1, "One"), entry(2, "Two")),
         )
 
@@ -61,9 +62,20 @@ class SyncLocalLibraryTest {
     }
 
     @Test
+    fun `an incomplete listing adds series and removes none`() {
+        val changes = localLibraryChanges(
+            series = SeriesListing(listOf("One", "Three"), complete = false),
+            favorites = listOf(entry(1, "One"), entry(2, "Two")),
+        )
+
+        changes.toAdd shouldContainExactly listOf("Three")
+        changes.toRemove.shouldBeEmpty()
+    }
+
+    @Test
     fun `a library that mirrors the folders needs no change`() {
         val changes = localLibraryChanges(
-            seriesNames = listOf("One", "Two"),
+            series = SeriesListing(listOf("One", "Two"), complete = true),
             favorites = listOf(entry(2, "Two"), entry(1, "One")),
         )
 
@@ -74,7 +86,7 @@ class SyncLocalLibraryTest {
     @Test
     fun `entries of other sources are left alone`() {
         val changes = localLibraryChanges(
-            seriesNames = listOf("One"),
+            series = SeriesListing(listOf("One"), complete = true),
             favorites = listOf(entry(1, "One", source = 42), entry(2, "Two", source = 42)),
         )
 

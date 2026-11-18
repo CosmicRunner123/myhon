@@ -1,8 +1,10 @@
 package eu.kanade.presentation.more.settings.screen
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +52,7 @@ import eu.kanade.tachiyomi.data.backup.create.BackupCreateWorker
 import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreWorker
 import eu.kanade.tachiyomi.data.export.LibraryExporter
 import eu.kanade.tachiyomi.data.export.LibraryExporter.ExportOptions
+import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
 import eu.kanade.tachiyomi.util.system.DeviceUtil
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.system.workManager
@@ -59,6 +63,8 @@ import mihon.app.di.appGraph
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.Help
 import tachiyomi.core.common.i18n.stringResource
+import tachiyomi.core.common.preference.minusAssign
+import tachiyomi.core.common.preference.plusAssign
 import tachiyomi.core.common.storage.displayablePath
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.backup.service.BackupPreferences
@@ -99,6 +105,7 @@ object SettingsDataScreen : SearchableSettings {
             getStorageLocationPref(storagePreferences = storagePreferences),
             Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_storage_location_usage_info)),
 
+            getSeriesFoldersGroup(storagePreferences = storagePreferences),
             getBackupAndRestoreGroup(backupPreferences = backupPreferences),
             getDataGroup(),
             getExportGroup(),
@@ -106,9 +113,7 @@ object SettingsDataScreen : SearchableSettings {
     }
 
     @Composable
-    fun storageLocationPicker(
-        storageDirPref: tachiyomi.core.common.preference.Preference<String>,
-    ): ManagedActivityResultLauncher<Uri?, Uri?> {
+    fun folderPicker(onPick: (String) -> Unit): ManagedActivityResultLauncher<Uri?, Uri?> {
         val context = LocalContext.current
 
         return rememberLauncherForActivityResult(
@@ -131,7 +136,7 @@ object SettingsDataScreen : SearchableSettings {
                 }
 
                 UniFile.fromUri(context, uri)?.let {
-                    storageDirPref.set(it.uri.toString())
+                    onPick(it.uri.toString())
                 }
             }
         }
@@ -159,7 +164,7 @@ object SettingsDataScreen : SearchableSettings {
         storagePreferences: StoragePreferences,
     ): Preference.PreferenceItem.TextPreference {
         val context = LocalContext.current
-        val pickStorageLocation = storageLocationPicker(storagePreferences.baseStorageDirectory)
+        val pickStorageLocation = folderPicker(storagePreferences.baseStorageDirectory::set)
 
         return Preference.PreferenceItem.TextPreference(
             title = stringResource(MR.strings.pref_storage_location),
@@ -172,6 +177,107 @@ object SettingsDataScreen : SearchableSettings {
                 }
             },
         )
+    }
+
+    @Composable
+    private fun getSeriesFoldersGroup(storagePreferences: StoragePreferences): Preference.PreferenceGroup {
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+
+        val foldersPref = storagePreferences.localSourceDirectories
+        val folders by foldersPref.collectAsState()
+        val folderPaths = remember(folders) {
+            folders.sorted().associateWith { UniFile.fromUri(context, it.toUri())?.displayablePath ?: it }
+        }
+        var folderToRemove by rememberSaveable { mutableStateOf<String?>(null) }
+
+        // Only a library update adds or drops the chapters of the series that are in several folders
+        val updateLibrary = { scope.launch { LibraryUpdateWorker.startNow(context.workManager) } }
+
+        val pickFolder = folderPicker { folder ->
+            if (folder !in foldersPref.get()) {
+                foldersPref += folder
+                updateLibrary()
+            }
+        }
+
+        folderToRemove?.let { folder ->
+            AlertDialog(
+                onDismissRequest = { folderToRemove = null },
+                title = {
+                    Text(text = stringResource(MR.strings.series_folder_remove_title))
+                },
+                text = {
+                    Text(text = stringResource(MR.strings.series_folder_remove_message, folderPaths[folder] ?: folder))
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            foldersPref -= folder
+                            if (folder != storagePreferences.baseStorageDirectory.get()) {
+                                releaseFolderPermission(context, folder)
+                            }
+                            updateLibrary()
+                            folderToRemove = null
+                        },
+                    ) {
+                        Text(text = stringResource(MR.strings.action_remove))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { folderToRemove = null }) {
+                        Text(text = stringResource(MR.strings.action_cancel))
+                    }
+                },
+            )
+        }
+
+        return Preference.PreferenceGroup(
+            title = stringResource(MR.strings.pref_series_folders),
+            preferenceItems = buildList {
+                add(
+                    Preference.PreferenceItem.TextPreference(
+                        title = stringResource(MR.strings.pref_series_folders_default),
+                        subtitle = stringResource(MR.strings.pref_series_folders_default_summary),
+                    ),
+                )
+                folderPaths.forEach { (folder, path) ->
+                    add(
+                        Preference.PreferenceItem.TextPreference(
+                            title = path,
+                            onClick = { folderToRemove = folder },
+                        ),
+                    )
+                }
+                add(
+                    Preference.PreferenceItem.TextPreference(
+                        title = stringResource(MR.strings.pref_series_folders_add),
+                        onClick = {
+                            try {
+                                pickFolder.launch(null)
+                            } catch (e: ActivityNotFoundException) {
+                                context.toast(MR.strings.file_picker_error)
+                            }
+                        },
+                    ),
+                )
+                add(Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_series_folders_info)))
+            },
+        )
+    }
+
+    private fun releaseFolderPermission(context: Context, folder: String) {
+        val uri = folder.toUri()
+        val treeUri = DocumentsContract.buildTreeDocumentUri(uri.authority, DocumentsContract.getTreeDocumentId(uri))
+        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
+        // Thrown when no permission is held, as on the devices where the picker could not take one
+        try {
+            context.contentResolver.releasePersistableUriPermission(treeUri, flags)
+        } catch (e: SecurityException) {
+            logcat(LogPriority.ERROR, e)
+        }
     }
 
     @Composable

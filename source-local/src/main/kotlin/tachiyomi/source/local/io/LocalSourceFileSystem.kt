@@ -12,17 +12,19 @@ class LocalSourceFileSystem(
     private val storageManager: StorageManager,
 ) {
 
-    fun getBaseDirectory(): UniFile? {
-        return storageManager.getLocalSourceDirectory()
+    /**
+     * The folders that hold series, in precedence order. A folder that can't be reached now is null.
+     */
+    fun getBaseDirectories(): List<UniFile?> {
+        return storageManager.getLocalSourceDirectories()
     }
 
-    fun getMangaDirectory(name: String): UniFile? {
-        return getBaseDirectory()
-            ?.findFile(name)
-            ?.takeIf { it.isDirectory }
-    }
-
-    fun getFilesInMangaDirectory(name: String): List<UniFile> {
-        return getMangaDirectory(name)?.listFiles().orEmpty().toList()
+    /**
+     * The folders of the series [name] in those of [baseDirectories] that can be reached, in precedence order.
+     */
+    fun getMangaDirectories(name: String, baseDirectories: List<UniFile?> = getBaseDirectories()): List<UniFile> {
+        return baseDirectories.mapNotNull { baseDirectory ->
+            baseDirectory?.findFile(name)?.takeIf { it.isDirectory }
+        }
     }
 }

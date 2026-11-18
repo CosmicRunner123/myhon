@@ -27,6 +27,7 @@ import tachiyomi.domain.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.source.local.LocalSource
+import tachiyomi.source.local.SeriesListing
 import tachiyomi.source.local.isLocal
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -52,7 +53,7 @@ class SyncLocalLibrary(
 
     suspend operator fun invoke() = withContext(Dispatchers.IO) {
         mutex.withLock {
-            val changes = localLibraryChanges(localSource.getSeriesNames(), getFavorites.await())
+            val changes = localLibraryChanges(localSource.getSeriesListing(), getFavorites.await())
 
             if (changes.toRemove.isNotEmpty()) {
                 updateManga.awaitAll(changes.toRemove.map { MangaUpdate(it.id) { favoriteAt = null } })
@@ -103,18 +104,14 @@ internal data class LocalLibraryChanges(
     val toRemove: List<Manga>,
 )
 
-/**
- * @param seriesNames the series folders of the local source, or null when they could not be listed.
- */
-internal fun localLibraryChanges(seriesNames: List<String>?, favorites: List<Manga>): LocalLibraryChanges {
-    if (seriesNames == null) return LocalLibraryChanges(toAdd = emptyList(), toRemove = emptyList())
-
+internal fun localLibraryChanges(series: SeriesListing, favorites: List<Manga>): LocalLibraryChanges {
     val localFavorites = favorites.filter { it.isLocal() }
     val favoriteNames = localFavorites.mapTo(HashSet()) { it.url }
-    val listedNames = seriesNames.toHashSet()
+    val listedNames = series.names.toHashSet()
     return LocalLibraryChanges(
-        toAdd = seriesNames.filterNot { it in favoriteNames },
-        toRemove = localFavorites.filterNot { it.url in listedNames },
+        toAdd = series.names.filterNot { it in favoriteNames },
+        // An entry that isn't listed may be in a folder that could not be reached
+        toRemove = if (series.complete) localFavorites.filterNot { it.url in listedNames } else emptyList(),
     )
 }
 

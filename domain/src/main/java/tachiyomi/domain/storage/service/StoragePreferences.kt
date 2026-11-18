@@ -18,4 +18,9 @@ class StoragePreferences(
         Preference.appStateKey("storage_dir"),
         folderProvider.path(),
     )
+
+    val localSourceDirectories: Preference<Set<String>> = preferenceStore.getStringSet(
+        Preference.appStateKey("local_source_dirs"),
+        emptySet(),
+    )
 }
