@@ -119,7 +119,7 @@ class LocalSource(
             val noXmlFile = files
                 .firstOrNull { it.name == ".noxml" }
             val legacyJsonDetailsFile = files
-                .firstOrNull { it.extension == "json" }
+                .firstOrNull { it.name.equals("details.json", ignoreCase = true) }
 
             when {
                 // Top level ComicInfo.xml
