@@ -57,9 +57,10 @@ The storage location chosen during setup holds:
 You can change it in **Settings → Data and storage → Storage location**. Series are read in place; Myhon never moves
 or deletes your files.
 
-Inside a series folder, Myhon may write `cover.jpg` (when you set a cover), `ComicInfo.xml` (when it converts an old
-`details.json` or saves the metadata of an archive), `.noxml` and a `.nomedia` file. To keep series folders free of
-these files, see [Covers and metadata folder](#covers-and-metadata-folder).
+Inside a series folder, Myhon may write `cover.jpg` (when you set a cover, or taken from the first chapter when the
+series has no cover), `ComicInfo.xml` (when it converts an old `details.json` or saves the metadata of an archive),
+`.noxml` and a `.nomedia` file. To keep series folders free of these files, see
+[Covers and metadata folder](#covers-and-metadata-folder).
 
 ## Series folders
 
