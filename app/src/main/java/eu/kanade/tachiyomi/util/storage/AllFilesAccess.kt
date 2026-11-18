@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -32,8 +34,8 @@ fun rememberAllFilesAccess(): Boolean {
 }
 
 /**
- * Asks for [hasAllFilesAccess]: on Android 11+ in the system settings, below with the permission dialog. Either way
- * the screen resumes when the user is done.
+ * Asks for [hasAllFilesAccess]: on Android 11+ in the system settings, below with the permission dialog, or in the
+ * app's settings once that was denied for good. Either way the screen resumes when the user is done.
  */
 @Composable
 fun rememberAllFilesAccessRequest(): () -> Unit {
@@ -57,6 +59,20 @@ fun rememberAllFilesAccessRequest(): () -> Unit {
             }
         }
     }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-    return remember(launcher) { { launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE) } }
+    val activity = LocalActivity.current
+    val permission = Manifest.permission.READ_EXTERNAL_STORAGE
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        // After "Don't ask again" the dialog is denied without showing, and only then no rationale is due
+        if (granted || activity == null || ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
+            return@rememberLauncherForActivityResult
+        }
+        try {
+            context.startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri()),
+            )
+        } catch (e: ActivityNotFoundException) {
+            context.toast(MR.strings.battery_optimization_setting_activity_not_found)
+        }
+    }
+    return remember(launcher) { { launcher.launch(permission) } }
 }
