@@ -18,6 +18,8 @@ trackers and backups, and changes the rest:
 * **Local series only.** Extensions, online sources, Browse, global search, migration, downloads and WebView are gone.
 * **The library fills itself.** Every series in your series folders is added to the library, which is the first
   screen; there is no "add to library" step.
+* **Or no library at all:** [Directory view](#directory-view) lets you browse your folders like a file explorer and
+  open comic files directly.
 * **Several series folders**, merged into one library.
 * **An optional folder for covers and metadata**, so the series folders stay untouched.
 * **Background music** from audio files inside a chapter.
@@ -26,8 +28,9 @@ trackers and backups, and changes the rest:
 ## Getting started
 
 1. Install the APK and open Myhon.
-2. During setup, pick a **storage location**: any folder you like, for example `Documents/Myhon`. Myhon creates a
-   `local` folder in it.
+2. During setup, choose how to open your comics: with the **Library** (the default) or in
+   [**Directory view**](#directory-view). Then pick a **storage location**: any folder you like, for example
+   `Documents/Myhon`. Myhon creates a `local` folder in it.
 3. Put each series in its own folder inside `local`, with one chapter per entry:
 
    ```
@@ -45,7 +48,8 @@ trackers and backups, and changes the rest:
 
    A chapter can be a folder of images, an archive (`zip`, `cbz`, `rar`, `cbr`, `7z`, `cb7`, `tar`, `cbt`) or an
    `epub`.
-4. Open the Library. Your series appear on their own; pull down to update the library after you add chapters.
+4. In library view, open the Library. Your series appear on their own; pull down to update the library after you add
+   chapters. In directory view, open **Folders** and browse to a comic file instead.
 
 ## Storage
 
