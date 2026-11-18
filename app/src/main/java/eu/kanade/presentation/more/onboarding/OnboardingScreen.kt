@@ -35,6 +35,8 @@ fun OnboardingScreen(
     val steps = remember {
         listOf(
             ThemeStep(),
+            // Before the storage location is picked, which starts a library update outside directory view
+            ViewModeStep(),
             StorageStep(),
             PermissionStep(),
             GuidesStep(onRestoreBackup = onRestoreBackup),

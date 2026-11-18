@@ -16,7 +16,11 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
@@ -26,6 +30,7 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
+import eu.kanade.tachiyomi.ui.directory.DirectoryTab
 import eu.kanade.tachiyomi.ui.history.HistoryTab
 import eu.kanade.tachiyomi.ui.library.LibraryTab
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
@@ -34,8 +39,10 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import mihon.app.di.appGraph
 import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
+import tachiyomi.presentation.core.util.collectAsState
 
 object HomeScreen : Screen() {
 
@@ -49,19 +56,23 @@ object HomeScreen : Screen() {
     @Suppress("ConstPropertyName")
     private const val TabNavigatorKey = "HomeTabs"
 
-    private val TABS = listOf(
-        LibraryTab,
-        HistoryTab,
-        MoreTab,
-    )
-
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val context = LocalContext.current
+        val directoryView by remember { context.appGraph.storagePreferences.directoryView }.collectAsState()
+        val firstTab = if (directoryView) DirectoryTab else LibraryTab
+        val tabs = remember(firstTab) { listOf(firstTab, HistoryTab, MoreTab) }
         TabNavigator(
-            tab = LibraryTab,
+            tab = firstTab,
             key = TabNavigatorKey,
         ) { tabNavigator ->
+            // The first tab of the other view mode, as saved before the mode changed, is replaced without showing it
+            val shownTab = tabNavigator.current.takeUnless { it == LibraryTab || it == DirectoryTab } ?: firstTab
+            LaunchedEffect(shownTab) {
+                if (tabNavigator.current != shownTab) tabNavigator.current = shownTab
+            }
+
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
                 val tabletUi = isTabletUi()
@@ -91,11 +102,11 @@ object HomeScreen : Screen() {
                     ),
                     navigationItemVerticalArrangement = Arrangement.Center,
                     navigationItems = {
-                        TABS.fastForEach { NavigationSuiteItem(it, navigationSuiteType) }
+                        tabs.fastForEach { NavigationSuiteItem(it, navigationSuiteType) }
                     },
                 ) {
                     AnimatedContent(
-                        targetState = tabNavigator.current,
+                        targetState = shownTab,
                         transitionSpec = {
                             materialFadeThroughIn(
                                 initialScale = 1f,
@@ -111,21 +122,22 @@ object HomeScreen : Screen() {
                 }
             }
 
-            val goToLibraryTab = { tabNavigator.current = LibraryTab }
+            val currentFirstTab by rememberUpdatedState(firstTab)
+            val goToFirstTab = { tabNavigator.current = currentFirstTab }
 
-            BackHandler(enabled = tabNavigator.current != LibraryTab, onBack = goToLibraryTab)
+            BackHandler(enabled = tabNavigator.current != firstTab, onBack = goToFirstTab)
 
             LaunchedEffect(Unit) {
                 launch {
                     librarySearchEvent.receiveAsFlow().collectLatest {
-                        goToLibraryTab()
+                        goToFirstTab()
                         LibraryTab.search(it)
                     }
                 }
                 launch {
                     openTabEvent.receiveAsFlow().collectLatest {
                         tabNavigator.current = when (it) {
-                            is Tab.Library -> LibraryTab
+                            is Tab.Library -> currentFirstTab
                             Tab.History -> HistoryTab
                         }
 
@@ -187,6 +199,9 @@ object HomeScreen : Screen() {
     }
 
     sealed interface Tab {
+        /**
+         * The first tab: the library, or the folders in directory view.
+         */
         data class Library(val mangaIdToOpen: Long? = null) : Tab
         data object History : Tab
     }

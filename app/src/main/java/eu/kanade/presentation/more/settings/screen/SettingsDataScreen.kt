@@ -163,14 +163,19 @@ object SettingsDataScreen : SearchableSettings {
     /**
      * Starts an update of every library entry. After a folder change, only a library update adds or drops the
      * chapters of the series that stay in the library, including those kept out of updates, and finds or makes their
-     * covers again.
+     * covers again. Does nothing in directory view, which keeps no library.
      */
     @Composable
     private fun libraryUpdater(): () -> Unit {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
+        val directoryViewPref = remember { context.appGraph.storagePreferences.directoryView }
 
-        return { scope.launch { LibraryUpdateWorker.startNow(context.workManager, allEntries = true) } }
+        return {
+            if (!directoryViewPref.get()) {
+                scope.launch { LibraryUpdateWorker.startNow(context.workManager, allEntries = true) }
+            }
+        }
     }
 
     @Composable
@@ -213,6 +218,9 @@ object SettingsDataScreen : SearchableSettings {
     @Composable
     private fun getSeriesFoldersGroup(storagePreferences: StoragePreferences): Preference.PreferenceGroup {
         val context = LocalContext.current
+
+        val directoryViewPref = storagePreferences.directoryView
+        val directoryView by directoryViewPref.collectAsState()
 
         val foldersPref = storagePreferences.localSourceDirectories
         val folders by foldersPref.collectAsState()
@@ -260,8 +268,26 @@ object SettingsDataScreen : SearchableSettings {
         }
 
         return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.pref_series_folders),
+            title = stringResource(
+                if (directoryView) MR.strings.pref_directory_view_folders else MR.strings.pref_series_folders,
+            ),
             preferenceItems = buildList {
+                add(
+                    Preference.PreferenceItem.SwitchPreference(
+                        preference = directoryViewPref,
+                        title = stringResource(MR.strings.pref_directory_view),
+                        subtitle = stringResource(MR.strings.pref_directory_view_summary),
+                        onValueChanged = { enabled ->
+                            // Back in library view, the library catches up with the folders as after a folder
+                            // change. The update does nothing in directory view, so the switch is set first
+                            if (!enabled) {
+                                directoryViewPref.set(false)
+                                updateLibrary()
+                            }
+                            true
+                        },
+                    ),
+                )
                 add(
                     Preference.PreferenceItem.TextPreference(
                         title = stringResource(MR.strings.pref_series_folders_default),
@@ -288,14 +314,28 @@ object SettingsDataScreen : SearchableSettings {
                         },
                     ),
                 )
-                add(Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_series_folders_info)))
-                add(getCoverFolderPref(storagePreferences = storagePreferences))
+                add(
+                    Preference.PreferenceItem.InfoPreference(
+                        stringResource(
+                            if (directoryView) {
+                                MR.strings.pref_directory_view_folders_info
+                            } else {
+                                MR.strings.pref_series_folders_info
+                            },
+                        ),
+                    ),
+                )
+                // Only the library uses it, and directory view writes nothing
+                add(getCoverFolderPref(storagePreferences = storagePreferences, visible = !directoryView))
             },
         )
     }
 
     @Composable
-    private fun getCoverFolderPref(storagePreferences: StoragePreferences): Preference.PreferenceItem.TextPreference {
+    private fun getCoverFolderPref(
+        storagePreferences: StoragePreferences,
+        visible: Boolean,
+    ): Preference.PreferenceItem.TextPreference {
         val context = LocalContext.current
         val updateLibrary = libraryUpdater()
 
@@ -320,6 +360,7 @@ object SettingsDataScreen : SearchableSettings {
         return Preference.PreferenceItem.TextPreference(
             title = stringResource(MR.strings.pref_cover_folder),
             subtitle = coverFolderPath ?: stringResource(MR.strings.pref_cover_folder_default),
+            visible = visible,
             widget = if (coverFolderPath != null) {
                 {
                     IconButton(onClick = { changeCoverFolder("") }) {

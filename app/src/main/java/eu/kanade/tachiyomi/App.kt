@@ -39,6 +39,7 @@ import eu.kanade.tachiyomi.data.coil.ImageDecoder
 import eu.kanade.tachiyomi.data.coil.MangaCoverFetcher
 import eu.kanade.tachiyomi.data.coil.MangaCoverKeyer
 import eu.kanade.tachiyomi.data.coil.MangaKeyer
+import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
@@ -50,6 +51,7 @@ import eu.kanade.tachiyomi.util.system.isDebugBuildType
 import eu.kanade.tachiyomi.util.system.notify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import logcat.AndroidLogcatLogger
@@ -67,6 +69,7 @@ import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.widget.WidgetManager
 import java.security.Security
@@ -88,6 +91,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
     @Inject private lateinit var networkPreferences: NetworkPreferences
 
     @Inject private lateinit var uiPreferences: UiPreferences
+
+    @Inject private lateinit var storagePreferences: StoragePreferences
 
     // Lazy: only the image loader uses these, and process starts without UI (workers, receivers) never build it
     @Inject private lateinit var coverCache: Lazy<CoverCache>
@@ -172,6 +177,13 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         privacyPreferences.crashlytics
             .changes()
             .onEach(TelemetryConfig::setCrashlyticsEnabled)
+            .launchIn(scope)
+
+        // Automatic library updates only run in library view; the migrator sets them up at launch
+        storagePreferences.directoryView
+            .changes()
+            .drop(1)
+            .onEach { LibraryUpdateWorker.setupTask(this) }
             .launchIn(scope)
 
         setAppCompatDelegateThemeMode(uiPreferences.themeMode.get())

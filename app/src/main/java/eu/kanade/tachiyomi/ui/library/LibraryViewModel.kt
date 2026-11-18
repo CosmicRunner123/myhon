@@ -62,6 +62,7 @@ import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.applyFilter
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StorageManager
+import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.domain.track.interactor.GetTracksPerManga
 import tachiyomi.domain.track.model.Track
 import tachiyomi.source.local.isLocal
@@ -83,6 +84,7 @@ class LibraryViewModel(
     private val sourceManager: SourceManager,
     private val trackerManager: TrackerManager,
     storageManager: StorageManager,
+    storagePreferences: StoragePreferences,
     syncLocalLibrary: SyncLocalLibrary,
 ) : ViewModel() {
 
@@ -193,9 +195,12 @@ class LibraryViewModel(
 
     init {
         viewModelScope.launch {
-            storageManager.changes
-                .onStart { emit(Unit) }
-                .collectLatest { syncLocalLibrary() }
+            // Outlives a switch to directory view, after which the folders may have changed
+            combine(
+                storageManager.changes.onStart { emit(Unit) },
+                storagePreferences.directoryView.changes(),
+            ) { _, directoryView -> directoryView }
+                .collectLatest { directoryView -> if (!directoryView) syncLocalLibrary() }
         }
     }
 

@@ -246,12 +246,15 @@ object SettingsAdvancedScreen : SearchableSettings {
     ): Preference.PreferenceGroup {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
+        val directoryView by remember { context.appGraph.storagePreferences.directoryView }.collectAsState()
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.label_library),
             preferenceItems = listOf(
                 Preference.PreferenceItem.TextPreference(
                     title = stringResource(MR.strings.pref_refresh_library_covers),
+                    // It writes covers and details into series folders, which directory view never does
+                    visible = !directoryView,
                     onClick = { scope.launch { MetadataUpdateWorker.startNow(context.workManager) } },
                 ),
                 Preference.PreferenceItem.TextPreference(

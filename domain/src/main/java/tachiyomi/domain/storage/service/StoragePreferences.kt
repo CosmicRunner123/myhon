@@ -25,6 +25,11 @@ class StoragePreferences(
     )
 
     /**
+     * Whether comics are opened by browsing the series folders like a file explorer, instead of from the library.
+     */
+    val directoryView: Preference<Boolean> = preferenceStore.getBoolean("directory_view", false)
+
+    /**
      * The folder the app saves the covers and details of series to, so that it writes nothing into series folders.
      * Empty to save them into the series folders.
      */

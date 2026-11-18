@@ -27,6 +27,7 @@ import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
+import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.source.local.LocalSource
 import tachiyomi.source.local.SeriesListing
 import tachiyomi.source.local.isLocal
@@ -50,10 +51,14 @@ class SyncLocalLibrary(
     private val getChaptersByMangaId: GetChaptersByMangaId,
     private val updateManga: UpdateManga,
     private val libraryPreferences: LibraryPreferences,
+    private val storagePreferences: StoragePreferences,
 ) {
     private val mutex = Mutex()
 
     suspend operator fun invoke() = withContext(Dispatchers.IO) {
+        // Directory view keeps no library, and adding series writes covers and details into their folders
+        if (storagePreferences.directoryView.get()) return@withContext
+
         mutex.withLock {
             val changes = localLibraryChanges(localSource.getSeriesListing(), getFavorites.await())
 

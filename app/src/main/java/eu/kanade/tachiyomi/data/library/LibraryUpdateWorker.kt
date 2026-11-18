@@ -60,6 +60,7 @@ import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.i18n.MR
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
@@ -80,6 +81,8 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
 
     @Inject private lateinit var libraryPreferences: LibraryPreferences
 
+    @Inject private lateinit var storagePreferences: StoragePreferences
+
     @Inject private lateinit var getLibraryManga: GetLibraryManga
 
     @Inject private lateinit var getManga: GetManga
@@ -96,6 +99,9 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
 
     override suspend fun doWork(): Result {
         graph.inject(this)
+
+        // Directory view keeps no library; this may have been queued before it was turned on
+        if (storagePreferences.directoryView.get()) return Result.success()
 
         if (tags.contains(WORK_NAME_AUTO)) {
             // Find a running manual worker. If exists, try again later
@@ -401,13 +407,16 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
          */
         private const val KEY_ALL_ENTRIES = "all_entries"
 
+        /**
+         * Schedules the automatic library update, or cancels it while it is turned off or directory view is on.
+         */
         fun setupTask(
             context: Context,
             prefInterval: Int? = null,
         ) {
             val preferences = context.appGraph.libraryPreferences
             val interval = prefInterval ?: preferences.autoUpdateInterval.get()
-            if (interval > 0) {
+            if (interval > 0 && !context.appGraph.storagePreferences.directoryView.get()) {
                 val restrictions = preferences.autoUpdateDeviceRestrictions.get()
                 val constraints = Constraints.Builder()
                     .setRequiresCharging(DEVICE_CHARGING in restrictions)
