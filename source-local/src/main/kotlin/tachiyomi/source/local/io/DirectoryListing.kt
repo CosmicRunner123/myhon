@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
+import tachiyomi.core.common.storage.hasAllFilesAccess
 import tachiyomi.core.common.util.system.logcat
 import java.io.File
 
@@ -58,7 +59,12 @@ internal fun isEpub(name: String): Boolean {
  */
 suspend fun listDirectory(context: Context, uri: Uri): List<DirectoryEntry>? = withContext(Dispatchers.IO) {
     val entries = try {
-        if (uri.scheme == ContentResolver.SCHEME_FILE) listFiles(uri) else listDocuments(context, uri)
+        when {
+            uri.scheme != ContentResolver.SCHEME_FILE -> listDocuments(context, uri)
+            // Without it, Android 11+ lists a folder without other apps' files, whose chapters the sync would delete
+            context.hasAllFilesAccess() -> listFiles(uri)
+            else -> null
+        }
     } catch (e: Exception) {
         // A SecurityException once the folder's access is released
         logcat(LogPriority.WARN, e) { "Failed to list $uri" }

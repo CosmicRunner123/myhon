@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.hippo.unifile.UniFile
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -27,21 +26,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import mihon.domain.source.interactor.OpenDirectoryComic
-import tachiyomi.core.common.storage.displayablePath
+import tachiyomi.core.common.storage.hasAllFilesAccess
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.interactor.GetManga
-import tachiyomi.domain.storage.model.LocalSourceFolder
-import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.io.DirectoryEntry
 import tachiyomi.source.local.io.listDirectory
@@ -50,7 +45,6 @@ import tachiyomi.source.local.io.listDirectory
 class DirectoryViewModel(
     @Assisted private val savedState: SavedStateHandle,
     private val context: Context,
-    private val storageManager: StorageManager,
     private val getManga: GetManga,
     private val getChaptersByMangaId: GetChaptersByMangaId,
     private val openDirectoryComic: OpenDirectoryComic,
@@ -84,17 +78,11 @@ class DirectoryViewModel(
 
     private var loadJob: Job? = null
 
-    // Kept until the roots are listed, so a listing cancelled by navigating doesn't leave them stale
-    private var rootsOutdated = false
+    // Kept until the volumes are listed, so a listing cancelled by navigating doesn't leave them stale
+    private var volumesOutdated = false
 
     init {
-        viewModelScope.launch {
-            storageManager.changes
-                // The folders opened may no longer be under the roots. The first listing keeps a restored path
-                .onEach { setPath(emptyList()) }
-                .onStart { emit(Unit) }
-                .collect { load(reloadRoots = true) }
-        }
+        load(reloadVolumes = true)
         viewModelScope.launch {
             folderMangaId
                 .flatMapLatest { mangaId ->
@@ -131,16 +119,26 @@ class DirectoryViewModel(
     }
 
     fun refresh() {
-        load(reloadRoots = state.value.path.isEmpty(), refreshing = true)
+        load(reloadVolumes = state.value.path.isEmpty(), refreshing = true)
     }
 
     /**
-     * Lists the folder shown, after the roots when [reloadRoots]. While [refreshing], the current listing stays until
-     * the new one replaces it.
+     * Lists the volumes again at the top level, as access may have been granted or a volume inserted or removed
+     * meanwhile.
      */
-    private fun load(reloadRoots: Boolean = false, refreshing: Boolean = false) {
+    fun onResume() {
+        val state = state.value
+        // While loading, they are being listed already
+        if (state.path.isEmpty() && state.volumes != Volumes.Loading) load(reloadVolumes = true)
+    }
+
+    /**
+     * Lists the folder shown, after the volumes when [reloadVolumes]. While [refreshing], the current listing stays
+     * until the new one replaces it.
+     */
+    private fun load(reloadVolumes: Boolean = false, refreshing: Boolean = false) {
         loadJob?.cancel()
-        rootsOutdated = rootsOutdated || reloadRoots
+        volumesOutdated = volumesOutdated || reloadVolumes
         _state.update {
             it.copy(
                 listing = if (refreshing) it.listing else Listing.Loading,
@@ -148,10 +146,12 @@ class DirectoryViewModel(
             )
         }
         loadJob = viewModelScope.launch {
-            if (rootsOutdated) {
-                val roots = withContext(Dispatchers.IO) { storageManager.getLocalSourceFolders().map { it.toRoot() } }
-                rootsOutdated = false
-                _state.update { it.copy(roots = roots) }
+            if (volumesOutdated) {
+                val volumes = withContext(Dispatchers.IO) {
+                    if (context.hasAllFilesAccess()) Volumes.Listed(listStorageVolumes(context)) else Volumes.NoAccess
+                }
+                volumesOutdated = false
+                _state.update { it.copy(volumes = volumes) }
             }
 
             val folder = state.value.folder
@@ -167,16 +167,6 @@ class DirectoryViewModel(
             folderMangaId.value = mangaId
             _state.update { it.copy(listing = listing, isRefreshing = false) }
         }
-    }
-
-    private fun LocalSourceFolder.toRoot(): DirectoryRoot {
-        val path = directory?.displayablePath ?: UniFile.fromUri(context, uri.toUri())?.displayablePath ?: uri
-        return DirectoryRoot(
-            uri = directory?.uri?.toString(),
-            name = directory?.name ?: path.trimEnd('/').substringAfterLast('/'),
-            path = path,
-            isDefault = isDefault,
-        )
     }
 
     fun openComic(file: DirectoryEntry) {
@@ -204,8 +194,8 @@ class DirectoryViewModel(
 
     @Immutable
     data class State(
-        /** The folders browsing starts from, null until they are listed. */
-        val roots: List<DirectoryRoot>? = null,
+        /** The top level, where browsing starts. */
+        val volumes: Volumes = Volumes.Loading,
         /** The folders opened from the top level, the one shown last. */
         val path: List<DirectoryFolder> = emptyList(),
         /** The contents of [folder]. */
@@ -215,32 +205,21 @@ class DirectoryViewModel(
         val isRefreshing: Boolean = false,
         val isOpening: Boolean = false,
     ) {
-        /**
-         * The folder shown: the last one opened, or at the top level the only root. Null at the top level when it
-         * lists the roots or none can be reached.
-         */
+        /** The folder shown, null at the top level. */
         val folder: DirectoryFolder?
-            get() = path.lastOrNull() ?: roots?.singleOrNull()?.folder
+            get() = path.lastOrNull()
     }
 
     @Immutable
     data class DirectoryFolder(val uri: String, val name: String)
 
-    /**
-     * A folder browsing starts from.
-     *
-     * @param uri the URI it is listed with, null while it can't be reached.
-     * @param isDefault whether it is the "local" folder of the storage location.
-     */
-    @Immutable
-    data class DirectoryRoot(
-        val uri: String?,
-        val name: String,
-        val path: String,
-        val isDefault: Boolean,
-    ) {
-        val folder: DirectoryFolder?
-            get() = uri?.let { DirectoryFolder(it, name) }
+    sealed interface Volumes {
+        data object Loading : Volumes
+
+        /** The device's storage can't be read without [hasAllFilesAccess]. */
+        data object NoAccess : Volumes
+
+        data class Listed(val volumes: List<DirectoryVolume>) : Volumes
     }
 
     sealed interface Listing {

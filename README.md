@@ -96,13 +96,17 @@ first. Choosing the default again moves nothing back.
 
 ## Directory view
 
-Directory view replaces the library with a file explorer: you browse your folders and open comic files directly.
+Directory view replaces the library with a file explorer: you browse your device and open comic files directly.
 Choose it during setup, or turn on **Settings → Data and storage → Directory view**. The first tab is then
 **Folders** instead of **Library**.
 
-* Browsing starts from the same folders as the library: `local`, shown as **Default folder**, and the folders you
-  added, which are listed under **Folders to browse** while directory view is on. With only `local`, its contents are
-  the top level. A folder that can't be reached is shown as **Unavailable**.
+* The top level lists the storage of your device, like a file explorer: internal storage first, then SD cards and USB
+  drives by name, each with its free and total space. Pull down to list them again after you insert or remove one.
+* To browse the whole device, Myhon needs **All files access** on Android 11 and later (the system folder picker
+  refuses the root of internal storage), or the storage permission on Android 8 to 10. Myhon only reads your files.
+  Allow it during setup, with **Allow access** in **Folders**, or in **Settings → Data and storage → Access to all
+  files**; on Android 11 and later these open the system setting. Some folders stay hidden from apps even then, such
+  as `Android/data` and `Android/obb`; opening them says the folder couldn't be read.
 * A folder shows its subfolders, then its comic files, each by name in natural order (`Chapter 2` before
   `Chapter 10`). Comic files are archives (`zip`, `cbz`, `rar`, `cbr`, `7z`, `cb7`, `tar`, `cbt`) and `epub`.
   Chapters saved as folders of images are not supported: folders are only browsed. Other files, and names that start
@@ -122,8 +126,9 @@ Choose it during setup, or turn on **Settings → Data and storage → Directory
 
 Switching to directory view keeps your library as it is, with its categories and reading progress, but the library is
 no longer shown, updated or matched with your folders: library updates, automatic ones included, don't run, and
-**Categories** in More, **Folder for covers and details** and **Refresh library covers** are hidden. When you switch
-back, the library catches up with your folders. Comics read in directory view stay in History in both modes.
+**Categories** in More, the **Series folders** settings with **Folder for covers and details**, and **Refresh library
+covers** are hidden. When you switch back, the library catches up with your folders. Comics read in directory view
+stay in History in both modes.
 
 ## Background music
 

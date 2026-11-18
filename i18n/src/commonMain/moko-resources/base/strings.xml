@@ -460,8 +460,9 @@
     <string name="pref_series_folders">Series folders</string>
     <string name="pref_directory_view">Directory view</string>
     <string name="pref_directory_view_summary">Browse your folders like a file explorer and open comic files directly, instead of keeping a library</string>
-    <string name="pref_directory_view_folders">Folders to browse</string>
-    <string name="pref_directory_view_folders_info">Directory view starts from these folders and shows their subfolders and comic files (zip, cbz, rar, cbr, 7z, cb7, tar, cbt and epub). Folders of images are not opened as chapters.</string>
+    <string name="pref_all_files_access">Access to all files</string>
+    <string name="pref_all_files_access_allowed">Allowed</string>
+    <string name="pref_all_files_access_not_allowed">Not allowed</string>
     <string name="pref_series_folders_default">Default folder</string>
     <string name="pref_series_folders_default_summary">The \"local\" folder of the storage location</string>
     <string name="pref_series_folders_add">Add folder</string>
@@ -593,9 +594,10 @@
     <string name="local_series_folders_unavailable">Not all series folders are available</string>
     <string name="directory_source">Directory view</string>
     <string name="directory_folder_unreadable">Couldn\'t read the folder</string>
-    <string name="directory_folder_unavailable">Unavailable</string>
     <string name="directory_folder_empty">No comics or folders here</string>
-    <string name="directory_no_folders">None of your folders can be reached. Choose a storage location or add folders in the Data and storage settings.</string>
+    <string name="directory_access_info">To browse your device, %1$s needs access to all files. It only reads them.</string>
+    <string name="directory_access_allow">Allow access</string>
+    <string name="directory_volume_space">%1$s free of %2$s</string>
     <string name="directory_comic_read">Read</string>
 
     <!-- Manga info -->

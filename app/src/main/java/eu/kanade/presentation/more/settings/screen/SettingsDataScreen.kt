@@ -53,6 +53,8 @@ import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreWorker
 import eu.kanade.tachiyomi.data.export.LibraryExporter
 import eu.kanade.tachiyomi.data.export.LibraryExporter.ExportOptions
 import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
+import eu.kanade.tachiyomi.util.storage.rememberAllFilesAccess
+import eu.kanade.tachiyomi.util.storage.rememberAllFilesAccessRequest
 import eu.kanade.tachiyomi.util.system.DeviceUtil
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.system.workManager
@@ -101,12 +103,19 @@ object SettingsDataScreen : SearchableSettings {
         val context = LocalContext.current
         val backupPreferences = remember { context.appGraph.backupPreferences }
         val storagePreferences = remember { context.appGraph.storagePreferences }
+        val directoryView by storagePreferences.directoryView.collectAsState()
 
         return listOf(
             getStorageLocationPref(storagePreferences = storagePreferences),
             Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_storage_location_usage_info)),
 
-            getSeriesFoldersGroup(storagePreferences = storagePreferences),
+            Preference.PreferenceItem.SwitchPreference(
+                preference = storagePreferences.directoryView,
+                title = stringResource(MR.strings.pref_directory_view),
+                subtitle = stringResource(MR.strings.pref_directory_view_summary),
+            ),
+            getAllFilesAccessPref(visible = directoryView),
+            getSeriesFoldersGroup(storagePreferences = storagePreferences, visible = !directoryView),
             getBackupAndRestoreGroup(backupPreferences = backupPreferences),
             getDataGroup(),
             getExportGroup(),
@@ -215,12 +224,32 @@ object SettingsDataScreen : SearchableSettings {
         )
     }
 
+    /**
+     * Whether directory view may read the whole device, which it browses.
+     */
     @Composable
-    private fun getSeriesFoldersGroup(storagePreferences: StoragePreferences): Preference.PreferenceGroup {
-        val context = LocalContext.current
+    private fun getAllFilesAccessPref(visible: Boolean): Preference.PreferenceItem.TextPreference {
+        val hasAccess = rememberAllFilesAccess()
+        val requestAccess = rememberAllFilesAccessRequest()
 
-        val directoryViewPref = storagePreferences.directoryView
-        val directoryView by directoryViewPref.collectAsState()
+        return Preference.PreferenceItem.TextPreference(
+            title = stringResource(MR.strings.pref_all_files_access),
+            subtitle = if (hasAccess) {
+                stringResource(MR.strings.pref_all_files_access_allowed)
+            } else {
+                stringResource(MR.strings.pref_all_files_access_not_allowed)
+            },
+            visible = visible,
+            onClick = requestAccess,
+        )
+    }
+
+    @Composable
+    private fun getSeriesFoldersGroup(
+        storagePreferences: StoragePreferences,
+        visible: Boolean,
+    ): Preference.PreferenceGroup {
+        val context = LocalContext.current
 
         val foldersPref = storagePreferences.localSourceDirectories
         val folders by foldersPref.collectAsState()
@@ -268,17 +297,9 @@ object SettingsDataScreen : SearchableSettings {
         }
 
         return Preference.PreferenceGroup(
-            title = stringResource(
-                if (directoryView) MR.strings.pref_directory_view_folders else MR.strings.pref_series_folders,
-            ),
+            title = stringResource(MR.strings.pref_series_folders),
+            visible = visible,
             preferenceItems = buildList {
-                add(
-                    Preference.PreferenceItem.SwitchPreference(
-                        preference = directoryViewPref,
-                        title = stringResource(MR.strings.pref_directory_view),
-                        subtitle = stringResource(MR.strings.pref_directory_view_summary),
-                    ),
-                )
                 add(
                     Preference.PreferenceItem.TextPreference(
                         title = stringResource(MR.strings.pref_series_folders_default),
@@ -305,28 +326,14 @@ object SettingsDataScreen : SearchableSettings {
                         },
                     ),
                 )
-                add(
-                    Preference.PreferenceItem.InfoPreference(
-                        stringResource(
-                            if (directoryView) {
-                                MR.strings.pref_directory_view_folders_info
-                            } else {
-                                MR.strings.pref_series_folders_info
-                            },
-                        ),
-                    ),
-                )
-                // Only the library uses it, and directory view writes nothing
-                add(getCoverFolderPref(storagePreferences = storagePreferences, visible = !directoryView))
+                add(Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_series_folders_info)))
+                add(getCoverFolderPref(storagePreferences = storagePreferences))
             },
         )
     }
 
     @Composable
-    private fun getCoverFolderPref(
-        storagePreferences: StoragePreferences,
-        visible: Boolean,
-    ): Preference.PreferenceItem.TextPreference {
+    private fun getCoverFolderPref(storagePreferences: StoragePreferences): Preference.PreferenceItem.TextPreference {
         val context = LocalContext.current
         val updateLibrary = libraryUpdater()
 
@@ -351,7 +358,6 @@ object SettingsDataScreen : SearchableSettings {
         return Preference.PreferenceItem.TextPreference(
             title = stringResource(MR.strings.pref_cover_folder),
             subtitle = coverFolderPath ?: stringResource(MR.strings.pref_cover_folder_default),
-            visible = visible,
             widget = if (coverFolderPath != null) {
                 {
                     IconButton(onClick = { changeCoverFolder("") }) {

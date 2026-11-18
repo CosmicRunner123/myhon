@@ -1,5 +1,6 @@
 package eu.kanade.presentation.directory
 
+import android.text.format.Formatter
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,16 +27,21 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.manga.components.MangaCover
 import eu.kanade.tachiyomi.data.coil.ComicThumbnail
 import eu.kanade.tachiyomi.ui.directory.DirectoryViewModel
+import eu.kanade.tachiyomi.ui.directory.DirectoryVolume
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Folder
+import mihon.icons.materialsymbols.rounded.Mobile
 import mihon.icons.materialsymbols.rounded.Refresh
-import mihon.icons.materialsymbols.rounded.Settings
+import mihon.icons.materialsymbols.rounded.Security
+import mihon.icons.materialsymbols.rounded.Storage
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
@@ -57,7 +63,7 @@ fun DirectoryScreen(
     onRefresh: () -> Unit,
     onClickFolder: (DirectoryViewModel.DirectoryFolder) -> Unit,
     onClickComic: (DirectoryEntry) -> Unit,
-    onClickSettings: () -> Unit,
+    onClickAllowAccess: () -> Unit,
 ) {
     Scaffold(
         topBar = { scrollBehavior ->
@@ -68,7 +74,6 @@ fun DirectoryScreen(
             )
         },
     ) { contentPadding ->
-        val roots = state.roots
         val folder = state.folder
         // Each open folder keeps its scroll position for when it is shown again
         val stateHolder = rememberSaveableStateHolder()
@@ -82,28 +87,33 @@ fun DirectoryScreen(
         }
         Box {
             when {
-                roots == null -> LoadingScreen(Modifier.padding(contentPadding))
-                roots.none { it.uri != null } -> DirectoryPullRefresh(state, onRefresh, contentPadding) {
-                    EmptyScreen(
-                        stringRes = MR.strings.directory_no_folders,
-                        modifier = Modifier.padding(contentPadding),
-                        actions = listOf(
-                            EmptyScreenAction(
-                                stringRes = MR.strings.label_data_storage,
-                                icon = MaterialSymbols.Rounded.Settings,
-                                onClick = onClickSettings,
+                folder == null -> when (val volumes = state.volumes) {
+                    DirectoryViewModel.Volumes.Loading -> LoadingScreen(Modifier.padding(contentPadding))
+                    DirectoryViewModel.Volumes.NoAccess -> DirectoryPullRefresh(state, onRefresh, contentPadding) {
+                        EmptyScreen(
+                            message = stringResource(
+                                MR.strings.directory_access_info,
+                                stringResource(MR.strings.app_name),
                             ),
-                        ),
-                    )
-                }
-                folder == null -> stateHolder.SaveableStateProvider(key = ROOTS_KEY) {
-                    DirectoryPullRefresh(state, onRefresh, contentPadding) {
-                        RootList(
-                            roots = roots,
-                            listState = rememberLazyListState(),
-                            contentPadding = contentPadding,
-                            onClickFolder = onClickFolder,
+                            modifier = Modifier.padding(contentPadding),
+                            actions = listOf(
+                                EmptyScreenAction(
+                                    stringRes = MR.strings.directory_access_allow,
+                                    icon = MaterialSymbols.Rounded.Security,
+                                    onClick = onClickAllowAccess,
+                                ),
+                            ),
                         )
+                    }
+                    is DirectoryViewModel.Volumes.Listed -> stateHolder.SaveableStateProvider(key = VOLUMES_KEY) {
+                        DirectoryPullRefresh(state, onRefresh, contentPadding) {
+                            VolumeList(
+                                volumes = volumes.volumes,
+                                listState = rememberLazyListState(),
+                                contentPadding = contentPadding,
+                                onClickFolder = onClickFolder,
+                            )
+                        }
                     }
                 }
                 else -> stateHolder.SaveableStateProvider(key = folder.uri) {
@@ -171,26 +181,30 @@ private fun DirectoryPullRefresh(
 }
 
 @Composable
-private fun RootList(
-    roots: List<DirectoryViewModel.DirectoryRoot>,
+private fun VolumeList(
+    volumes: List<DirectoryVolume>,
     listState: LazyListState,
     contentPadding: PaddingValues,
     onClickFolder: (DirectoryViewModel.DirectoryFolder) -> Unit,
 ) {
+    val context = LocalContext.current
     FastScrollLazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
         contentPadding = contentPadding,
     ) {
-        items(roots) { root ->
-            val folder = root.folder
+        items(items = volumes, key = { it.uri }) { volume ->
             DirectoryItem(
-                title = if (root.isDefault) stringResource(MR.strings.pref_series_folders_default) else root.name,
-                subtitle = if (folder != null) root.path else stringResource(MR.strings.directory_folder_unavailable),
-                onClick = folder?.let { { onClickFolder(it) } },
-                dimmed = folder == null,
+                title = volume.name,
+                subtitle = stringResource(
+                    MR.strings.directory_volume_space,
+                    Formatter.formatShortFileSize(context, volume.freeBytes),
+                    Formatter.formatShortFileSize(context, volume.totalBytes),
+                ),
+                onClick = { onClickFolder(DirectoryViewModel.DirectoryFolder(volume.uri, volume.name)) },
+                dimmed = false,
             ) {
-                FolderIcon()
+                ItemIcon(if (volume.isPrimary) MaterialSymbols.Rounded.Mobile else MaterialSymbols.Rounded.Storage)
             }
         }
     }
@@ -223,7 +237,7 @@ private fun EntryList(
                     onClick = { onClickFolder(DirectoryViewModel.DirectoryFolder(entry.uri, entry.name)) },
                     dimmed = false,
                 ) {
-                    FolderIcon()
+                    ItemIcon(MaterialSymbols.Rounded.Folder)
                 }
             } else {
                 val chapter = chapters[entry.uri]
@@ -258,13 +272,13 @@ private fun EntryList(
 private fun DirectoryItem(
     title: String,
     subtitle: String?,
-    onClick: (() -> Unit)?,
+    onClick: () -> Unit,
     dimmed: Boolean,
     image: @Composable () -> Unit,
 ) {
     Row(
         modifier = Modifier
-            .clickable(enabled = onClick != null, onClick = { onClick?.invoke() })
+            .clickable(onClick = onClick)
             .height(DirectoryItemHeight)
             .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small)
             .alpha(if (dimmed) DISABLED_ALPHA else 1f),
@@ -303,9 +317,9 @@ private fun DirectoryItem(
 }
 
 @Composable
-private fun FolderIcon() {
+private fun ItemIcon(imageVector: ImageVector) {
     Icon(
-        imageVector = MaterialSymbols.Rounded.Folder,
+        imageVector = imageVector,
         contentDescription = null,
         modifier = Modifier.size(32.dp),
         tint = MaterialTheme.colorScheme.primary,
@@ -314,4 +328,4 @@ private fun FolderIcon() {
 
 private val DirectoryItemHeight = 72.dp
 
-private const val ROOTS_KEY = "roots"
+private const val VOLUMES_KEY = "volumes"

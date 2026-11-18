@@ -1,11 +1,15 @@
 package eu.kanade.presentation.more.onboarding
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,8 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import eu.kanade.tachiyomi.util.storage.rememberAllFilesAccess
+import eu.kanade.tachiyomi.util.storage.rememberAllFilesAccessRequest
 import mihon.app.di.appGraph
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
 
@@ -30,6 +37,8 @@ internal class ViewModeStep : OnboardingStep {
         val context = LocalContext.current
         val directoryViewPref = remember { context.appGraph.storagePreferences.directoryView }
         val directoryView by directoryViewPref.collectAsState()
+        val hasAllFilesAccess = rememberAllFilesAccess()
+        val requestAllFilesAccess = rememberAllFilesAccessRequest()
 
         Column(modifier = Modifier.selectableGroup()) {
             Text(
@@ -48,6 +57,21 @@ internal class ViewModeStep : OnboardingStep {
                 selected = directoryView,
                 onClick = { directoryViewPref.set(true) },
             )
+            // Not needed to finish the setup, as access can be allowed later in directory view or the settings
+            if (directoryView && !hasAllFilesAccess) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+                ) {
+                    Text(stringResource(MR.strings.directory_access_info, stringResource(MR.strings.app_name)))
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = requestAllFilesAccess,
+                    ) {
+                        Text(stringResource(MR.strings.directory_access_allow))
+                    }
+                }
+            }
         }
     }
 
