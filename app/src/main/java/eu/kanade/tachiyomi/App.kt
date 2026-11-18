@@ -53,6 +53,7 @@ import eu.kanade.tachiyomi.util.system.notify
 import eu.kanade.tachiyomi.util.system.workManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -182,9 +183,11 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             .launchIn(scope)
 
         // Automatic library updates only run in library view; the migrator sets them up at launch. The mode can also
-        // change from setup or a restored backup, so this follows every change
+        // change from setup or a restored backup, so this follows every change. A first write of the default value
+        // is reported too, and is no change
         storagePreferences.directoryView
             .changes()
+            .distinctUntilChanged()
             .drop(1)
             .onEach { directoryView ->
                 LibraryUpdateWorker.setupTask(this)
