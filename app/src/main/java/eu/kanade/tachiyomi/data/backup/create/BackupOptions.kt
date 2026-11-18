@@ -11,7 +11,6 @@ data class BackupOptions(
     val history: Boolean = true,
     val readEntries: Boolean = true,
     val appSettings: Boolean = true,
-    val sourceSettings: Boolean = true,
     val privateSettings: Boolean = false,
 ) {
 
@@ -23,11 +22,10 @@ data class BackupOptions(
         history,
         readEntries,
         appSettings,
-        sourceSettings,
         privateSettings,
     )
 
-    fun canCreate() = libraryEntries || categories || appSettings || sourceSettings
+    fun canCreate() = libraryEntries || categories || appSettings
 
     companion object {
         val libraryOptions = listOf(
@@ -74,15 +72,10 @@ data class BackupOptions(
                 setter = { options, enabled -> options.copy(appSettings = enabled) },
             ),
             Entry(
-                label = MR.strings.source_settings,
-                getter = BackupOptions::sourceSettings,
-                setter = { options, enabled -> options.copy(sourceSettings = enabled) },
-            ),
-            Entry(
                 label = MR.strings.private_settings,
                 getter = BackupOptions::privateSettings,
                 setter = { options, enabled -> options.copy(privateSettings = enabled) },
-                enabled = { it.appSettings || it.sourceSettings },
+                enabled = { it.appSettings },
             ),
         )
 
@@ -94,8 +87,7 @@ data class BackupOptions(
             history = array[4],
             readEntries = array[5],
             appSettings = array[6],
-            sourceSettings = array[7],
-            privateSettings = array[8],
+            privateSettings = array[7],
         )
     }
 

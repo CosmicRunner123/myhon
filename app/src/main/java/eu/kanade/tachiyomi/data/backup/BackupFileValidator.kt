@@ -6,11 +6,9 @@ import eu.kanade.tachiyomi.data.backup.models.BackupTracking
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
-import tachiyomi.domain.source.service.SourceManager
 
 @Inject
 class BackupFileValidator(
-    private val sourceManager: SourceManager,
     private val trackerManager: TrackerManager,
     private val backupDecoder: BackupDecoder,
 ) {
@@ -18,31 +16,17 @@ class BackupFileValidator(
     /**
      * Checks for critical backup file data.
      *
-     * @return List of missing sources or missing trackers.
+     * @return List of missing trackers.
      */
-    suspend fun validate(uri: Uri): Results {
+    fun validate(uri: Uri): Results {
         val trackerIds = mutableSetOf<Int>()
-        val backup = try {
+        try {
             backupDecoder.decodeMetadata(uri, TrackedManga.serializer()) { manga ->
                 manga.tracking.mapTo(trackerIds) { it.syncId }
-            }.backup
+            }
         } catch (e: Exception) {
             throw IllegalStateException(e)
         }
-
-        val sources = backup.backupSources.associate { it.sourceId to it.name }
-        val missingSources = sources
-            .filterKeys { sourceManager.get(it) == null }
-            .map { (id, name) ->
-                // Some backups store the id as the name, and sources without a stub were backed up with no name
-                if (name.isBlank() || name.toLongOrNull() != null) {
-                    sourceManager.getOrStub(id).toString()
-                } else {
-                    name
-                }
-            }
-            .distinct()
-            .sorted()
 
         val missingTrackers = trackerIds
             .mapNotNull { trackerManager.get(it.toLong()) }
@@ -50,11 +34,10 @@ class BackupFileValidator(
             .map { it.name }
             .sorted()
 
-        return Results(missingSources, missingTrackers)
+        return Results(missingTrackers)
     }
 
     data class Results(
-        val missingSources: List<String>,
         val missingTrackers: List<String>,
     )
 

@@ -123,28 +123,15 @@ class RestoreBackupScreen(
                         when (error) {
                             is MissingRestoreComponents -> {
                                 appendLine(stringResource(MR.strings.backup_restore_content_trackers))
-                                if (error.sources.isNotEmpty()) {
-                                    appendLine()
-                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        appendLine(stringResource(MR.strings.backup_restore_missing_sources))
-                                    }
-                                    error.sources.joinTo(
-                                        this,
-                                        separator = "\n- ",
-                                        prefix = "- ",
-                                    )
+                                appendLine()
+                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    appendLine(stringResource(MR.strings.backup_restore_missing_trackers))
                                 }
-                                if (error.trackers.isNotEmpty()) {
-                                    appendLine()
-                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        appendLine(stringResource(MR.strings.backup_restore_missing_trackers))
-                                    }
-                                    error.trackers.joinTo(
-                                        this,
-                                        separator = "\n- ",
-                                        prefix = "- ",
-                                    )
-                                }
+                                error.trackers.joinTo(
+                                    this,
+                                    separator = "\n- ",
+                                    prefix = "- ",
+                                )
                             }
 
                             is InvalidRestore -> {
@@ -215,7 +202,7 @@ class RestoreBackupViewModel(
         )
     }
 
-    private suspend fun validate(uri: Uri) {
+    private fun validate(uri: Uri) {
         val results = try {
             backupFileValidator.validate(uri)
         } catch (e: Exception) {
@@ -226,9 +213,9 @@ class RestoreBackupViewModel(
             return
         }
 
-        if (results.missingSources.isNotEmpty() || results.missingTrackers.isNotEmpty()) {
+        if (results.missingTrackers.isNotEmpty()) {
             setError(
-                error = MissingRestoreComponents(uri, results.missingSources, results.missingTrackers),
+                error = MissingRestoreComponents(uri, results.missingTrackers),
                 canRestore = true,
             )
             return
@@ -256,7 +243,6 @@ class RestoreBackupViewModel(
 
 private data class MissingRestoreComponents(
     val uri: Uri,
-    val sources: List<String>,
     val trackers: List<String>,
 )
 

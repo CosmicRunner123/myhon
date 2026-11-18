@@ -30,10 +30,6 @@ class StubSourceRepositoryImpl(
             .awaitAsOneOrNull()
     }
 
-    override suspend fun upsertStubSource(id: Long, lang: String, name: String) {
-        database.sourceQueries.upsert(id = id, name = name, language = lang)
-    }
-
     private fun mapStubSource(
         id: Long,
         name: String,

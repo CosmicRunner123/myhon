@@ -8,9 +8,8 @@ import dev.zacsweers.metro.AssistedInject
 import eu.kanade.tachiyomi.data.backup.BackupDecoder
 import eu.kanade.tachiyomi.data.backup.BackupNotifier
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
+import eu.kanade.tachiyomi.data.backup.models.BackupManga
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
-import eu.kanade.tachiyomi.data.backup.models.BackupSource
-import eu.kanade.tachiyomi.data.backup.models.BackupSourcePreferences
 import eu.kanade.tachiyomi.data.backup.restore.restorers.CategoriesRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.MangaRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.PreferenceRestorer
@@ -20,13 +19,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.chunked
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import logcat.LogPriority
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.source.repository.StubSourceRepository
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
+import tachiyomi.source.local.LocalSource
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -46,8 +45,6 @@ class BackupRestorer(
     private val preferenceRestorer: PreferenceRestorer,
     private val mangaRestorer: MangaRestorer,
     private val backupDecoder: BackupDecoder,
-    private val sourceManager: SourceManager,
-    private val stubSourceRepository: StubSourceRepository,
 ) {
 
     @AssistedFactory
@@ -86,20 +83,15 @@ class BackupRestorer(
         val (entryCount, backup) = backupDecoder.decodeMetadata(uri)
 
         // Store source mapping for error messages
-        val backupMaps = backup.backupSources
-        sourceMapping = backupMaps.associate { it.sourceId to it.name }
+        sourceMapping = backup.backupSources.associate { it.sourceId to it.name }
 
         if (options.libraryEntries) {
-            restoreSourceNames(backupMaps)
             restoreAmount += entryCount
         }
         if (options.categories) {
             restoreAmount += 1
         }
         if (options.appSettings) {
-            restoreAmount += 1
-        }
-        if (options.sourceSettings) {
             restoreAmount += 1
         }
 
@@ -116,9 +108,6 @@ class BackupRestorer(
                     restoreCategoriesJob,
                 )
             }
-            if (options.sourceSettings) {
-                restoreSourcePreferences(backup.backupSourcePreferences)
-            }
             if (options.libraryEntries) {
                 restoreManga(
                     uri,
@@ -129,16 +118,6 @@ class BackupRestorer(
 
             // TODO: optionally trigger online library + tracker update
         }
-    }
-
-    // Without a stub, a source that isn't installed has no name for the next backup to write
-    private suspend fun restoreSourceNames(backupSources: List<BackupSource>) {
-        backupSources
-            .filter { it.name.isNotBlank() }
-            .filter {
-                sourceManager.get(it.sourceId) == null && stubSourceRepository.getStubSource(it.sourceId) == null
-            }
-            .forEach { stubSourceRepository.upsertStubSource(it.sourceId, lang = "", name = it.name) }
     }
 
     private fun CoroutineScope.restoreCategories(backupCategories: List<BackupCategory>) = launch {
@@ -161,7 +140,17 @@ class BackupRestorer(
     ) = launch {
         categoriesRestoreJob?.join()
 
+        val skippedReason = context.stringResource(MR.strings.restore_skipped_not_local)
+
         backupDecoder.decodeEntries(uri)
+            .filter { backupManga ->
+                backupManga.isRestorable().also { restorable ->
+                    if (!restorable) {
+                        addError(backupManga, skippedReason)
+                        restoreProgress.incrementAndFetch()
+                    }
+                }
+            }
             .chunked(100)
             .collect { chunk ->
                 val restoredAsBatch = try {
@@ -184,8 +173,7 @@ class BackupRestorer(
                             mangaRestorer.restore(listOf(it), backupCategories)
                         } catch (e: Exception) {
                             ensureActive()
-                            val sourceName = sourceMapping[it.source] ?: it.source.toString()
-                            errors.add(Date() to "${it.title} [$sourceName]: ${e.message}")
+                            addError(it, e.message)
                         }
 
                         restoreProgress.incrementAndFetch()
@@ -217,17 +205,9 @@ class BackupRestorer(
         )
     }
 
-    private fun CoroutineScope.restoreSourcePreferences(preferences: List<BackupSourcePreferences>) = launch {
-        ensureActive()
-        preferenceRestorer.restoreSource(preferences)
-
-        val progress = restoreProgress.incrementAndFetch()
-        notifier.showRestoreProgress(
-            context.stringResource(MR.strings.source_settings),
-            progress,
-            restoreAmount,
-            isSync,
-        )
+    private fun addError(backupManga: BackupManga, message: String?) {
+        val sourceName = sourceMapping[backupManga.source] ?: backupManga.source.toString()
+        errors.add(Date() to "${backupManga.title} [$sourceName]: $message")
     }
 
     private fun writeErrorLog(): File {
@@ -249,3 +229,8 @@ class BackupRestorer(
         return File("")
     }
 }
+
+/**
+ * Series of any other source can't be read by this app.
+ */
+internal fun BackupManga.isRestorable(): Boolean = source == LocalSource.ID

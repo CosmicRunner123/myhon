@@ -6,7 +6,6 @@ import dev.zacsweers.metro.Inject
 import eu.kanade.tachiyomi.data.backup.create.BackupCreateWorker
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
-import eu.kanade.tachiyomi.data.backup.models.BackupSourcePreferences
 import eu.kanade.tachiyomi.data.backup.models.BooleanPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.FloatPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.IntPreferenceValue
@@ -14,7 +13,6 @@ import eu.kanade.tachiyomi.data.backup.models.LongPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.StringPreferenceValue
 import eu.kanade.tachiyomi.data.backup.models.StringSetPreferenceValue
 import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
-import tachiyomi.core.common.preference.AndroidPreferenceStore
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.plusAssign
 import tachiyomi.domain.category.interactor.GetCategories
@@ -31,29 +29,15 @@ class PreferenceRestorer(
         preferences: List<BackupPreference>,
         backupCategories: List<BackupCategory>?,
     ) {
-        restorePreferences(
-            preferences,
-            preferenceStore,
-            backupCategories,
-        )
+        restorePreferences(preferences, backupCategories)
 
         LibraryUpdateWorker.setupTask(context)
         BackupCreateWorker.setupTask(context)
     }
 
-    suspend fun restoreSource(preferences: List<BackupSourcePreferences>) {
-        preferences.forEach {
-            val sourcePrefs = AndroidPreferenceStore(
-                context.getSharedPreferences(it.sourceKey, Context.MODE_PRIVATE),
-            )
-            restorePreferences(it.prefs, sourcePrefs)
-        }
-    }
-
     private suspend fun restorePreferences(
         toRestore: List<BackupPreference>,
-        preferenceStore: PreferenceStore,
-        backupCategories: List<BackupCategory>? = null,
+        backupCategories: List<BackupCategory>?,
     ) {
         val allCategories = if (backupCategories != null) getCategories.await() else emptyList()
         val categoriesByName = allCategories.associateBy { it.name }
@@ -99,7 +83,6 @@ class PreferenceRestorer(
                             val restored = restoreCategoriesPreference(
                                 key,
                                 value.value,
-                                preferenceStore,
                                 backupCategoriesById,
                                 categoriesByName,
                             )
@@ -116,7 +99,6 @@ class PreferenceRestorer(
     private fun restoreCategoriesPreference(
         key: String,
         value: Set<String>,
-        preferenceStore: PreferenceStore,
         backupCategoriesById: Map<String, BackupCategory>,
         categoriesByName: Map<String, Category>,
     ): Boolean {

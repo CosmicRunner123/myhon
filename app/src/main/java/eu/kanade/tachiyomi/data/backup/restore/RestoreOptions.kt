@@ -7,17 +7,15 @@ data class RestoreOptions(
     val libraryEntries: Boolean = true,
     val categories: Boolean = true,
     val appSettings: Boolean = true,
-    val sourceSettings: Boolean = true,
 ) {
 
     fun asBooleanArray() = booleanArrayOf(
         libraryEntries,
         categories,
         appSettings,
-        sourceSettings,
     )
 
-    fun canRestore() = libraryEntries || categories || appSettings || sourceSettings
+    fun canRestore() = libraryEntries || categories || appSettings
 
     companion object {
         val options = listOf(
@@ -36,18 +34,12 @@ data class RestoreOptions(
                 getter = RestoreOptions::appSettings,
                 setter = { options, enabled -> options.copy(appSettings = enabled) },
             ),
-            Entry(
-                label = MR.strings.source_settings,
-                getter = RestoreOptions::sourceSettings,
-                setter = { options, enabled -> options.copy(sourceSettings = enabled) },
-            ),
         )
 
         fun fromBooleanArray(array: BooleanArray) = RestoreOptions(
             libraryEntries = array[0],
             categories = array[1],
             appSettings = array[2],
-            sourceSettings = array[3],
         )
     }
 
