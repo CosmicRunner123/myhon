@@ -50,6 +50,7 @@ import eu.kanade.tachiyomi.util.system.animatorDurationScale
 import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.isDebugBuildType
 import eu.kanade.tachiyomi.util.system.notify
+import eu.kanade.tachiyomi.util.system.workManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.drop
@@ -180,16 +181,20 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             .onEach(TelemetryConfig::setCrashlyticsEnabled)
             .launchIn(scope)
 
-        // Automatic library updates only run in library view; the migrator sets them up at launch
+        // Automatic library updates only run in library view; the migrator sets them up at launch. The mode can also
+        // change from setup or a restored backup, so this follows every change
         storagePreferences.directoryView
             .changes()
             .drop(1)
             .onEach { directoryView ->
                 LibraryUpdateWorker.setupTask(this)
-                // Updates that already started would go on writing covers and details into series folders
                 if (directoryView) {
+                    // Updates that already started would go on writing covers and details into series folders
                     LibraryUpdateWorker.cancelManual(this)
                     MetadataUpdateWorker.cancel(this)
+                } else {
+                    // Only an update brings the chapters and covers of series already in the library up to date
+                    LibraryUpdateWorker.startNow(workManager, allEntries = true)
                 }
             }
             .launchIn(scope)

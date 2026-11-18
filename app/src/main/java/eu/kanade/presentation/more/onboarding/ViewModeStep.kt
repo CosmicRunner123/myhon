@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import eu.kanade.presentation.more.settings.screen.SettingsDataScreen
 import mihon.app.di.appGraph
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
@@ -31,7 +30,6 @@ internal class ViewModeStep : OnboardingStep {
         val context = LocalContext.current
         val directoryViewPref = remember { context.appGraph.storagePreferences.directoryView }
         val directoryView by directoryViewPref.collectAsState()
-        val updateLibrary = SettingsDataScreen.libraryUpdater()
 
         Column(modifier = Modifier.selectableGroup()) {
             Text(
@@ -42,14 +40,7 @@ internal class ViewModeStep : OnboardingStep {
                 title = stringResource(MR.strings.label_library),
                 subtitle = stringResource(MR.strings.onboarding_view_mode_library_summary),
                 selected = !directoryView,
-                onClick = {
-                    // Back in library view, the library catches up with the folders as the settings switch makes it;
-                    // the update does nothing in directory view, so that is left first
-                    if (directoryViewPref.get()) {
-                        directoryViewPref.set(false)
-                        updateLibrary()
-                    }
-                },
+                onClick = { directoryViewPref.set(false) },
             )
             ViewModeItem(
                 title = stringResource(MR.strings.pref_directory_view),

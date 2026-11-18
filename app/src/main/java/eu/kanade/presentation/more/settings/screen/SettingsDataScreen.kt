@@ -166,7 +166,7 @@ object SettingsDataScreen : SearchableSettings {
      * covers again. Does nothing in directory view, which keeps no library.
      */
     @Composable
-    fun libraryUpdater(): () -> Unit {
+    private fun libraryUpdater(): () -> Unit {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         val directoryViewPref = remember { context.appGraph.storagePreferences.directoryView }
@@ -277,15 +277,6 @@ object SettingsDataScreen : SearchableSettings {
                         preference = directoryViewPref,
                         title = stringResource(MR.strings.pref_directory_view),
                         subtitle = stringResource(MR.strings.pref_directory_view_summary),
-                        onValueChanged = { enabled ->
-                            // Back in library view, the library catches up with the folders as after a folder
-                            // change. The update does nothing in directory view, so the switch is set first
-                            if (!enabled) {
-                                directoryViewPref.set(false)
-                                updateLibrary()
-                            }
-                            true
-                        },
                     ),
                 )
                 add(
