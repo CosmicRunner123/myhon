@@ -85,8 +85,9 @@ fun PreferenceScreen(
     }
 }
 
-private fun List<Preference>.findHighlightedIndex(highlightKey: String): Int {
-    return flatMap {
+internal fun List<Preference>.findHighlightedIndex(highlightKey: String): Int {
+    // Counts rows like PreferenceScreen: none for a hidden group, but one for each hidden item
+    return filter { it !is Preference.PreferenceGroup || it.visible }.flatMap {
         if (it is Preference.PreferenceGroup) {
             buildList<String?> {
                 add(it.title) // Header
