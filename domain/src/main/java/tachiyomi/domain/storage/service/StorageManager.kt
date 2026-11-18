@@ -96,7 +96,13 @@ class StorageManager(
     }
 
     private fun getChildDirectory(name: String): UniFile? {
-        val parent = baseDir ?: return null
+        val current = baseDirLazy
+        // Looked up again while unavailable, as its volume can be mounted later; not kept if the location changed
+        // meanwhile
+        val parent = current.value
+            ?: getBaseDir(storagePreferences.baseStorageDirectory.get())
+                ?.also { if (baseDirLazy === current) baseDirLazy = lazyOf(it) }
+            ?: return null
         childDirectories[name]
             ?.takeIf { (cachedParent, directory) -> cachedParent === parent && directory.exists() }
             ?.let { (_, directory) -> return directory }
