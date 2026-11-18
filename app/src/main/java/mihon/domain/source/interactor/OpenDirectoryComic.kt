@@ -64,14 +64,19 @@ class OpenDirectoryComic(
         return chapter
     }
 
-    // History shows the folder with the thumbnail of the file opened last
-    private suspend fun setCover(manga: Manga, chapter: Chapter) {
-        if (manga.thumbnailUrl == chapter.url) return
+    /**
+     * Makes the file of [chapter] the cover of the directory view entry [manga], so History shows the folder with the
+     * thumbnail of the file read last, and returns [manga] with that cover.
+     */
+    suspend fun setCover(manga: Manga, chapter: Chapter): Manga {
+        if (manga.thumbnailUrl == chapter.url) return manga
+        val now = Clock.System.now()
         updateManga.await(
             MangaUpdate(manga.id) {
                 thumbnailUrl = chapter.url
-                coverLastModified = Clock.System.now()
+                coverLastModified = now
             },
         )
+        return manga.copy(thumbnailUrl = chapter.url, coverLastModified = now)
     }
 }

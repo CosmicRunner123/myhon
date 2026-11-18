@@ -63,6 +63,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import mihon.core.metro.AppCoroutineScope
+import mihon.domain.source.interactor.OpenDirectoryComic
 import tachiyomi.core.common.preference.toggle
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
@@ -105,6 +106,7 @@ class ReaderViewModel(
     private val coverManager: LocalCoverManager,
     private val updateManga: UpdateManga,
     private val coverCache: CoverCache,
+    private val openDirectoryComic: OpenDirectoryComic,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -175,6 +177,12 @@ class ReaderViewModel(
     private var pendingProgressSave: Job? = null
 
     private var unfilteredChapterList: List<Chapter>? = null
+
+    /**
+     * The directory view entry as its cover was last set. It's kept apart from [manga], whose changes reload the
+     * viewer.
+     */
+    private var directoryManga: Manga? = null
 
     private val musicPlayer = ReaderMusicPlayer(context, viewModelScope)
 
@@ -566,6 +574,12 @@ class ReaderViewModel(
             chapterReadStartTime = null
 
             upsertHistory.await(HistoryUpdate(chapterId, endTime, sessionReadDuration))
+
+            val manga = directoryManga ?: manga
+            if (manga?.source == DirectorySource.ID) {
+                // The reader may have gone on to another file of the folder
+                directoryManga = openDirectoryComic.setCover(manga, readerChapter.chapter)
+            }
         }
     }
 
