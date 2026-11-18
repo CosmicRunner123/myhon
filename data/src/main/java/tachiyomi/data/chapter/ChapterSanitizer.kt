@@ -3,9 +3,11 @@ package tachiyomi.data.chapter
 object ChapterSanitizer {
 
     fun String.sanitize(title: String): String {
-        return trim()
+        val name = trim()
+        return name
             .removePrefix(title)
             .trim(*CHAPTER_TRIM_CHARS)
+            .ifEmpty { name }
     }
 
     private val CHAPTER_TRIM_CHARS = arrayOf(
