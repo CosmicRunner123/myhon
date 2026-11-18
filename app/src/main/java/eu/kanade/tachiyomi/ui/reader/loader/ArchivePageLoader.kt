@@ -42,7 +42,7 @@ internal class ArchivePageLoader(private val file: UniFile, private val context:
 
 /**
  * Copies [entryName] of [archive] into [cacheDir], unless an earlier call already did, and returns the copy's URI.
- * It reads the archive with its own reader, since the page loader's reader is unmapped when the chapter is recycled.
+ * It reads the archive with its own reader, since the page loader's reader is closed when the chapter is recycled.
  */
 private suspend fun extractEntry(context: Context, archive: UniFile, entryName: String, cacheDir: File): Uri {
     return withContext(Dispatchers.IO) {
