@@ -74,6 +74,8 @@ class ReaderMusicPlayer(
     fun setLoop(loop: Boolean) {
         this.loop = loop
         player?.isLooping = isLoopingTrack()
+        // The playlist ended while loop was off
+        if (loop && player == null && preparing == null) playlist.indices.firstOrNull { it !in failed }?.let(::play)
     }
 
     fun pause() {
