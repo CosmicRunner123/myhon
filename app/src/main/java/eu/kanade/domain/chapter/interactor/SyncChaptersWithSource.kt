@@ -52,9 +52,15 @@ class SyncChaptersWithSource(
         val sourceChapters = rawSourceChapters
             .distinctBy { it.url }
             .mapIndexed { i, sChapter ->
+                // Files keep the name the directory view lists them under, even one starting with the folder's name
+                val name = if (manga.source == DirectorySource.ID) {
+                    sChapter.name.trim()
+                } else {
+                    with(ChapterSanitizer) { sChapter.name.sanitize(manga.title) }
+                }
                 Chapter.create()
                     .copyFromSChapter(sChapter)
-                    .copy(name = with(ChapterSanitizer) { sChapter.name.sanitize(manga.title) })
+                    .copy(name = name)
                     .copy(mangaId = manga.id, sourceOrder = i.toLong())
             }
 

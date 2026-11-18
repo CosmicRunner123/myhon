@@ -40,6 +40,24 @@ class SyncChaptersWithSourceTest {
         added.bookmark shouldBe true
     }
 
+    @Test
+    fun `a file in directory view keeps the folder's name at the start of its own`() = runTest {
+        val manga = Manga.create().copy(id = 1, source = DirectorySource.ID, title = "Spider")
+
+        val added = sync(manga, emptyList(), listOf(sChapter("file:///Spider/Spider-Man%2001.cbz", "Spider-Man 01")))
+
+        added.single().name shouldBe "Spider-Man 01"
+    }
+
+    @Test
+    fun `a chapter loses the series title at the start of its name`() = runTest {
+        val manga = Manga.create().copy(id = 1, source = LocalSource.ID, title = "Spider")
+
+        val added = sync(manga, emptyList(), listOf(sChapter("Spider/Spider-Man 01.cbz", "Spider-Man 01")))
+
+        added.single().name shouldBe "Man 01"
+    }
+
     /** Syncs a list holding only "Superman 001" for a series whose read and bookmarked "Batman 001" is gone. */
     private suspend fun replaceReadChapter(source: Long): Chapter {
         val manga = Manga.create().copy(id = 1, source = source, title = "Downloads")
@@ -52,16 +70,18 @@ class SyncChaptersWithSourceTest {
             read = true,
             bookmark = true,
         )
-        val sourceChapter = SChapter.create().apply {
-            url = "file:///Downloads/Superman%20001.cbz"
-            name = "Superman 001"
-            date_upload = 1L
-        }
 
+        val sourceChapter = sChapter("file:///Downloads/Superman%20001.cbz", "Superman 001")
+
+        return sync(manga, listOf(removed), listOf(sourceChapter)).single().also { it.chapterNumber shouldBe 1.0 }
+    }
+
+    /** Syncs [sourceChapters] over [dbChapters] and returns the chapters it adds. */
+    private suspend fun sync(manga: Manga, dbChapters: List<Chapter>, sourceChapters: List<SChapter>): List<Chapter> {
         val toAdd = slot<List<Chapter>>()
         val chapterRepository = mockk<ChapterRepository> {
-            coEvery { getChapterByMangaId(manga.id) } returns listOf(removed)
-            coEvery { updateFromRemote(listOf(removed.id), capture(toAdd), emptyList()) } answers { toAdd.captured }
+            coEvery { getChapterByMangaId(manga.id) } returns dbChapters
+            coEvery { updateFromRemote(any(), capture(toAdd), any()) } answers { toAdd.captured }
         }
         val getExcludedScanlators = mockk<GetExcludedScanlators> {
             coEvery { await(manga.id) } returns emptySet()
@@ -77,8 +97,14 @@ class SyncChaptersWithSourceTest {
             libraryPreferences = libraryPreferences,
         )
 
-        syncChaptersWithSource.await(listOf(sourceChapter), manga)
+        syncChaptersWithSource.await(sourceChapters, manga)
 
-        return toAdd.captured.single().also { it.chapterNumber shouldBe 1.0 }
+        return toAdd.captured
+    }
+
+    private fun sChapter(url: String, name: String) = SChapter.create().apply {
+        this.url = url
+        this.name = name
+        date_upload = 1L
     }
 }
