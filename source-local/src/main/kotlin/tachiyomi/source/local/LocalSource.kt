@@ -375,9 +375,9 @@ internal fun mergeSeriesNames(namesByBaseDirectory: List<List<String>?>): Series
 }
 
 /**
- * Merges the files of the folders of one series, given in precedence order: of the files with the same name, the
- * one in the first folder is kept.
+ * Merges the files of the folders of one series, given in precedence order: of the files with the same name,
+ * ignoring case as file lookups do, the one in the first folder is kept.
  */
 internal fun <T> mergeSeriesFiles(filesByFolder: List<List<T>>, name: (T) -> String?): List<T> {
-    return filesByFolder.flatten().distinctBy(name)
+    return filesByFolder.flatten().distinctBy { name(it)?.lowercase() }
 }

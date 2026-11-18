@@ -66,7 +66,7 @@ class LocalSourceTest {
             listOf(
                 listOf(SeriesFile("first", "Ch. 2.cbz")),
                 listOf(SeriesFile("second", "Ch. 1.cbz"), SeriesFile("second", "Ch. 2.cbz")),
-                listOf(SeriesFile("third", "Ch. 1.cbz"), SeriesFile("third", "ch. 2.cbz")),
+                listOf(SeriesFile("third", "Ch. 1.cbz"), SeriesFile("third", "Ch. 3.cbz")),
             ),
             SeriesFile::name,
         )
@@ -74,7 +74,24 @@ class LocalSourceTest {
         files shouldContainExactly listOf(
             SeriesFile("first", "Ch. 2.cbz"),
             SeriesFile("second", "Ch. 1.cbz"),
-            SeriesFile("third", "ch. 2.cbz"),
+            SeriesFile("third", "Ch. 3.cbz"),
+        )
+    }
+
+    @Test
+    fun `file names that differ in case are one file taken from the first folder`() {
+        val files = mergeSeriesFiles(
+            listOf(
+                listOf(SeriesFile("first", "Ch. 2.cbz")),
+                listOf(SeriesFile("second", "ch. 2.cbz"), SeriesFile("second", "ch. 3.CBZ")),
+                listOf(SeriesFile("third", "Ch. 3.cbz")),
+            ),
+            SeriesFile::name,
+        )
+
+        files shouldContainExactly listOf(
+            SeriesFile("first", "Ch. 2.cbz"),
+            SeriesFile("second", "ch. 3.CBZ"),
         )
     }
 
