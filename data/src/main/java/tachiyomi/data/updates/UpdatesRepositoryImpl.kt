@@ -7,7 +7,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.Flow
-import tachiyomi.core.common.util.lang.toLong
 import tachiyomi.data.Database
 import tachiyomi.data.subscribeToList
 import tachiyomi.domain.manga.model.MangaCover
@@ -28,33 +27,6 @@ class UpdatesRepositoryImpl(
         limit: Long,
     ): List<UpdatesWithRelations> {
         return getUpdatesByReadStatus(read = read, after = after, limit = limit).awaitAsList()
-    }
-
-    override fun subscribeAll(
-        after: Instant,
-        limit: Long,
-        unread: Boolean?,
-        started: Boolean?,
-        bookmarked: Boolean?,
-        hideExcludedScanlators: Boolean,
-        includedCategories: List<Long>,
-        excludedCategories: List<Long>,
-    ): Flow<List<UpdatesWithRelations>> {
-        return database.updatesViewQueries
-            .getRecentUpdatesWithFilters(
-                after = after,
-                limit = limit,
-                read = unread?.let { !it },
-                started = started?.toLong(),
-                bookmarked = bookmarked,
-                hideExcludedScanlators = hideExcludedScanlators.toLong(),
-                includedEmpty = includedCategories.isEmpty(),
-                excludedEmpty = excludedCategories.isEmpty(),
-                includedCategories = includedCategories,
-                excludedCategories = excludedCategories,
-                mapper = ::mapUpdatesWithRelations,
-            )
-            .subscribeToList()
     }
 
     override fun subscribeWithRead(

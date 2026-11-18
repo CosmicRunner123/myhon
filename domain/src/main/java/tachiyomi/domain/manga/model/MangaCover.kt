@@ -12,13 +12,3 @@ data class MangaCover(
     val url: String?,
     val lastModified: Instant?,
 )
-
-fun Manga.asMangaCover(): MangaCover {
-    return MangaCover(
-        mangaId = id,
-        sourceId = source,
-        isMangaFavorite = favorite,
-        url = thumbnailUrl,
-        lastModified = coverLastModified,
-    )
-}

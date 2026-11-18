@@ -10,6 +10,5 @@ object Constants {
     // Shortcut actions
     const val SHORTCUT_LIBRARY = "eu.kanade.tachiyomi.SHOW_LIBRARY"
     const val SHORTCUT_MANGA = "eu.kanade.tachiyomi.SHOW_MANGA"
-    const val SHORTCUT_UPDATES = "eu.kanade.tachiyomi.SHOW_RECENTLY_UPDATED"
     const val SHORTCUT_HISTORY = "eu.kanade.tachiyomi.SHOW_RECENTLY_READ"
 }

@@ -19,24 +19,6 @@ fun <T : R, R : Any> List<T>.insertSeparators(
     return newList
 }
 
-/**
- * Similar to [eu.kanade.core.util.insertSeparators] but iterates from last to first element
- */
-fun <T : R, R : Any> List<T>.insertSeparatorsReversed(
-    generator: (before: T?, after: T?) -> R?,
-): List<R> {
-    if (isEmpty()) return emptyList()
-    val newList = mutableListOf<R>()
-    for (i in size downTo 0) {
-        val after = getOrNull(i)
-        after?.let(newList::add)
-        val before = getOrNull(i - 1)
-        val separator = generator.invoke(before, after)
-        separator?.let(newList::add)
-    }
-    return newList.asReversed()
-}
-
 fun <E> HashSet<E>.addOrRemove(value: E, shouldAdd: Boolean) {
     if (shouldAdd) {
         add(value)

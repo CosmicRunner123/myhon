@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,13 +16,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
@@ -37,17 +30,12 @@ import eu.kanade.tachiyomi.ui.history.HistoryTab
 import eu.kanade.tachiyomi.ui.library.LibraryTab
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
 import eu.kanade.tachiyomi.ui.more.MoreTab
-import eu.kanade.tachiyomi.ui.updates.UpdatesTab
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import mihon.app.di.appGraph
 import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
-import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.i18n.pluralStringResource
 
 object HomeScreen : Screen() {
 
@@ -63,7 +51,6 @@ object HomeScreen : Screen() {
 
     private val TABS = listOf(
         LibraryTab,
-        UpdatesTab,
         HistoryTab,
         MoreTab,
     )
@@ -139,7 +126,6 @@ object HomeScreen : Screen() {
                     openTabEvent.receiveAsFlow().collectLatest {
                         tabNavigator.current = when (it) {
                             is Tab.Library -> LibraryTab
-                            Tab.Updates -> UpdatesTab
                             Tab.History -> HistoryTab
                         }
 
@@ -185,49 +171,7 @@ object HomeScreen : Screen() {
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            badge = tabBadge(tab),
         )
-    }
-
-    @Composable
-    private fun tabBadge(tab: eu.kanade.presentation.util.Tab): (@Composable () -> Unit)? {
-        val context = LocalContext.current
-        val count by produceState(initialValue = 0, tab) {
-            val graph = context.appGraph
-            when (tab) {
-                is UpdatesTab -> {
-                    combine(
-                        graph.libraryPreferences.newShowUpdatesCount.changes(),
-                        graph.libraryPreferences.newUpdatesCount.changes(),
-                    ) { show, count ->
-                        if (show) count else 0
-                    }
-                        .collectLatest { value = it }
-                }
-
-                else -> value = 0
-            }
-        }
-        if (count <= 0) return null
-        return {
-            Badge {
-                val desc = when (tab) {
-                    is UpdatesTab -> pluralStringResource(
-                        MR.plurals.notification_chapters_generic,
-                        count = count,
-                        count,
-                    )
-
-                    else -> null
-                }
-                Text(
-                    text = count.toString(),
-                    modifier = Modifier.semantics {
-                        if (desc != null) contentDescription = desc
-                    },
-                )
-            }
-        }
     }
 
     suspend fun search(query: String) {
@@ -244,7 +188,6 @@ object HomeScreen : Screen() {
 
     sealed interface Tab {
         data class Library(val mangaIdToOpen: Long? = null) : Tab
-        data object Updates : Tab
         data object History : Tab
     }
 }

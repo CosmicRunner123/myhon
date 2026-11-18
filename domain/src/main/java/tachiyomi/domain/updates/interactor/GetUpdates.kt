@@ -15,27 +15,6 @@ class GetUpdates(
         return repository.awaitWithRead(read, after, limit = 500)
     }
 
-    fun subscribe(
-        instant: Instant,
-        unread: Boolean?,
-        started: Boolean?,
-        bookmarked: Boolean?,
-        hideExcludedScanlators: Boolean,
-        includedCategories: List<Long>,
-        excludedCategories: List<Long>,
-    ): Flow<List<UpdatesWithRelations>> {
-        return repository.subscribeAll(
-            instant,
-            limit = 500,
-            unread = unread,
-            started = started,
-            bookmarked = bookmarked,
-            hideExcludedScanlators = hideExcludedScanlators,
-            includedCategories = includedCategories,
-            excludedCategories = excludedCategories,
-        )
-    }
-
     fun subscribe(read: Boolean, after: Instant): Flow<List<UpdatesWithRelations>> {
         return repository.subscribeWithRead(read, after, limit = 500)
     }

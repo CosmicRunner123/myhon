@@ -31,18 +31,6 @@ interface PreferenceStore {
     fun getAll(): Map<String, *>
 }
 
-fun PreferenceStore.getLongArray(
-    key: String,
-    defaultValue: List<Long>,
-): Preference<List<Long>> {
-    return getObjectFromString(
-        key = key,
-        defaultValue = defaultValue,
-        serializer = { it.joinToString(",") },
-        deserializer = { it.split(",").mapNotNull { l -> l.toLongOrNull() } },
-    )
-}
-
 inline fun <reified T : Enum<T>> PreferenceStore.getEnum(
     key: String,
     defaultValue: T,

@@ -44,7 +44,6 @@ import mihon.core.metro.metroGraph
 import mihon.domain.source.interactor.SyncLocalLibrary
 import mihon.domain.source.interactor.UpdateMangaFromRemote
 import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.chapter.model.Chapter
@@ -270,11 +269,6 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
                                             .sortedByDescending { it.sourceOrder }
 
                                         if (newChapters.isNotEmpty()) {
-                                            // Sources update concurrently, and getAndSet is a separate read and write
-                                            synchronized(libraryPreferences.newUpdatesCount) {
-                                                libraryPreferences.newUpdatesCount.getAndSet { it + newChapters.size }
-                                            }
-
                                             // Convert to the manga that contains new chapters
                                             newUpdates.add(manga to newChapters.toTypedArray())
                                         }

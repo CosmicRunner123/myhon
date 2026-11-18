@@ -22,12 +22,6 @@ interface MangaRepository {
 
     fun getLibraryMangaAsFlow(): Flow<List<LibraryManga>>
 
-    suspend fun getUpcomingManga(
-        statuses: Set<Long>,
-        excludedCategories: List<Long>,
-        includedCategories: List<Long>,
-    ): Flow<List<Manga>>
-
     suspend fun resetViewerFlags(): Boolean
 
     suspend fun deleteNonLibraryManga(sourceIds: List<Long>, keepReadManga: Boolean)

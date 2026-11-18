@@ -24,9 +24,6 @@ class BaselineProfileGenerator {
             pressHome()
             startActivityAndWait()
 
-            device.waitAndClick(By.text("Updates"))
-            device.waitForIdle()
-
             device.waitAndClick(By.text("History"))
             device.waitForIdle()
 

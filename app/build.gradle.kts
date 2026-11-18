@@ -289,7 +289,6 @@ dependencies {
     implementation(libs.bundles.voyager)
     implementation(libs.composeMaterialMotion)
     implementation(libs.swipe)
-    implementation(libs.composeGrid)
     implementation(libs.reorderable)
     implementation(libs.bundles.markdown)
     implementation(libs.materialKolor)

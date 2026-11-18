@@ -79,46 +79,6 @@ AND EXISTS (
     AND (user_read = 1 OR user_last_page_read != 0)
 );
 
-getUpcomingManga:
-SELECT
-    id, source_id, remote_url, remote_title, remote_author, remote_artist, remote_description,
-    remote_genre, remote_status, remote_cover, remote_update_strategy, remote_memo,
-    user_favorite_at, user_notes, user_reader_flags, user_chapter_flags,
-    state_chapter_last_update, state_chapter_next_update, state_chapter_fetch_interval,
-    state_cover_last_modified, state_initialized
-FROM manga
-WHERE state_chapter_next_update >= :startOfDay
-AND user_favorite_at IS NOT NULL
-AND remote_status IN :statuses
-AND (
-    -- includedEmpty being true expresses "don't care" state and bypasses the membership filter
-    :includedEmpty
-    OR EXISTS (
-        SELECT 1 FROM manga_category
-        WHERE manga_category.manga_id = manga.id
-        AND manga_category.category_id IN :includedCategories
-    )
-    OR (0 IN :includedCategories AND NOT EXISTS (
-        SELECT 1 FROM manga_category WHERE manga_category.manga_id = manga.id)
-    )
-)
-AND (
-    -- excludedEmpty being true expresses "don't care" state and bypasses the membership filter
-    :excludedEmpty
-    OR (
-        NOT EXISTS (
-            SELECT 1 FROM manga_category
-            WHERE manga_category.manga_id = manga.id
-            AND manga_category.category_id IN :excludedCategories
-        )
-        AND (
-            0 NOT IN :excludedCategories
-            OR EXISTS (SELECT 1 FROM manga_category WHERE manga_category.manga_id = manga.id)
-        )
-    )
-)
-ORDER BY state_chapter_next_update ASC;
-
 resetViewerFlags:
 UPDATE manga
 SET user_reader_flags = 0

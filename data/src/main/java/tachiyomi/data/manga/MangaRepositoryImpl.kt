@@ -9,9 +9,6 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
 import logcat.LogPriority
 import tachiyomi.core.common.util.lang.toLong
 import tachiyomi.core.common.util.system.logcat
@@ -23,7 +20,6 @@ import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaRemoteUpdate
 import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.domain.manga.repository.MangaRepository
-import kotlin.time.Clock
 
 @Inject
 @SingleIn(AppScope::class)
@@ -71,26 +67,6 @@ class MangaRepositoryImpl(
     override fun getLibraryMangaAsFlow(): Flow<List<LibraryManga>> {
         return database.libraryViewQueries
             .library(MangaMapper::mapLibraryManga)
-            .subscribeToList()
-    }
-
-    override suspend fun getUpcomingManga(
-        statuses: Set<Long>,
-        excludedCategories: List<Long>,
-        includedCategories: List<Long>,
-    ): Flow<List<Manga>> {
-        val timeZone = TimeZone.currentSystemDefault()
-        val startOfDay = Clock.System.now().toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
-        return database.mangaQueries
-            .getUpcomingManga(
-                startOfDay = startOfDay,
-                statuses = statuses,
-                includedEmpty = includedCategories.isEmpty(),
-                includedCategories = includedCategories,
-                excludedEmpty = excludedCategories.isEmpty(),
-                excludedCategories = excludedCategories,
-                mapper = MangaMapper::mapManga,
-            )
             .subscribeToList()
     }
 

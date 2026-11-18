@@ -31,8 +31,6 @@ dependencies {
     implementation(libs.metro.runtime)
     implementation(libs.kotlinx.serialization.json)
 
-    implementation(libs.kotlinx.datetime)
-
     implementation(libs.androidx.sqlite.bundled)
     implementation(libs.sqldelight.androidxDriver)
     implementation(libs.sqldelight.async)
