@@ -1,5 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" fill="none" viewBox="0 0 432 432">
-  <circle cx="216" cy="216" r="216" fill="#2b2140"/>
-  <path fill="#ffd166" d="M108,151Q108,139 120,141L196,155Q206,157 206,167L206,281Q206,293 194,291L118,277Q108,275 108,265Z"/>
-  <path fill="#ffd166" fill-rule="evenodd" d="M226,167Q226,157 236,155L312,141Q324,139 324,151L324,265Q324,275 314,277L238,291Q226,293 226,281ZM270,189L270,237A17,13 0 1 0 280 249L280,211L300,207L300,183Z"/>
+  <circle cx="216" cy="216" r="216" fill="#000"/>
+  <path fill="#8E5CF0" fill-rule="evenodd" d="M216,110A106,106 0 1,1 216,322A106,106 0 1,1 216,110ZM216,129.4A86.6,86.6 0 1,0 216,302.6A86.6,86.6 0 1,0 216,129.4Z"/>
+  <g transform="translate(5,-8)">
+    <path stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" d="M184,246L184,176C196,190 214,198 216,224"/>
+    <path stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" d="M216,224L216,256M216,224C226,206 238,190 252,178L252,244C240,246 226,250 216,256"/>
+    <path stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" d="M216,276C230,268 248,264 266,264L266,196"/>
+    <path fill="#fff" d="M154.56,256.32A18,13 -24 1,1 187.44,241.68A18,13 -24 1,1 154.56,256.32Z"/>
+  </g>
 </svg>
