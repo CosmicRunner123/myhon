@@ -33,8 +33,9 @@ class ChapterLoader(
         chapter.state = ReaderChapter.State.Loading
         withContext(Dispatchers.IO) {
             logcat { "Loading pages for ${chapter.chapter.name}" }
+            var loader: PageLoader? = null
             try {
-                val loader = getPageLoader(chapter)
+                loader = getPageLoader(chapter)
                 chapter.pageLoader = loader
 
                 val pages = loader.getPages()
@@ -52,6 +53,8 @@ class ChapterLoader(
 
                 chapter.state = ReaderChapter.State.Loaded(pages)
             } catch (e: Throwable) {
+                loader?.recycle()
+                if (chapter.pageLoader === loader) chapter.pageLoader = null
                 chapter.state = ReaderChapter.State.Error(e)
                 throw e
             }
