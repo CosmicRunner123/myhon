@@ -362,13 +362,14 @@ fun Manga.isLocal(): Boolean = source == LocalSource.ID
 data class SeriesListing(val names: List<String>, val complete: Boolean)
 
 /**
- * Series folders with the same name in several base directories are one series.
+ * Series folders with the same name in several base directories are one series. Names are compared ignoring case,
+ * as folder lookups do, and the first base directory's spelling is kept.
  *
  * @param namesByBaseDirectory the series folder names of each base directory, null where it could not be listed.
  */
 internal fun mergeSeriesNames(namesByBaseDirectory: List<List<String>?>): SeriesListing {
     return SeriesListing(
-        names = namesByBaseDirectory.filterNotNull().flatten().distinct(),
+        names = namesByBaseDirectory.filterNotNull().flatten().distinctBy { it.lowercase() },
         complete = null !in namesByBaseDirectory,
     )
 }

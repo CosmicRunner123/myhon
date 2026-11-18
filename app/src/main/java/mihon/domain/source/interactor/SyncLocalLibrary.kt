@@ -112,13 +112,19 @@ internal data class LocalLibraryChanges(
 )
 
 internal fun localLibraryChanges(series: SeriesListing, favorites: List<Manga>): LocalLibraryChanges {
-    val localFavorites = favorites.filter { it.isLocal() }
-    val favoriteNames = localFavorites.mapTo(HashSet()) { it.url }
-    val listedNames = series.names.toHashSet()
+    // An entry stands for the series whose name matches its url ignoring case, as folder lookups do
+    val favoriteNames = HashSet<String>()
+    val (localFavorites, duplicates) = favorites
+        .filter { it.isLocal() }
+        .sortedBy { it.id }
+        // Of entries that stand for one series, such as one restored with another spelling, the oldest stays
+        .partition { favoriteNames.add(it.url.lowercase()) }
+    val listedNames = series.names.mapTo(HashSet()) { it.lowercase() }
     return LocalLibraryChanges(
-        toAdd = series.names.filterNot { it in favoriteNames },
+        toAdd = series.names.filterNot { it.lowercase() in favoriteNames },
         // An entry that isn't listed may be in a folder that could not be reached
-        toRemove = if (series.complete) localFavorites.filterNot { it.url in listedNames } else emptyList(),
+        toRemove = duplicates +
+            if (series.complete) localFavorites.filterNot { it.url.lowercase() in listedNames } else emptyList(),
     )
 }
 

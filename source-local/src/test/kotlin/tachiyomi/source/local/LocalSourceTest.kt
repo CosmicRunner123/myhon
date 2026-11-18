@@ -25,10 +25,10 @@ class LocalSourceTest {
     }
 
     @Test
-    fun `series names that differ in case are different series`() {
-        val listing = mergeSeriesNames(listOf(listOf("One"), listOf("one")))
+    fun `series names that differ in case are one series named as in the first base directory`() {
+        val listing = mergeSeriesNames(listOf(listOf("One", "two"), listOf("one", "Two")))
 
-        listing shouldBe SeriesListing(listOf("One", "one"), complete = true)
+        listing shouldBe SeriesListing(listOf("One", "two"), complete = true)
     }
 
     @Test

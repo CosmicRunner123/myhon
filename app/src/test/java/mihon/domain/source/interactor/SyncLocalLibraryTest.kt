@@ -95,6 +95,30 @@ class SyncLocalLibraryTest {
     }
 
     @Test
+    fun `an entry stands for its series whatever the case of the folder name`() {
+        val changes = localLibraryChanges(
+            series = SeriesListing(listOf("One Piece"), complete = true),
+            favorites = listOf(entry(1, "one piece")),
+        )
+
+        changes.toAdd.shouldBeEmpty()
+        changes.toRemove.shouldBeEmpty()
+    }
+
+    @Test
+    fun `of entries whose folder names differ in case only the oldest stays`() {
+        val newer = entry(2, "One piece")
+
+        val changes = localLibraryChanges(
+            series = SeriesListing(listOf("One Piece"), complete = false),
+            favorites = listOf(newer, entry(1, "One Piece")),
+        )
+
+        changes.toAdd.shouldBeEmpty()
+        changes.toRemove shouldContainExactly listOf(newer)
+    }
+
+    @Test
     fun `an entry is added no earlier than its chapters were fetched`() {
         val now = Instant.fromEpochMilliseconds(1_000)
         val chapters = listOf(900L, 1_200L, 1_100L).map {
