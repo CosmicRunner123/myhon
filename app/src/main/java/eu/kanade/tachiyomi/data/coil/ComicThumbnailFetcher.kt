@@ -46,15 +46,7 @@ class ComicThumbnailFetcher(
 
     private suspend fun generate(diskCache: DiskCache): DiskCache.Snapshot {
         check(diskCacheKey !in failedKeys) { "No thumbnail for ${thumbnail.uri}" }
-        val bitmap = generations.withPermit {
-            try {
-                decodeFirstPage()
-            } catch (e: Exception) {
-                // Otherwise a broken file is read again each time it is shown
-                failedKeys += diskCacheKey
-                throw e
-            }
-        }
+        val bitmap = generations.withPermit { decodeFirstPage() }
         try {
             val editor = diskCache.openEditor(diskCacheKey) ?: error("Thumbnail of ${thumbnail.uri} is being written")
             try {
@@ -81,16 +73,34 @@ class ComicThumbnailFetcher(
         val file = UniFile.fromUri(context, thumbnail.uri.toUri()) ?: error("Invalid URI ${thumbnail.uri}")
         return when (val format = Format.valueOf(file)) {
             is Format.Archive -> format.file.archiveReader(context).use { reader ->
-                val page = archivePageNames(reader).firstOrNull() ?: error("No pages in ${thumbnail.uri}")
-                reader.getInputStream(page)!!.use(::decodeThumbnail)
+                rememberFailure {
+                    val page = archivePageNames(reader).firstOrNull() ?: error("No pages in ${thumbnail.uri}")
+                    reader.getInputStream(page)!!.use(::decodeThumbnail)
+                }
             }
             // EpubReader reads the archive as it's made, so the mapping is released when the file isn't one
             is Format.Epub -> format.file.archiveReader(context).use { reader ->
-                val epub = EpubReader(reader)
-                val page = epub.getFirstImage() ?: error("No pages in ${thumbnail.uri}")
-                epub.getInputStream(page)!!.use(::decodeThumbnail)
+                rememberFailure {
+                    val epub = EpubReader(reader)
+                    val page = epub.getFirstImage() ?: error("No pages in ${thumbnail.uri}")
+                    epub.getInputStream(page)!!.use(::decodeThumbnail)
+                }
             }
             is Format.Directory -> error("${thumbnail.uri} is a folder")
+        }
+    }
+
+    /**
+     * Runs [block], which reads the opened file, and remembers when it fails, so a broken file isn't read again each
+     * time it's shown. A file that couldn't be opened isn't remembered, since its storage may come back.
+     */
+    private inline fun <T> rememberFailure(block: () -> T): T {
+        try {
+            return block()
+        } catch (e: Exception) {
+            // There may be memory for it the next time it's shown
+            if (e !is ImageDecoder.OutOfMemoryException) failedKeys += diskCacheKey
+            throw e
         }
     }
 
