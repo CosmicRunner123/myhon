@@ -50,7 +50,9 @@ private val AUDIO_EXTENSIONS = setOf(
 )
 
 fun isAudioFile(name: String): Boolean {
-    return name.substringAfterLast('.', "").lowercase() in AUDIO_EXTENSIONS
+    // Hidden files include the stubs macOS writes beside each file (._x.mp3, __MACOSX/._x.mp3), which hold no audio
+    return !name.substringAfterLast('/').substringAfterLast('\\').startsWith('.') &&
+        name.substringAfterLast('.', "").lowercase() in AUDIO_EXTENSIONS
 }
 
 // Whole-chapter tracks rank below every range

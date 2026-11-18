@@ -19,6 +19,14 @@ class MusicTrackTest {
     }
 
     @Test
+    fun `hidden files, like the stubs macOS writes beside each file, are not audio`() {
+        listOf("._a.mp3", "__MACOSX/._a.mp3", "dir\\._a.flac", ".a.mp3")
+            .forEach { isAudioFile(it) shouldBe false }
+        listOf("a._b.mp3", ".dir/a.mp3")
+            .forEach { isAudioFile(it) shouldBe true }
+    }
+
+    @Test
     fun `two numbers are the start and stop images`() {
         MusicCue.parse("05-12.mp3") shouldBe MusicCue(trackNumber = null, images = 5..12)
         MusicCue.parse("battle 3 to 7.ogg") shouldBe MusicCue(trackNumber = null, images = 3..7)
