@@ -38,6 +38,7 @@ class ReaderMusicPlayer(
     private val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
         .setAudioAttributes(AUDIO_ATTRIBUTES)
         .setOnAudioFocusChangeListener(::onAudioFocusChange, Handler(Looper.getMainLooper()))
+        .setAcceptsDelayedFocusGain(true)
         .build()
 
     private var enabled = false
@@ -84,7 +85,6 @@ class ReaderMusicPlayer(
     fun resume() {
         if (!paused) return
         paused = false
-        focusLost = false
         updatePlayback()
     }
 
@@ -103,7 +103,13 @@ class ReaderMusicPlayer(
         activeSet = set
         this.playlist = playlist
         failed.clear()
-        if (playlist.isEmpty()) abandonFocus() else play(0)
+        if (playlist.isEmpty()) {
+            abandonFocus()
+        } else {
+            // No AUDIOFOCUS_GAIN follows a permanent loss, so new music asks for the focus again
+            focusLost = false
+            play(0)
+        }
     }
 
     private fun play(index: Int) {
@@ -189,11 +195,21 @@ class ReaderMusicPlayer(
     }
 
     private fun requestFocus(): Boolean {
-        return audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        return when (audioManager.requestAudioFocus(focusRequest)) {
+            AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> true
+            // Granted through AUDIOFOCUS_GAIN once the call ends
+            AudioManager.AUDIOFOCUS_REQUEST_DELAYED -> {
+                focusLost = true
+                false
+            }
+            else -> false
+        }
     }
 
     private fun abandonFocus() {
         audioManager.abandonAudioFocusRequest(focusRequest)
+        // An abandoned request gets no AUDIOFOCUS_GAIN
+        focusLost = false
     }
 
     companion object {
