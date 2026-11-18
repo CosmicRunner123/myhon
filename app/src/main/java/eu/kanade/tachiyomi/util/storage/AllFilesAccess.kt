@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
@@ -61,9 +62,13 @@ fun rememberAllFilesAccessRequest(): () -> Unit {
     }
     val activity = LocalActivity.current
     val permission = Manifest.permission.READ_EXTERNAL_STORAGE
+    var rationaleBefore by rememberSaveable { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        // After "Don't ask again" the dialog is denied without showing, and only then no rationale is due
-        if (granted || activity == null || ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
+        // After "Don't ask again" the dialog is denied without showing, and only then no rationale is due before nor
+        // after the request. A rationale due before means the dialog showed and the user ticked it just now.
+        if (granted || activity == null || rationaleBefore ||
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+        ) {
             return@rememberLauncherForActivityResult
         }
         try {
@@ -74,5 +79,11 @@ fun rememberAllFilesAccessRequest(): () -> Unit {
             context.toast(MR.strings.battery_optimization_setting_activity_not_found)
         }
     }
-    return remember(launcher) { { launcher.launch(permission) } }
+    return remember(launcher, activity) {
+        {
+            rationaleBefore =
+                activity != null && ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+            launcher.launch(permission)
+        }
+    }
 }
