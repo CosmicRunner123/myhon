@@ -192,8 +192,11 @@ object SettingsDataScreen : SearchableSettings {
         }
         var folderToRemove by rememberSaveable { mutableStateOf<String?>(null) }
 
-        // Only a library update adds or drops the chapters of the series that are in several folders
-        val updateLibrary = { scope.launch { LibraryUpdateWorker.startNow(context.workManager) } }
+        // Only a library update adds or drops the chapters of the series that are in several folders, including those
+        // kept out of updates
+        val updateLibrary = {
+            scope.launch { LibraryUpdateWorker.startNow(context.workManager, allEntries = true) }
+        }
 
         val pickFolder = folderPicker { folder ->
             if (folder !in foldersPref.get()) {

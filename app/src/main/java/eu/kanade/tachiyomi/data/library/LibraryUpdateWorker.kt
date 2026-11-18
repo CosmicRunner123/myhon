@@ -112,7 +112,7 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
         syncLocalLibrary()
 
         val categoryId = inputData.getLong(KEY_CATEGORY, -1L)
-        addMangaToQueue(categoryId)
+        addMangaToQueue(categoryId, inputData.getBoolean(KEY_ALL_ENTRIES, false))
 
         return withContext(Dispatchers.IO) {
             try {
@@ -148,9 +148,15 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
      * Adds list of manga to be updated.
      *
      * @param categoryId the ID of the category to update, or -1 if no category specified.
+     * @param allEntries whether to update every entry, regardless of the update categories and restrictions.
      */
-    private suspend fun addMangaToQueue(categoryId: Long) {
+    private suspend fun addMangaToQueue(categoryId: Long, allEntries: Boolean) {
         val libraryManga = getLibraryManga.await()
+
+        if (allEntries) {
+            mangaToUpdate = libraryManga.sortedBy { it.manga.title }
+            return
+        }
 
         val listToUpdate = if (categoryId != -1L) {
             libraryManga.filter { categoryId in it.categories }
@@ -396,6 +402,11 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
          */
         private const val KEY_CATEGORY = "category"
 
+        /**
+         * Key for updating every entry, regardless of the update categories and restrictions.
+         */
+        private const val KEY_ALL_ENTRIES = "all_entries"
+
         fun setupTask(
             context: Context,
             prefInterval: Int? = null,
@@ -434,6 +445,7 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
         suspend fun startNow(
             workManager: WorkManager,
             category: Category? = null,
+            allEntries: Boolean = false,
         ): Boolean {
             if (workManager.isRunning(TAG)) {
                 // Already running either as a scheduled or manual job
@@ -442,6 +454,7 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
 
             val inputData = workDataOf(
                 KEY_CATEGORY to category?.id,
+                KEY_ALL_ENTRIES to allEntries,
             )
             val request = OneTimeWorkRequestBuilder<LibraryUpdateWorker>()
                 .addTag(TAG)
