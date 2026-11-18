@@ -144,7 +144,8 @@ class SyncChaptersWithSource(
             .associate { it.chapterNumber to it.dateFetch }
 
         // The numbers in the names of files in directory view are not chapter numbers
-        val markDuplicateAsRead = manga.source != DirectorySource.ID &&
+        val hasChapterNumbers = manga.source != DirectorySource.ID
+        val markDuplicateAsRead = hasChapterNumbers &&
             libraryPreferences.markDuplicateReadChapterAsRead.get()
                 .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_NEW)
 
@@ -159,7 +160,9 @@ class SyncChaptersWithSource(
                 chapter = chapter.copy(read = true)
             }
 
-            if (!chapter.isRecognizedNumber || chapter.chapterNumber !in deletedChapterNumbers) return@map chapter
+            if (!hasChapterNumbers || !chapter.isRecognizedNumber || chapter.chapterNumber !in deletedChapterNumbers) {
+                return@map chapter
+            }
 
             chapter = chapter.copy(
                 read = chapter.chapterNumber in deletedReadChapterNumbers,
