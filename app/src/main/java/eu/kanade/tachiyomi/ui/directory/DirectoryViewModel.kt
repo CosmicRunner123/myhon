@@ -3,14 +3,19 @@ package eu.kanade.tachiyomi.ui.directory
 import android.content.Context
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.hippo.unifile.UniFile
 import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
-import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -40,10 +46,9 @@ import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.io.DirectoryEntry
 import tachiyomi.source.local.io.listDirectory
 
-@Inject
-@ViewModelKey
-@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
+@AssistedInject
 class DirectoryViewModel(
+    @Assisted private val savedState: SavedStateHandle,
     private val context: Context,
     private val storageManager: StorageManager,
     private val getManga: GetManga,
@@ -51,7 +56,24 @@ class DirectoryViewModel(
     private val openDirectoryComic: OpenDirectoryComic,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(State())
+    @AssistedFactory
+    @ViewModelAssistedFactoryKey(DirectoryViewModel::class)
+    @ContributesIntoMap(AppScope::class)
+    fun interface Factory : ViewModelAssistedFactory {
+        override fun create(extras: CreationExtras): DirectoryViewModel {
+            return create(extras.createSavedStateHandle())
+        }
+
+        fun create(@Assisted savedState: SavedStateHandle): DirectoryViewModel
+    }
+
+    // So browsing goes on in the same folder when the process was killed while reading
+    private val _state = MutableStateFlow(
+        State(
+            path = savedState.get<List<String>>(KEY_PATH_URIS).orEmpty()
+                .zip(savedState.get<List<String>>(KEY_PATH_NAMES).orEmpty(), ::DirectoryFolder),
+        ),
+    )
     val state: StateFlow<State> = _state.asStateFlow()
 
     private val _events = Channel<Event>(Channel.UNLIMITED)
@@ -68,12 +90,10 @@ class DirectoryViewModel(
     init {
         viewModelScope.launch {
             storageManager.changes
+                // The folders opened may no longer be under the roots. The first listing keeps a restored path
+                .onEach { setPath(emptyList()) }
                 .onStart { emit(Unit) }
-                .collect {
-                    // The folders opened may no longer be under the roots
-                    _state.update { it.copy(path = emptyList()) }
-                    load(reloadRoots = true)
-                }
+                .collect { load(reloadRoots = true) }
         }
         viewModelScope.launch {
             folderMangaId
@@ -88,20 +108,26 @@ class DirectoryViewModel(
     }
 
     fun openFolder(folder: DirectoryFolder) {
-        _state.update { it.copy(path = it.path + folder) }
+        setPath(state.value.path + folder)
         load()
     }
 
     fun goUp() {
         if (state.value.path.isEmpty()) return
-        _state.update { it.copy(path = it.path.dropLast(1)) }
+        setPath(state.value.path.dropLast(1))
         load()
     }
 
     fun goToTopLevel() {
         if (state.value.path.isEmpty()) return
-        _state.update { it.copy(path = emptyList()) }
+        setPath(emptyList())
         load()
+    }
+
+    private fun setPath(path: List<DirectoryFolder>) {
+        _state.update { it.copy(path = path) }
+        savedState[KEY_PATH_URIS] = ArrayList(path.map { it.uri })
+        savedState[KEY_PATH_NAMES] = ArrayList(path.map { it.name })
     }
 
     fun refresh() {
@@ -226,5 +252,10 @@ class DirectoryViewModel(
     sealed interface Event {
         data class OpenChapter(val chapter: Chapter) : Event
         data class OpenFailed(val message: String?) : Event
+    }
+
+    private companion object {
+        const val KEY_PATH_URIS = "path_uris"
+        const val KEY_PATH_NAMES = "path_names"
     }
 }
