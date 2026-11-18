@@ -143,6 +143,35 @@ object SettingsDataScreen : SearchableSettings {
         }
     }
 
+    /**
+     * Picks the storage location, whose "local" folder is the first series folder.
+     */
+    @Composable
+    fun storageLocationPicker(
+        storageDirPref: tachiyomi.core.common.preference.Preference<String>,
+    ): ManagedActivityResultLauncher<Uri?, Uri?> {
+        val updateLibrary = libraryUpdater()
+
+        return folderPicker { location ->
+            if (location != storageDirPref.get()) {
+                storageDirPref.set(location)
+                updateLibrary()
+            }
+        }
+    }
+
+    /**
+     * Starts an update of every library entry. After a folder change, only a library update adds or drops the
+     * chapters of the series that stay in the library, including those kept out of updates.
+     */
+    @Composable
+    private fun libraryUpdater(): () -> Unit {
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+
+        return { scope.launch { LibraryUpdateWorker.startNow(context.workManager, allEntries = true) } }
+    }
+
     @Composable
     fun storageLocationText(
         storageDirPref: tachiyomi.core.common.preference.Preference<String>,
@@ -165,7 +194,7 @@ object SettingsDataScreen : SearchableSettings {
         storagePreferences: StoragePreferences,
     ): Preference.PreferenceItem.TextPreference {
         val context = LocalContext.current
-        val pickStorageLocation = folderPicker(storagePreferences.baseStorageDirectory::set)
+        val pickStorageLocation = storageLocationPicker(storagePreferences.baseStorageDirectory)
 
         return Preference.PreferenceItem.TextPreference(
             title = stringResource(MR.strings.pref_storage_location),
@@ -183,7 +212,6 @@ object SettingsDataScreen : SearchableSettings {
     @Composable
     private fun getSeriesFoldersGroup(storagePreferences: StoragePreferences): Preference.PreferenceGroup {
         val context = LocalContext.current
-        val scope = rememberCoroutineScope()
 
         val foldersPref = storagePreferences.localSourceDirectories
         val folders by foldersPref.collectAsState()
@@ -192,11 +220,7 @@ object SettingsDataScreen : SearchableSettings {
         }
         var folderToRemove by rememberSaveable { mutableStateOf<String?>(null) }
 
-        // Only a library update adds or drops the chapters of the series that are in several folders, including those
-        // kept out of updates
-        val updateLibrary = {
-            scope.launch { LibraryUpdateWorker.startNow(context.workManager, allEntries = true) }
-        }
+        val updateLibrary = libraryUpdater()
 
         val pickFolder = folderPicker { folder ->
             if (folder !in foldersPref.get()) {

@@ -40,7 +40,7 @@ internal class StorageStep : OnboardingStep {
         val handler = LocalUriHandler.current
 
         val storagePref = remember { context.appGraph.storagePreferences.baseStorageDirectory }
-        val pickStorageLocation = SettingsDataScreen.folderPicker(storagePref::set)
+        val pickStorageLocation = SettingsDataScreen.storageLocationPicker(storagePref)
 
         Column(
             modifier = Modifier.padding(16.dp),
