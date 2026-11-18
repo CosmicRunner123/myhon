@@ -162,7 +162,8 @@ object SettingsDataScreen : SearchableSettings {
 
     /**
      * Starts an update of every library entry. After a folder change, only a library update adds or drops the
-     * chapters of the series that stay in the library, including those kept out of updates.
+     * chapters of the series that stay in the library, including those kept out of updates, and finds or makes their
+     * covers again.
      */
     @Composable
     private fun libraryUpdater(): () -> Unit {
@@ -296,6 +297,7 @@ object SettingsDataScreen : SearchableSettings {
     @Composable
     private fun getCoverFolderPref(storagePreferences: StoragePreferences): Preference.PreferenceItem.TextPreference {
         val context = LocalContext.current
+        val updateLibrary = libraryUpdater()
 
         val coverFolderPref = storagePreferences.localCoverDirectory
         val coverFolder by coverFolderPref.collectAsState()
@@ -305,9 +307,12 @@ object SettingsDataScreen : SearchableSettings {
 
         val changeCoverFolder = { folder: String ->
             val previousFolder = coverFolderPref.get()
-            coverFolderPref.set(folder)
-            if (previousFolder.isNotEmpty()) {
-                releaseFolderPermission(context, storagePreferences, previousFolder)
+            if (folder != previousFolder) {
+                coverFolderPref.set(folder)
+                if (previousFolder.isNotEmpty()) {
+                    releaseFolderPermission(context, storagePreferences, previousFolder)
+                }
+                updateLibrary()
             }
         }
         val pickCoverFolder = folderPicker(changeCoverFolder)
