@@ -23,6 +23,7 @@ import tachiyomi.domain.chapter.interactor.SetMangaDefaultChapterFlags
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetFavorites
+import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
@@ -40,6 +41,7 @@ import kotlin.time.Instant
 class SyncLocalLibrary(
     private val localSource: LocalSource,
     private val getFavorites: GetFavorites,
+    private val getManga: GetManga,
     private val networkToLocalManga: NetworkToLocalManga,
     private val updateMangaFromRemote: UpdateMangaFromRemote,
     private val setMangaDefaultChapterFlags: SetMangaDefaultChapterFlags,
@@ -80,6 +82,9 @@ class SyncLocalLibrary(
             title = name
         }
         val manga = networkToLocalManga(series.toDomainManga(LocalSource.ID))
+        // A restore, for instance, put it in the library after the folders were listed; its date added and
+        // chapter settings stay
+        if (manga.favorite) return
 
         // Fetched while outside the library, so the chapters found now don't count as updates
         val update = updateMangaFromRemote(manga, fetchDetails = true, fetchChapters = true)
@@ -88,6 +93,8 @@ class SyncLocalLibrary(
         if (update.isFailure) {
             logcat(LogPriority.WARN) { "Adding $name to the library without its details and chapters" }
         }
+        // The fetch is slow enough for a restore to finish meanwhile
+        if (getManga.await(manga.id)?.favorite == true) return
 
         setMangaDefaultChapterFlags.await(manga)
         if (categoryId != null && getCategories.await(manga.id).isEmpty()) {
