@@ -40,6 +40,7 @@ import eu.kanade.tachiyomi.data.coil.MangaCoverFetcher
 import eu.kanade.tachiyomi.data.coil.MangaCoverKeyer
 import eu.kanade.tachiyomi.data.coil.MangaKeyer
 import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
+import eu.kanade.tachiyomi.data.library.MetadataUpdateWorker
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
@@ -183,7 +184,14 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         storagePreferences.directoryView
             .changes()
             .drop(1)
-            .onEach { LibraryUpdateWorker.setupTask(this) }
+            .onEach { directoryView ->
+                LibraryUpdateWorker.setupTask(this)
+                // Updates that already started would go on writing covers and details into series folders
+                if (directoryView) {
+                    LibraryUpdateWorker.cancelManual(this)
+                    MetadataUpdateWorker.cancel(this)
+                }
+            }
             .launchIn(scope)
 
         setAppCompatDelegateThemeMode(uiPreferences.themeMode.get())

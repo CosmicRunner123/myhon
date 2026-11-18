@@ -469,6 +469,13 @@ class LibraryUpdateWorker(private val context: Context, workerParams: WorkerPara
             return true
         }
 
+        /**
+         * Cancels the manual update, whether it is running or waiting to.
+         */
+        fun cancelManual(context: Context) {
+            context.workManager.cancelUniqueWork(WORK_NAME_MANUAL)
+        }
+
         suspend fun stop(context: Context) {
             val workManager = context.workManager
             val workQuery = WorkQuery.Builder.fromTags(listOf(TAG))

@@ -13,6 +13,7 @@ import dev.zacsweers.metro.Inject
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.util.system.isRunning
 import eu.kanade.tachiyomi.util.system.setForegroundSafely
+import eu.kanade.tachiyomi.util.system.workManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -31,6 +32,7 @@ import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.manga.interactor.GetLibraryManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.storage.service.StoragePreferences
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -50,10 +52,16 @@ class MetadataUpdateWorker(context: Context, workerParams: WorkerParameters) :
 
     @Inject private lateinit var notifier: LibraryUpdateNotifier
 
+    @Inject private lateinit var storagePreferences: StoragePreferences
+
     private var mangaToUpdate: List<LibraryManga> = mutableListOf()
 
     override suspend fun doWork(): Result {
         graph.inject(this)
+
+        // It writes covers and details into series folders, which directory view never does; this may have been
+        // queued before it was turned on
+        if (storagePreferences.directoryView.get()) return Result.success()
 
         setForegroundSafely()
 
@@ -182,6 +190,10 @@ class MetadataUpdateWorker(context: Context, workerParams: WorkerParameters) :
             workManager.enqueueUniqueWork(WORK_NAME_MANUAL, ExistingWorkPolicy.KEEP, request)
 
             return true
+        }
+
+        fun cancel(context: Context) {
+            context.workManager.cancelUniqueWork(WORK_NAME_MANUAL)
         }
     }
 }

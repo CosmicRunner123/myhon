@@ -56,10 +56,11 @@ class SyncLocalLibrary(
     private val mutex = Mutex()
 
     suspend operator fun invoke() = withContext(Dispatchers.IO) {
-        // Directory view keeps no library, and adding series writes covers and details into their folders
-        if (storagePreferences.directoryView.get()) return@withContext
-
         mutex.withLock {
+            // Directory view keeps no library, and adding series writes covers and details into their folders. Checked
+            // under the lock, as it may have been turned on while this waited for another sync
+            if (storagePreferences.directoryView.get()) return@withLock
+
             val changes = localLibraryChanges(localSource.getSeriesListing(), getFavorites.await())
 
             if (changes.toRemove.isNotEmpty()) {
