@@ -16,6 +16,7 @@ import tachiyomi.domain.chapter.repository.ChapterRepository
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaRemoteUpdate
+import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.domain.manga.repository.MangaRepository
 import tachiyomi.domain.source.service.SourceManager
 import kotlin.time.Clock
@@ -70,9 +71,25 @@ class UpdateMangaFromRemote(
                 manualFetch = manualFetch,
                 fetchWindow = fetchWindow,
             )
+            // A library entry whose chapters could not be fetched when it was added, as while a series folder was
+            // unavailable, joins the library now rather than getting its back catalogue as updates
+            val firstChapters = if (manga.favorite && chapters.isEmpty()) {
+                chapterRepository.getChapterByMangaId(manga.id)
+            } else {
+                emptyList()
+            }
+            if (firstChapters.isNotEmpty()) {
+                val addedAt = addedAt(Clock.System.now(), firstChapters)
+                mangaRepository.update(MangaUpdate(manga.id) { favoriteAt = addedAt })
+            }
             val updatedManga = mangaRepository.getMangaById(manga.id)
 
-            Result.success(RemoteMangaUpdate(manga = updatedManga, newChapters = newChapters))
+            Result.success(
+                RemoteMangaUpdate(
+                    manga = updatedManga,
+                    newChapters = if (firstChapters.isEmpty()) newChapters else emptyList(),
+                ),
+            )
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             Result.failure(e)
