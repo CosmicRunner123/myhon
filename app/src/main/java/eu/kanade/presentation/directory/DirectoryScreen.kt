@@ -19,7 +19,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -29,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.components.AppBar
@@ -42,6 +46,7 @@ import mihon.icons.materialsymbols.rounded.Mobile
 import mihon.icons.materialsymbols.rounded.Refresh
 import mihon.icons.materialsymbols.rounded.Security
 import mihon.icons.materialsymbols.rounded.Storage
+import mihon.icons.materialsymbols.roundedfilled.PlayArrow
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
@@ -64,6 +69,7 @@ fun DirectoryScreen(
     onClickFolder: (DirectoryViewModel.DirectoryFolder) -> Unit,
     onClickComic: (DirectoryEntry) -> Unit,
     onClickAllowAccess: () -> Unit,
+    onClickResume: () -> Unit,
 ) {
     Scaffold(
         topBar = { scrollBehavior ->
@@ -72,6 +78,20 @@ fun DirectoryScreen(
                 navigateUp = onClickUp.takeIf { state.path.isNotEmpty() },
                 scrollBehavior = scrollBehavior,
             )
+        },
+        floatingActionButton = {
+            val lastRead = state.lastRead
+            if (lastRead != null) {
+                val description = stringResource(MR.strings.directory_resume, lastRead.title)
+                SmallExtendedFloatingActionButton(
+                    text = { Text(text = stringResource(MR.strings.action_resume)) },
+                    icon = { Icon(imageVector = MaterialSymbols.RoundedFilled.PlayArrow, contentDescription = null) },
+                    onClick = onClickResume,
+                    modifier = Modifier
+                        .animateFloatingActionButton(visible = state.folder == null, alignment = Alignment.BottomEnd)
+                        .semantics { contentDescription = description },
+                )
+            }
         },
     ) { contentPadding ->
         val folder = state.folder

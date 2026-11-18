@@ -19,6 +19,11 @@ class GetHistory(
         return repository.getLastHistory()
     }
 
+    /** The entry read last among those of the source [sourceId]. */
+    fun subscribeLast(sourceId: Long): Flow<HistoryWithRelations?> {
+        return repository.getLastHistoryBySourceIdAsFlow(sourceId)
+    }
+
     fun subscribe(query: String): Flow<List<HistoryWithRelations>> {
         return repository.getHistory(query)
     }

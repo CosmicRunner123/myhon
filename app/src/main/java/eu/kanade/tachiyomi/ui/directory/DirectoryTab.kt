@@ -68,6 +68,7 @@ data object DirectoryTab : Tab {
             onClickFolder = viewModel::openFolder,
             onClickComic = viewModel::openComic,
             onClickAllowAccess = requestAllFilesAccess,
+            onClickResume = viewModel::resumeLastRead,
         )
 
         BackHandler(enabled = state.path.isNotEmpty(), onBack = viewModel::goUp)
@@ -93,6 +94,7 @@ data object DirectoryTab : Tab {
                         is DirectoryViewModel.Event.OpenFailed -> context.toast(
                             event.message ?: context.stringResource(MR.strings.unknown_error),
                         )
+                        DirectoryViewModel.Event.NoNextChapter -> context.toast(MR.strings.no_next_chapter)
                     }
                 }
             }

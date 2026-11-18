@@ -12,6 +12,7 @@ import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.Database
 import tachiyomi.data.subscribeToList
+import tachiyomi.data.subscribeToOneOrNull
 import tachiyomi.domain.history.model.History
 import tachiyomi.domain.history.model.HistoryUpdate
 import tachiyomi.domain.history.model.HistoryWithRelations
@@ -34,6 +35,12 @@ class HistoryRepositoryImpl(
         return database.historyViewQueries
             .getLatestHistory(HistoryMapper::mapHistoryWithRelations)
             .awaitAsOneOrNull()
+    }
+
+    override fun getLastHistoryBySourceIdAsFlow(sourceId: Long): Flow<HistoryWithRelations?> {
+        return database.historyViewQueries
+            .getLatestHistoryBySourceId(sourceId, HistoryMapper::mapHistoryWithRelations)
+            .subscribeToOneOrNull()
     }
 
     override suspend fun getTotalReadDuration(): Long {

@@ -32,11 +32,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import mihon.domain.source.interactor.OpenDirectoryComic
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.storage.hasAllFilesAccess
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
 import tachiyomi.domain.chapter.model.Chapter
+import tachiyomi.domain.history.interactor.GetHistory
+import tachiyomi.domain.history.model.HistoryWithRelations
 import tachiyomi.domain.manga.interactor.GetManga
+import tachiyomi.i18n.MR
 import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.io.DirectoryEntry
 import tachiyomi.source.local.io.listDirectory
@@ -47,6 +51,7 @@ class DirectoryViewModel(
     private val context: Context,
     private val getManga: GetManga,
     private val getChaptersByMangaId: GetChaptersByMangaId,
+    private val getHistory: GetHistory,
     private val openDirectoryComic: OpenDirectoryComic,
 ) : ViewModel() {
 
@@ -92,6 +97,11 @@ class DirectoryViewModel(
                 .collect { chapters ->
                     _state.update { state -> state.copy(chapters = chapters.associateBy { it.url }) }
                 }
+        }
+        viewModelScope.launch {
+            getHistory.subscribeLast(DirectorySource.ID)
+                .flowOn(Dispatchers.IO)
+                .collect { history -> _state.update { it.copy(lastRead = history) } }
         }
     }
 
@@ -192,6 +202,30 @@ class DirectoryViewModel(
         }
     }
 
+    /** Goes on reading the folder of [State.lastRead] like History does. */
+    fun resumeLastRead() {
+        val lastRead = state.value.lastRead ?: return
+        if (state.value.isOpening) return
+        _state.update { it.copy(isOpening = true) }
+        viewModelScope.launch {
+            try {
+                val chapter = withContext(Dispatchers.IO) {
+                    val manga = getManga.await(lastRead.mangaId)
+                        ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
+                    openDirectoryComic.resume(manga, lastRead.chapterId)
+                }
+                _events.send(if (chapter != null) Event.OpenChapter(chapter) else Event.NoNextChapter)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to resume ${lastRead.title}" }
+                _events.send(Event.OpenFailed(e.message))
+            } finally {
+                _state.update { it.copy(isOpening = false) }
+            }
+        }
+    }
+
     @Immutable
     data class State(
         /** The top level, where browsing starts. */
@@ -202,6 +236,8 @@ class DirectoryViewModel(
         val listing: Listing = Listing.Loading,
         /** The chapters of the folder shown, by the URI of their file, once one of its files was opened. */
         val chapters: Map<String, Chapter> = emptyMap(),
+        /** The History entry of the folder read last, if any. */
+        val lastRead: HistoryWithRelations? = null,
         val isRefreshing: Boolean = false,
         val isOpening: Boolean = false,
     ) {
@@ -231,6 +267,7 @@ class DirectoryViewModel(
     sealed interface Event {
         data class OpenChapter(val chapter: Chapter) : Event
         data class OpenFailed(val message: String?) : Event
+        data object NoNextChapter : Event
     }
 
     private companion object {

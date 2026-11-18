@@ -599,6 +599,7 @@
     <string name="directory_access_allow">Allow access</string>
     <string name="directory_volume_space">%1$s free of %2$s</string>
     <string name="directory_comic_read">Read</string>
+    <string name="directory_resume">Resume reading %1$s</string>
 
     <!-- Manga info -->
     <string name="ongoing">Ongoing</string>

@@ -65,3 +65,26 @@ ON chapter.id = history.chapter_id
 WHERE history.read_at IS NOT NULL
 ORDER BY history.read_at DESC
 LIMIT 1;
+
+getLatestHistoryBySourceId:
+SELECT
+history.id AS id,
+manga.id AS mangaId,
+chapter.id AS chapterId,
+manga.remote_title AS title,
+manga.remote_cover AS thumbnailUrl,
+manga.source_id AS sourceId,
+manga.user_favorite_at IS NOT NULL AS favorite,
+manga.state_cover_last_modified AS coverLastModified,
+chapter.remote_chapter_number AS chapterNumber,
+history.read_at AS readAt,
+history.read_duration AS readDuration
+FROM history
+JOIN manga
+ON manga.id = history.manga_id
+JOIN chapter
+ON chapter.id = history.chapter_id
+WHERE history.read_at IS NOT NULL
+AND manga.source_id = :sourceId
+ORDER BY history.read_at DESC
+LIMIT 1;
