@@ -26,6 +26,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.setting.SettingsScreen
 import eu.kanade.tachiyomi.ui.stats.StatsScreen
+import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
@@ -55,7 +56,8 @@ data object MoreTab : Tab {
         MoreScreen(
             incognitoMode = viewModel.incognitoMode,
             onIncognitoModeChange = { viewModel.incognitoMode = it },
-            onClickCategories = { navigator.push(CategoryScreen()) },
+            // Categories only sort the library
+            onClickCategories = { navigator.push(CategoryScreen()) }.takeUnless { viewModel.directoryView },
             onClickStats = { navigator.push(StatsScreen()) },
             onClickDataAndStorage = { navigator.push(SettingsScreen(SettingsScreen.Destination.DataAndStorage)) },
             onClickSettings = { navigator.push(SettingsScreen()) },
@@ -69,7 +71,10 @@ data object MoreTab : Tab {
 @ContributesIntoMap(AppScope::class)
 class MoreViewModel(
     preferences: BasePreferences,
+    storagePreferences: StoragePreferences,
 ) : ViewModel() {
 
     var incognitoMode by preferences.incognitoMode.asState(viewModelScope)
+
+    val directoryView by storagePreferences.directoryView.asState(viewModelScope)
 }

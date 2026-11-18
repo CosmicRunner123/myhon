@@ -31,6 +31,7 @@ import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.source.local.DirectorySource
 
 data object HistoryTab : Tab {
 
@@ -65,7 +66,14 @@ data object HistoryTab : Tab {
             state = state,
             snackbarHostState = snackbarHostState,
             onSearchQueryChange = viewModel::updateSearchQuery,
-            onClickCover = { navigator.push(MangaScreen(it)) },
+            onClickCover = { history ->
+                // Directory view has no series pages
+                if (history.coverData.sourceId == DirectorySource.ID) {
+                    viewModel.getNextChapterForManga(history.mangaId, history.chapterId)
+                } else {
+                    navigator.push(MangaScreen(history.mangaId))
+                }
+            },
             onClickResume = viewModel::getNextChapterForManga,
             onDialogChange = viewModel::setDialog,
         )
@@ -107,14 +115,15 @@ data object HistoryTab : Tab {
                     HistoryViewModel.Event.HistoryCleared ->
                         snackbarHostState.showSnackbar(context.stringResource(MR.strings.clear_history_completed))
                     is HistoryViewModel.Event.OpenChapter -> openChapter(context, e.chapter)
+                    is HistoryViewModel.Event.OpenFailed -> snackbarHostState.showSnackbar(
+                        e.message ?: context.stringResource(MR.strings.unknown_error),
+                    )
                 }
             }
         }
 
         LaunchedEffect(Unit) {
-            resumeLastChapterReadEvent.receiveAsFlow().collectLatest {
-                openChapter(context, viewModel.getNextChapter())
-            }
+            resumeLastChapterReadEvent.receiveAsFlow().collectLatest { viewModel.getNextChapter() }
         }
     }
 

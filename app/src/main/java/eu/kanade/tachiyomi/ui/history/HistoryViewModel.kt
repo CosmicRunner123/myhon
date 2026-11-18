@@ -12,7 +12,9 @@ import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import eu.kanade.core.util.insertSeparators
 import eu.kanade.presentation.history.HistoryUiModel
 import eu.kanade.tachiyomi.util.lang.toLocalDate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +31,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.withContext
 import logcat.LogPriority
+import mihon.domain.source.interactor.OpenDirectoryComic
 import tachiyomi.core.common.util.lang.SubscriberGate
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
@@ -37,6 +41,8 @@ import tachiyomi.domain.history.interactor.GetHistory
 import tachiyomi.domain.history.interactor.GetNextChapters
 import tachiyomi.domain.history.interactor.RemoveHistory
 import tachiyomi.domain.history.model.HistoryWithRelations
+import tachiyomi.domain.manga.interactor.GetManga
+import tachiyomi.source.local.DirectorySource
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
@@ -45,6 +51,8 @@ import kotlin.time.Duration.Companion.seconds
 class HistoryViewModel(
     private val getHistory: GetHistory,
     private val getNextChapters: GetNextChapters,
+    private val getManga: GetManga,
+    private val openDirectoryComic: OpenDirectoryComic,
     private val removeHistory: RemoveHistory,
 ) : ViewModel() {
 
@@ -58,6 +66,8 @@ class HistoryViewModel(
     private val searchQuery = MutableStateFlow<String?>(null)
 
     private val dialog = MutableStateFlow<Dialog?>(null)
+
+    private var resumeJob: Job? = null
 
     private val history = searchQuery
         .flatMapLatest { query ->
@@ -94,19 +104,42 @@ class HistoryViewModel(
             }
     }
 
-    suspend fun getNextChapter(): Chapter? {
-        return getNextChapters.await().firstOrNull()
-    }
-
-    fun getNextChapterForManga(mangaId: Long, chapterId: Long) {
-        viewModelScope.launch {
-            sendNextChapterEvent(getNextChapters.await(mangaId, chapterId))
+    fun getNextChapter() {
+        resume {
+            val history = getHistory.awaitLast() ?: return@resume null
+            nextChapter(history.mangaId, history.chapterId)
         }
     }
 
-    private suspend fun sendNextChapterEvent(chapters: List<Chapter>) {
-        val chapter = chapters.firstOrNull()
-        _events.send(Event.OpenChapter(chapter))
+    fun getNextChapterForManga(mangaId: Long, chapterId: Long) {
+        resume { nextChapter(mangaId, chapterId) }
+    }
+
+    /**
+     * Sends the chapter [block] finds to be opened, unless one is still being found: a directory view folder is
+     * listed first, which can take a while.
+     */
+    private fun resume(block: suspend () -> Chapter?) {
+        if (resumeJob?.isActive == true) return
+        resumeJob = viewModelScope.launch {
+            val event = try {
+                Event.OpenChapter(block())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e)
+                Event.OpenFailed(e.message)
+            }
+            _events.send(event)
+        }
+    }
+
+    private suspend fun nextChapter(mangaId: Long, chapterId: Long): Chapter? {
+        val manga = getManga.await(mangaId)
+        if (manga?.source == DirectorySource.ID) {
+            return withContext(Dispatchers.IO) { openDirectoryComic.resume(manga, chapterId) }
+        }
+        return getNextChapters.await(mangaId, chapterId).firstOrNull()
     }
 
     fun removeFromHistory(history: HistoryWithRelations) {
@@ -151,6 +184,7 @@ class HistoryViewModel(
 
     sealed interface Event {
         data class OpenChapter(val chapter: Chapter?) : Event
+        data class OpenFailed(val message: String?) : Event
         data object InternalError : Event
         data object HistoryCleared : Event
     }

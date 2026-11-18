@@ -16,6 +16,7 @@ import tachiyomi.domain.chapter.repository.ChapterRepository
 import tachiyomi.domain.chapter.service.ChapterRecognition
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.model.Manga
+import tachiyomi.source.local.DirectorySource
 import java.lang.Long.max
 import java.util.TreeSet
 import kotlin.time.Clock
@@ -142,8 +143,10 @@ class SyncChaptersWithSource(
         val deletedChapterNumberDateFetchMap = removedChapters.sortedByDescending { it.dateFetch }
             .associate { it.chapterNumber to it.dateFetch }
 
-        val markDuplicateAsRead = libraryPreferences.markDuplicateReadChapterAsRead.get()
-            .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_NEW)
+        // The numbers in the names of files in directory view are not chapter numbers
+        val markDuplicateAsRead = manga.source != DirectorySource.ID &&
+            libraryPreferences.markDuplicateReadChapterAsRead.get()
+                .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_NEW)
 
         // Date fetch is set in such a way that the upper ones will have bigger value than the lower ones
         // Sources MUST return the chapters from most to less recent, which is common.

@@ -76,6 +76,7 @@ import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.image.LocalCoverManager
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -226,16 +227,18 @@ class ReaderViewModel(
             else -> chapters
         }
 
+        // The numbers in the names of files in directory view are not chapter numbers
+        val hasChapterNumbers = manga.source != DirectorySource.ID
         return chaptersForReader
             .sortedWith(getChapterSort(manga, sortDescending = false))
             .run {
-                if (readerPreferences.skipDupe.get()) {
+                if (readerPreferences.skipDupe.get() && hasChapterNumbers) {
                     removeDuplicates(selectedChapter)
                 } else {
                     this
                 }
             }
-            .map(::ReaderChapter)
+            .map { ReaderChapter(it, hasChapterNumber = hasChapterNumbers) }
     }
 
     private var incognitoMode: Boolean = false
@@ -512,7 +515,7 @@ class ReaderViewModel(
 
         val markDuplicateAsRead = libraryPreferences.markDuplicateReadChapterAsRead.get()
             .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_EXISTING)
-        if (!markDuplicateAsRead) return
+        if (!markDuplicateAsRead || !readerChapter.hasChapterNumber) return
 
         val duplicateUnreadChapters = getUnfilteredChapterList()
             .mapNotNull { chapter ->

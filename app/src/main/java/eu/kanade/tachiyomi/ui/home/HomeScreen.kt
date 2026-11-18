@@ -43,6 +43,7 @@ import mihon.app.di.appGraph
 import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
 import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.source.local.DirectorySource
 
 object HomeScreen : Screen() {
 
@@ -61,6 +62,7 @@ object HomeScreen : Screen() {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
         val directoryView by remember { context.appGraph.storagePreferences.directoryView }.collectAsState()
+        val getManga = remember { context.appGraph.getManga }
         val firstTab = if (directoryView) DirectoryTab else LibraryTab
         val tabs = remember(firstTab) { listOf(firstTab, HistoryTab, MoreTab) }
         TabNavigator(
@@ -141,8 +143,10 @@ object HomeScreen : Screen() {
                             Tab.History -> HistoryTab
                         }
 
-                        if (it is Tab.Library && it.mangaIdToOpen != null) {
-                            navigator.push(MangaScreen(it.mangaIdToOpen))
+                        val mangaId = (it as? Tab.Library)?.mangaIdToOpen ?: return@collectLatest
+                        // Directory view has no series pages
+                        if (getManga.await(mangaId)?.source != DirectorySource.ID) {
+                            navigator.push(MangaScreen(mangaId))
                         }
                     }
                 }

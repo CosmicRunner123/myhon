@@ -36,6 +36,7 @@ import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.interactor.ResetCategoryFlags
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetFavorites
+import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.interactor.ResetViewerFlags
 import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.domain.track.interactor.UpsertTrack
@@ -81,6 +82,7 @@ interface AppGraph : ViewModelGraph {
 
     val networkHelper: NetworkHelper
 
+    val getManga: GetManga
     val getFavorites: GetFavorites
     val getCategories: GetCategories
     val resetViewerFlags: ResetViewerFlags

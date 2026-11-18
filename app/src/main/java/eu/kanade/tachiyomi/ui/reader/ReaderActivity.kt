@@ -115,6 +115,7 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.source.local.DirectorySource
 
 class ReaderActivity : BaseActivity() {
 
@@ -309,7 +310,8 @@ class ReaderActivity : BaseActivity() {
                 is ReaderViewModel.Dialog.PageActions -> {
                     ReaderPageActionsDialog(
                         onDismissRequest = onDismissRequest,
-                        onSetAsCover = viewModel::setAsCover,
+                        // Covers in directory view are the first page of the file opened last
+                        onSetAsCover = viewModel::setAsCover.takeUnless { state.manga?.source == DirectorySource.ID },
                         onShare = viewModel::shareImage,
                         onSave = viewModel::saveImage,
                     )
@@ -549,7 +551,8 @@ class ReaderActivity : BaseActivity() {
             mangaTitle = state.manga?.title,
             chapterTitle = state.currentChapter?.chapter?.name,
             navigateUp = onBackPressedDispatcher::onBackPressed,
-            onClickTopAppBar = ::openMangaScreen,
+            // Directory view has no series pages
+            onClickTopAppBar = ::openMangaScreen.takeUnless { state.manga?.source == DirectorySource.ID },
             bookmarked = state.bookmarked,
             onToggleBookmarked = viewModel::toggleChapterBookmark,
 

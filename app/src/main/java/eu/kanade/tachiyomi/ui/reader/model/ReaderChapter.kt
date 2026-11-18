@@ -5,7 +5,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 
-data class ReaderChapter(private val loadedChapter: Chapter) {
+/**
+ * @param hasChapterNumber whether the number in the chapter's name is its chapter number, so chapters with the same
+ * number are duplicates and a gap between numbers means chapters are missing.
+ */
+data class ReaderChapter(private val loadedChapter: Chapter, val hasChapterNumber: Boolean = true) {
 
     /**
      * The chapter as it currently stands, which drifts from [loadedChapter] as the reader records

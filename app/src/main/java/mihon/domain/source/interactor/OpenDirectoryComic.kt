@@ -7,6 +7,7 @@ import eu.kanade.domain.manga.interactor.UpdateManga
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.chapter.interactor.GetChapter
 import tachiyomi.domain.chapter.model.Chapter
+import tachiyomi.domain.history.interactor.GetNextChapters
 import tachiyomi.domain.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
@@ -25,6 +26,7 @@ class OpenDirectoryComic(
     private val networkToLocalManga: NetworkToLocalManga,
     private val syncChaptersWithSource: SyncChaptersWithSource,
     private val getChapter: GetChapter,
+    private val getNextChapters: GetNextChapters,
     private val updateManga: UpdateManga,
 ) {
 
@@ -45,16 +47,31 @@ class OpenDirectoryComic(
         syncChaptersWithSource.await(chapters, manga)
         val chapter = getChapter.await(fileUri, manga.id)
             ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
-
-        // History shows the folder with the thumbnail of the file opened last
-        if (manga.thumbnailUrl != fileUri) {
-            updateManga.await(
-                MangaUpdate(manga.id) {
-                    thumbnailUrl = fileUri
-                    coverLastModified = Clock.System.now()
-                },
-            )
-        }
+        setCover(manga, chapter)
         return chapter
+    }
+
+    /**
+     * The chapter to go on reading the directory view entry [manga] with from its chapter [chapterId], as
+     * [GetNextChapters] finds it once the entry's chapters match its folder's files again. Throws when the folder
+     * can't be read, without storing anything, or when it no longer has the chapter's file.
+     */
+    suspend fun resume(manga: Manga, chapterId: Long): Chapter? {
+        syncChaptersWithSource.await(directorySource.getChapterList(manga.url), manga)
+        getChapter.await(chapterId) ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
+        val chapter = getNextChapters.await(manga.id, chapterId).firstOrNull() ?: return null
+        setCover(manga, chapter)
+        return chapter
+    }
+
+    // History shows the folder with the thumbnail of the file opened last
+    private suspend fun setCover(manga: Manga, chapter: Chapter) {
+        if (manga.thumbnailUrl == chapter.url) return
+        updateManga.await(
+            MangaUpdate(manga.id) {
+                thumbnailUrl = chapter.url
+                coverLastModified = Clock.System.now()
+            },
+        )
     }
 }

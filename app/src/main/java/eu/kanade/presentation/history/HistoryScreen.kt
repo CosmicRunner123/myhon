@@ -42,7 +42,7 @@ fun HistoryScreen(
     state: HistoryViewModel.State,
     snackbarHostState: SnackbarHostState,
     onSearchQueryChange: (String?) -> Unit,
-    onClickCover: (mangaId: Long) -> Unit,
+    onClickCover: (HistoryWithRelations) -> Unit,
     onClickResume: (mangaId: Long, chapterId: Long) -> Unit,
     onDialogChange: (HistoryViewModel.Dialog?) -> Unit,
 ) {
@@ -87,7 +87,7 @@ fun HistoryScreen(
                 HistoryScreenContent(
                     history = it,
                     contentPadding = contentPadding,
-                    onClickCover = { history -> onClickCover(history.mangaId) },
+                    onClickCover = onClickCover,
                     onClickResume = { history -> onClickResume(history.mangaId, history.chapterId) },
                     onClickDelete = { item -> onDialogChange(HistoryViewModel.Dialog.Delete(item)) },
                 )

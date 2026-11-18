@@ -49,7 +49,7 @@ fun ReaderAppBars(
     mangaTitle: String?,
     chapterTitle: String?,
     navigateUp: () -> Unit,
-    onClickTopAppBar: () -> Unit,
+    onClickTopAppBar: (() -> Unit)?,
     bookmarked: Boolean,
     onToggleBookmarked: () -> Unit,
 
@@ -85,7 +85,7 @@ fun ReaderAppBars(
             ReaderTopBar(
                 modifier = Modifier
                     .background(backgroundColor)
-                    .clickable(onClick = onClickTopAppBar),
+                    .clickable(enabled = onClickTopAppBar != null, onClick = { onClickTopAppBar?.invoke() }),
                 mangaTitle = mangaTitle,
                 chapterTitle = chapterTitle,
                 navigateUp = navigateUp,

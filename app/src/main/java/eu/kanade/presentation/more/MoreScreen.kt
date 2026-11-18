@@ -25,7 +25,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 fun MoreScreen(
     incognitoMode: Boolean,
     onIncognitoModeChange: (Boolean) -> Unit,
-    onClickCategories: () -> Unit,
+    onClickCategories: (() -> Unit)?,
     onClickStats: () -> Unit,
     onClickDataAndStorage: () -> Unit,
     onClickSettings: () -> Unit,
@@ -52,12 +52,14 @@ fun MoreScreen(
 
             item { HorizontalDivider() }
 
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.categories),
-                    icon = MaterialSymbols.AutoMirroredRounded.Label,
-                    onPreferenceClick = onClickCategories,
-                )
+            if (onClickCategories != null) {
+                item {
+                    TextPreferenceWidget(
+                        title = stringResource(MR.strings.categories),
+                        icon = MaterialSymbols.AutoMirroredRounded.Label,
+                        onPreferenceClick = onClickCategories,
+                    )
+                }
             }
             item {
                 TextPreferenceWidget(
