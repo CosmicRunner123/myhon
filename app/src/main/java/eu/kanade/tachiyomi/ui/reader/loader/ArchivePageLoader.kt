@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.util.storage.DiskUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import mihon.core.archive.ArchiveReader
 import mihon.core.archive.archiveReader
 import tachiyomi.core.common.util.system.ImageUtil
 import java.io.File
@@ -22,22 +23,49 @@ import java.io.File
 internal class ArchivePageLoader(private val file: UniFile, private val context: Context) : PageLoader() {
     private val reader = file.archiveReader(context)
 
-    override suspend fun getPages(): List<ReaderPage> = reader.useEntries { entries ->
-        val (audioEntries, otherEntries) = entries
-            .filter { it.isFile }
-            .partition { isAudioFile(it.name) }
-        music = audioEntries.map { entry ->
-            MusicTrack(entry.name) { cacheDir -> extractEntry(context, file, entry.name, cacheDir) }
+    override suspend fun getPages(): List<ReaderPage> {
+        val fileNames = archiveFileNames(reader)
+        music = fileNames.filter(::isAudioFile).map { name ->
+            MusicTrack(name) { cacheDir -> extractEntry(context, file, name, cacheDir) }
         }
-        otherEntries
-            .filter { ImageUtil.isImage(it.name) { reader.getInputStream(it.name)!! } }
-            .sortedWith { f1, f2 -> f1.name.compareToCaseInsensitiveNaturalOrder(f2.name) }
-            .mapIndexed { i, entry -> ReaderPage(i) { reader.getInputStream(entry.name)!! } }
+        return archivePageNames(reader, fileNames)
+            .mapIndexed { i, name -> ReaderPage(i) { reader.getInputStream(name)!! } }
+            .toList()
     }
 
     override fun recycle() {
         reader.close()
     }
+}
+
+/**
+ * The names of the files in [reader]'s archive, in the archive's order.
+ */
+internal fun archiveFileNames(reader: ArchiveReader): List<String> {
+    return reader.useEntries { entries -> entries.filter { it.isFile }.map { it.name }.toList() }
+}
+
+/**
+ * The names of the pages of [reader]'s archive, whose files are [fileNames], in reading order. Comic thumbnails take
+ * the first one, so they show the page the reader opens on.
+ */
+internal fun archivePageNames(
+    reader: ArchiveReader,
+    fileNames: List<String> = archiveFileNames(reader),
+): Sequence<String> {
+    return archivePageNames(fileNames) { name -> ImageUtil.isImage(name) { reader.getInputStream(name)!! } }
+}
+
+/**
+ * The files of [fileNames] that aren't audio, in natural order, that [isImage] accepts. [isImage] is called only as
+ * the sequence reaches each file, as it may have to decode it.
+ */
+internal fun archivePageNames(fileNames: List<String>, isImage: (String) -> Boolean): Sequence<String> {
+    return fileNames
+        .filterNot(::isAudioFile)
+        .sortedWith { f1, f2 -> f1.compareToCaseInsensitiveNaturalOrder(f2) }
+        .asSequence()
+        .filter(isImage)
 }
 
 /**

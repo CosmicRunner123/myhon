@@ -16,6 +16,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.allowRgb565
@@ -31,6 +32,8 @@ import eu.kanade.tachiyomi.crash.CrashActivity
 import eu.kanade.tachiyomi.crash.GlobalExceptionHandler
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.coil.BufferedSourceFetcher
+import eu.kanade.tachiyomi.data.coil.ComicThumbnailFetcher
+import eu.kanade.tachiyomi.data.coil.ComicThumbnailKeyer
 import eu.kanade.tachiyomi.data.coil.CoverRequestInterceptor
 import eu.kanade.tachiyomi.data.coil.ImageDecoder
 import eu.kanade.tachiyomi.data.coil.MangaCoverFetcher
@@ -58,6 +61,7 @@ import mihon.core.metro.GraphProvider
 import mihon.core.migration.Migration
 import mihon.core.migration.Migrator
 import mihon.telemetry.TelemetryConfig
+import okio.Path.Companion.toOkioPath
 import org.conscrypt.Conscrypt
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.Preference
@@ -208,6 +212,12 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
         return ImageLoader.Builder(this).apply {
             val callFactoryLazy = lazy { networkHelper.value.client }
             val coverCache = coverCache.value
+            val comicThumbnailCacheLazy = lazy {
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("comic_thumbnails").toOkioPath())
+                    .maxSizeBytes(64L * 1024 * 1024)
+                    .build()
+            }
             components {
                 // NetworkFetcher.Factory
                 add(OkHttpNetworkFetcherFactory(callFactoryLazy::value))
@@ -215,9 +225,12 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
                 add(ImageDecoder.Factory())
                 // Fetcher.Factory
                 add(BufferedSourceFetcher.Factory())
+                add(ComicThumbnailFetcher.Factory(comicThumbnailCacheLazy))
+                add(ComicThumbnailFetcher.DirectoryCoverFactory(comicThumbnailCacheLazy))
                 add(MangaCoverFetcher.MangaCoverFactory(callFactoryLazy, coverCache))
                 add(MangaCoverFetcher.MangaFactory(callFactoryLazy, coverCache))
                 // Keyer
+                add(ComicThumbnailKeyer())
                 add(MangaCoverKeyer(coverCache))
                 add(MangaKeyer(coverCache))
                 // Interceptor

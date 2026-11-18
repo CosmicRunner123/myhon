@@ -31,7 +31,17 @@ class EpubReader(private val reader: ArchiveReader) : Closeable by reader {
         val ref = getPackageHref()
         val doc = getPackageDocument(ref)
         val pages = getPagesFromDocument(doc)
-        return getImagesFromPages(pages, ref)
+        return getImagesFromPages(pages, ref).toList()
+    }
+
+    /**
+     * Returns the path of the first image found in the epub file, reading only the pages up to it.
+     */
+    fun getFirstImage(): String? {
+        val ref = getPackageHref()
+        val doc = getPackageDocument(ref)
+        val pages = getPagesFromDocument(doc)
+        return getImagesFromPages(pages, ref).firstOrNull()
     }
 
     /**
@@ -69,25 +79,22 @@ class EpubReader(private val reader: ArchiveReader) : Closeable by reader {
     }
 
     /**
-     * Returns all the images contained in every page from the epub.
+     * Returns all the images contained in every page from the epub, reading each page when the sequence reaches it.
      */
-    private fun getImagesFromPages(pages: List<String>, packageHref: String): List<String> {
-        val result = mutableListOf<String>()
+    private fun getImagesFromPages(pages: List<String>, packageHref: String): Sequence<String> = sequence {
         val basePath = getParentDirectory(packageHref)
-        pages.forEach { page ->
+        for (page in pages) {
             val entryPath = resolveZipPath(basePath, page)
             val document = getInputStream(entryPath)!!.use { Jsoup.parse(it, null, "") }
             val imageBasePath = getParentDirectory(entryPath)
 
-            document.allElements.forEach {
-                when (it.tagName()) {
-                    "img" -> result.add(resolveZipPath(imageBasePath, it.attr("src")))
-                    "image" -> result.add(resolveZipPath(imageBasePath, it.attr("xlink:href")))
+            for (element in document.allElements) {
+                when (element.tagName()) {
+                    "img" -> yield(resolveZipPath(imageBasePath, element.attr("src")))
+                    "image" -> yield(resolveZipPath(imageBasePath, element.attr("xlink:href")))
                 }
             }
         }
-
-        return result
     }
 
     /**
