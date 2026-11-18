@@ -59,6 +59,10 @@ class ReaderPreferences(
 
     val keepScreenOn: Preference<Boolean> = preferenceStore.getBoolean("pref_keep_screen_on_key", false)
 
+    val music: Preference<Boolean> = preferenceStore.getBoolean("pref_reader_music", true)
+
+    val musicLoop: Preference<Boolean> = preferenceStore.getBoolean("pref_reader_music_loop", true)
+
     val defaultReadingMode: Preference<Int> = preferenceStore.getInt(
         "pref_default_reading_mode_key",
         ReadingMode.RIGHT_TO_LEFT.flagValue,

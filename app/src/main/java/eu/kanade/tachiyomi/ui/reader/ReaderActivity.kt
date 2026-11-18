@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -180,6 +181,7 @@ class ReaderActivity : BaseActivity() {
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
         super.onCreate(savedInstanceState)
+        volumeControlStream = AudioManager.STREAM_MUSIC
 
         setComposeContent {
             val state by viewModel.state.collectAsState()
@@ -397,6 +399,7 @@ class ReaderActivity : BaseActivity() {
 
     override fun onPause() {
         viewModel.saveHistory()
+        if (!isChangingConfigurations) viewModel.pauseMusic()
         super.onPause()
     }
 
@@ -407,6 +410,7 @@ class ReaderActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.restartReadTimer()
+        viewModel.resumeMusic()
         setMenuVisibility(viewModel.state.value.menuVisible)
     }
 

@@ -118,6 +118,19 @@ internal fun ColumnScope.GeneralPage(viewModel: ReaderSettingsViewModel) {
     )
 
     CheckboxItem(
+        label = stringResource(MR.strings.pref_reader_music),
+        pref = viewModel.preferences.music,
+    )
+
+    val music by viewModel.preferences.music.collectAsState()
+    if (music) {
+        CheckboxItem(
+            label = stringResource(MR.strings.pref_reader_music_loop),
+            pref = viewModel.preferences.musicLoop,
+        )
+    }
+
+    CheckboxItem(
         label = stringResource(MR.strings.pref_read_with_long_tap),
         pref = viewModel.preferences.readWithLongTap,
     )

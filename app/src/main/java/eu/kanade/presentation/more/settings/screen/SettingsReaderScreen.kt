@@ -62,6 +62,7 @@ object SettingsReaderScreen : SearchableSettings {
             getDisplayGroup(readerPreferences = readerPref),
             getEInkGroup(readerPreferences = readerPref),
             getReadingGroup(readerPreferences = readerPref),
+            getMusicGroup(readerPreferences = readerPref),
             getPagedGroup(readerPreferences = readerPref),
             getWebtoonGroup(readerPreferences = readerPref),
             getNavigationGroup(readerPreferences = readerPref),
@@ -107,6 +108,26 @@ object SettingsReaderScreen : SearchableSettings {
                 Preference.PreferenceItem.SwitchPreference(
                     preference = readerPreferences.showPageNumber,
                     title = stringResource(MR.strings.pref_show_page_number),
+                ),
+            ),
+        )
+    }
+
+    @Composable
+    private fun getMusicGroup(readerPreferences: ReaderPreferences): Preference.PreferenceGroup {
+        val music by readerPreferences.music.collectAsState()
+        return Preference.PreferenceGroup(
+            title = stringResource(MR.strings.pref_category_music),
+            preferenceItems = listOf(
+                Preference.PreferenceItem.SwitchPreference(
+                    preference = readerPreferences.music,
+                    title = stringResource(MR.strings.pref_reader_music),
+                    subtitle = stringResource(MR.strings.pref_reader_music_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    preference = readerPreferences.musicLoop,
+                    title = stringResource(MR.strings.pref_reader_music_loop),
+                    visible = music,
                 ),
             ),
         )

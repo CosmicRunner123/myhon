@@ -320,6 +320,10 @@
     <string name="filter_mode_lighten">Dodge / Lighten</string>
     <string name="filter_mode_darken">Burn / Darken</string>
     <string name="pref_keep_screen_on">Keep screen on</string>
+    <string name="pref_category_music">Music</string>
+    <string name="pref_reader_music">Play music</string>
+    <string name="pref_reader_music_summary">Plays the audio files found in a chapter while you read it</string>
+    <string name="pref_reader_music_loop">Loop music</string>
     <string name="pref_skip_read_chapters">Skip chapters marked read</string>
     <string name="pref_skip_filtered_chapters">Skip filtered chapters</string>
     <string name="pref_skip_dupe_chapters">Skip duplicate chapters</string>

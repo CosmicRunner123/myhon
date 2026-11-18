@@ -32,6 +32,7 @@ import eu.kanade.tachiyomi.ui.reader.model.InsertPage
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader.model.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader.music.ReaderMusicPlayer
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderOrientation
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.ui.reader.setting.ReadingMode
@@ -174,6 +175,8 @@ class ReaderViewModel(
 
     private var unfilteredChapterList: List<Chapter>? = null
 
+    private val musicPlayer = ReaderMusicPlayer(context, viewModelScope)
+
     private suspend fun getUnfilteredChapterList(): List<Chapter> {
         return unfilteredChapterList
             ?: getChaptersByMangaId.await(manga!!.id, applyScanlatorFilter = false)
@@ -253,6 +256,13 @@ class ReaderViewModel(
             }
             .launchIn(viewModelScope)
 
+        readerPreferences.music.changes()
+            .onEach(musicPlayer::setEnabled)
+            .launchIn(viewModelScope)
+        readerPreferences.musicLoop.changes()
+            .onEach(musicPlayer::setLoop)
+            .launchIn(viewModelScope)
+
         if (hasValidArgs) {
             viewModelScope.launch { init() }
         }
@@ -260,6 +270,7 @@ class ReaderViewModel(
 
     override fun onCleared() {
         state.value.viewerChapters?.unref()
+        musicPlayer.release()
     }
 
     /**
@@ -409,6 +420,9 @@ class ReaderViewModel(
      * currently active.
      */
     fun onPageSelected(page: ReaderPage) {
+        // Reading backwards, the InsertPage half of a split page is shown first
+        musicPlayer.onPageSelected(page)
+
         // InsertPage doesn't change page progress
         if (page is InsertPage) {
             return
@@ -513,6 +527,14 @@ class ReaderViewModel(
                 }
             }
         updateChapter.awaitAll(duplicateUnreadChapters)
+    }
+
+    fun pauseMusic() {
+        musicPlayer.pause()
+    }
+
+    fun resumeMusic() {
+        musicPlayer.resume()
     }
 
     fun restartReadTimer() {

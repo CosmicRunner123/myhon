@@ -6,7 +6,6 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import mihon.core.archive.archiveReader
 import mihon.core.archive.epubReader
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
@@ -75,7 +74,7 @@ class ChapterLoader(
         }
         return when (val format = source.getFormat(chapter.chapter.toSChapter())) {
             is Format.Directory -> DirectoryPageLoader(format.file)
-            is Format.Archive -> ArchivePageLoader(format.file.archiveReader(context))
+            is Format.Archive -> ArchivePageLoader(format.file, context)
             is Format.Epub -> EpubPageLoader(format.file.epubReader(context))
         }
     }
