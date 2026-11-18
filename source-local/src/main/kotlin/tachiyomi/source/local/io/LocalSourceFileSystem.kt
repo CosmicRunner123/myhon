@@ -4,6 +4,7 @@ import com.hippo.unifile.UniFile
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import eu.kanade.tachiyomi.util.storage.DiskUtil
 import tachiyomi.domain.storage.service.StorageManager
 
 @Inject
@@ -49,12 +50,15 @@ class LocalSourceFileSystem(
      */
     fun getMangaCoverDirectory(name: String, create: Boolean): UniFile? {
         val coverDirectory = getCoverDirectory() ?: return null
+        // SAF replaces the characters FAT rejects when it creates a folder, so the name must not have any to be
+        // found again
+        val folderName = DiskUtil.buildValidFilename(name)
         return if (create) {
             // The details and chapters of a series are fetched concurrently, and SAF gives a folder created while
             // one of the same name is being created another name
-            synchronized(this) { coverDirectory.createDirectory(name) }
+            synchronized(this) { coverDirectory.createDirectory(folderName) }
         } else {
-            coverDirectory.findFile(name)?.takeIf { it.isDirectory }
+            coverDirectory.findFile(folderName)?.takeIf { it.isDirectory }
         }
     }
 
