@@ -1,12 +1,16 @@
 package eu.kanade.tachiyomi.ui.reader.music
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import kotlinx.coroutines.CancellationException
@@ -59,6 +63,24 @@ class ReaderMusicPlayer(
 
     private var paused = false
     private var focusLost = false
+    private var outputLost = false
+
+    // Headphones or a Bluetooth speaker went away; keep the music from moving to the phone's speaker
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            outputLost = true
+            updatePlayback()
+        }
+    }
+
+    init {
+        ContextCompat.registerReceiver(
+            context,
+            noisyReceiver,
+            IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+    }
 
     fun onPageSelected(page: ReaderPage) {
         chapterId = page.chapter.chapter.id
@@ -92,6 +114,7 @@ class ReaderMusicPlayer(
     }
 
     fun release() {
+        context.unregisterReceiver(noisyReceiver)
         releasePlayer()
         abandonFocus()
         cacheDir.deleteRecursively()
@@ -109,8 +132,9 @@ class ReaderMusicPlayer(
         if (playlist.isEmpty()) {
             abandonFocus()
         } else {
-            // No AUDIOFOCUS_GAIN follows a permanent loss, so new music asks for the focus again
+            // Neither a permanent focus loss nor a lost output reports its end, so new music starts afresh
             focusLost = false
+            outputLost = false
             play(0)
         }
     }
@@ -179,7 +203,7 @@ class ReaderMusicPlayer(
 
     private fun updatePlayback() {
         val player = player ?: return
-        if (!paused && !focusLost && requestFocus()) {
+        if (!paused && !focusLost && !outputLost && requestFocus()) {
             player.start()
         } else if (player.isPlaying) {
             player.pause()
