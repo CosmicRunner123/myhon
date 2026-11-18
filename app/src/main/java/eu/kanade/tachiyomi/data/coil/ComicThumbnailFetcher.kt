@@ -16,8 +16,8 @@ import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.ui.reader.loader.archivePageNames
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import mihon.core.archive.EpubReader
 import mihon.core.archive.archiveReader
-import mihon.core.archive.epubReader
 import tachiyomi.domain.manga.model.MangaCover
 import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.io.Format
@@ -84,7 +84,9 @@ class ComicThumbnailFetcher(
                 val page = archivePageNames(reader).firstOrNull() ?: error("No pages in ${thumbnail.uri}")
                 reader.getInputStream(page)!!.use(::decodeThumbnail)
             }
-            is Format.Epub -> format.file.epubReader(context).use { epub ->
+            // EpubReader reads the archive as it's made, so the mapping is released when the file isn't one
+            is Format.Epub -> format.file.archiveReader(context).use { reader ->
+                val epub = EpubReader(reader)
                 val page = epub.getFirstImage() ?: error("No pages in ${thumbnail.uri}")
                 epub.getInputStream(page)!!.use(::decodeThumbnail)
             }
