@@ -29,9 +29,10 @@ trackers and backups, and changes the rest:
 
 1. Install the APK and open Myhon.
 2. During setup, choose how to open your comics: with the **Library** (the default) or in
-   [**Directory view**](#directory-view). Then pick a **storage location**: any folder you like, for example
-   `Documents/Myhon`. Myhon creates a `local` folder in it.
-3. Put each series in its own folder inside `local`, with one chapter per entry:
+   [**Directory view**](#directory-view). For directory view, also allow access to all files when asked. Then pick a
+   **storage location**: any folder you like, for example `Documents/Myhon`. Myhon creates a `local` folder in it.
+3. In library view, put each series in its own folder inside `local`, with one chapter per entry (directory view
+   reads your comics wherever they are, so you can skip this step):
 
    ```
    Myhon/
