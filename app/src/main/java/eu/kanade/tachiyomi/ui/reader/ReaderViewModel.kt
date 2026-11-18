@@ -63,7 +63,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import mihon.core.metro.AppCoroutineScope
-import mihon.domain.source.interactor.OpenDirectoryComic
 import tachiyomi.core.common.preference.toggle
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.interactor.GetChaptersByMangaId
@@ -76,6 +75,7 @@ import tachiyomi.domain.history.model.HistoryUpdate
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.model.Manga
+import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.source.local.DirectorySource
 import tachiyomi.source.local.image.LocalCoverManager
@@ -106,7 +106,6 @@ class ReaderViewModel(
     private val coverManager: LocalCoverManager,
     private val updateManga: UpdateManga,
     private val coverCache: CoverCache,
-    private val openDirectoryComic: OpenDirectoryComic,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -575,12 +574,26 @@ class ReaderViewModel(
 
             upsertHistory.await(HistoryUpdate(chapterId, endTime, sessionReadDuration))
 
-            val manga = directoryManga ?: manga
-            if (manga?.source == DirectorySource.ID) {
-                // The reader may have gone on to another file of the folder
-                directoryManga = openDirectoryComic.setCover(manga, readerChapter.chapter)
-            }
+            setDirectoryCover(readerChapter.chapter)
         }
+    }
+
+    /**
+     * Makes the file of [chapter] the cover of a directory view entry, so History shows the folder with the thumbnail
+     * of the file read last. Set with the history rather than on opening, so it follows the reader to the next file
+     * and stays as it was in incognito mode.
+     */
+    private suspend fun setDirectoryCover(chapter: Chapter) {
+        val manga = directoryManga ?: manga ?: return
+        if (manga.source != DirectorySource.ID || manga.thumbnailUrl == chapter.url) return
+        val now = Clock.System.now()
+        updateManga.await(
+            MangaUpdate(manga.id) {
+                thumbnailUrl = chapter.url
+                coverLastModified = now
+            },
+        )
+        directoryManga = manga.copy(thumbnailUrl = chapter.url, coverLastModified = now)
     }
 
     /**

@@ -3,17 +3,14 @@ package mihon.domain.source.interactor
 import android.content.Context
 import dev.zacsweers.metro.Inject
 import eu.kanade.domain.chapter.interactor.SyncChaptersWithSource
-import eu.kanade.domain.manga.interactor.UpdateManga
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.chapter.interactor.GetChapter
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.history.interactor.GetNextChapters
 import tachiyomi.domain.manga.interactor.NetworkToLocalManga
 import tachiyomi.domain.manga.model.Manga
-import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.i18n.MR
 import tachiyomi.source.local.DirectorySource
-import kotlin.time.Clock
 
 /**
  * Gets a comic file of directory view ready to read. Its folder is an entry of [DirectorySource] outside the library,
@@ -27,13 +24,11 @@ class OpenDirectoryComic(
     private val syncChaptersWithSource: SyncChaptersWithSource,
     private val getChapter: GetChapter,
     private val getNextChapters: GetNextChapters,
-    private val updateManga: UpdateManga,
 ) {
 
     /**
      * The chapter of the file [fileUri] in the folder [folderUri] named [folderName], once the folder's chapters
-     * match its files and the file is the folder's cover. Throws, without storing anything, when the folder can't be
-     * read or no longer has the file.
+     * match its files. Throws, without storing anything, when the folder can't be read or no longer has the file.
      */
     suspend fun await(folderUri: String, folderName: String, fileUri: String): Chapter {
         val chapters = directorySource.getChapterList(folderUri)
@@ -45,10 +40,8 @@ class OpenDirectoryComic(
             Manga.create().copy(source = DirectorySource.ID, url = folderUri, title = folderName),
         )
         syncChaptersWithSource.await(chapters, manga)
-        val chapter = getChapter.await(fileUri, manga.id)
+        return getChapter.await(fileUri, manga.id)
             ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
-        setCover(manga, chapter)
-        return chapter
     }
 
     /**
@@ -59,24 +52,6 @@ class OpenDirectoryComic(
     suspend fun resume(manga: Manga, chapterId: Long): Chapter? {
         syncChaptersWithSource.await(directorySource.getChapterList(manga.url), manga)
         getChapter.await(chapterId) ?: throw Exception(context.stringResource(MR.strings.chapter_not_found))
-        val chapter = getNextChapters.await(manga.id, chapterId).firstOrNull() ?: return null
-        setCover(manga, chapter)
-        return chapter
-    }
-
-    /**
-     * Makes the file of [chapter] the cover of the directory view entry [manga], so History shows the folder with the
-     * thumbnail of the file read last, and returns [manga] with that cover.
-     */
-    suspend fun setCover(manga: Manga, chapter: Chapter): Manga {
-        if (manga.thumbnailUrl == chapter.url) return manga
-        val now = Clock.System.now()
-        updateManga.await(
-            MangaUpdate(manga.id) {
-                thumbnailUrl = chapter.url
-                coverLastModified = now
-            },
-        )
-        return manga.copy(thumbnailUrl = chapter.url, coverLastModified = now)
+        return getNextChapters.await(manga.id, chapterId).firstOrNull()
     }
 }

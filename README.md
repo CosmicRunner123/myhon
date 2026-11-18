@@ -112,10 +112,9 @@ Choose it during setup, or turn on **Settings → Data and storage → Directory
 * There are no series pages. In the reader, the next and previous chapters are the next and previous files of the same
   folder, so you can read on through a folder; files in subfolders are not included. Background music works as in the
   library.
-* History lists the folders you read from by name, with the thumbnail of the file you last opened from **Folders** or
-  History. Tapping an entry, or its cover, lists the folder again and goes on where you left off; if the folder can't
-  be read or the file is gone, Myhon says so. In the reader, the title doesn't open a series page and **Set as cover**
-  is not offered.
+* History lists the folders you read from by name, with the thumbnail of the file you read last. Tapping an entry, or
+  its cover, lists the folder again and goes on where you left off; if the folder can't be read or the file is gone,
+  Myhon says so. In the reader, the title doesn't open a series page and **Set as cover** is not offered.
 
 Switching to directory view keeps your library as it is, with its categories and reading progress, but the library is
 no longer shown, updated or matched with your folders: library updates, automatic ones included, don't run, and
