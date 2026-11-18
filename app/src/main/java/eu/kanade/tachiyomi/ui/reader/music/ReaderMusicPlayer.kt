@@ -52,6 +52,7 @@ class ReaderMusicPlayer(
     private var playlist = emptyList<MusicTrack>()
     private var position = 0
     private val failed = mutableSetOf<Int>()
+    private var cachedChapterId: Long? = null
 
     private var player: MediaPlayer? = null
     private var preparing: Job? = null
@@ -118,7 +119,13 @@ class ReaderMusicPlayer(
         releasePlayer()
         position = index
         val track = playlist[index]
+        val chapterId = chapterId
         preparing = scope.launch {
+            // Only the chapter being read keeps its copies; deleted before extracting so the two never overlap
+            if (chapterId != cachedChapterId) {
+                withContext(Dispatchers.IO) { cacheDir.listFiles()?.forEach(File::delete) }
+                cachedChapterId = chapterId
+            }
             player = try {
                 prepare(track)
             } catch (e: Exception) {
