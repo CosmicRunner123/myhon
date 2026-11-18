@@ -166,7 +166,7 @@ object SettingsDataScreen : SearchableSettings {
      * covers again. Does nothing in directory view, which keeps no library.
      */
     @Composable
-    private fun libraryUpdater(): () -> Unit {
+    fun libraryUpdater(): () -> Unit {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         val directoryViewPref = remember { context.appGraph.storagePreferences.directoryView }
