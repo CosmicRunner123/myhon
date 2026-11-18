@@ -243,6 +243,7 @@ class MangaRepositoryImpl(
                         stateChapterFetchInterval = fetchInterval?.toLong(),
                         userReaderFlags = viewerFlags,
                         userChapterFlags = chapterFlags,
+                        remoteCover = thumbnailUrl,
                         stateCoverLastModified = coverLastModified,
                         id = id,
                         userNotes = notes,

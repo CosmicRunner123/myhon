@@ -459,6 +459,9 @@
     <string name="pref_series_folders_info">Each folder holds one folder per series. Series with the same folder name in several folders are merged.</string>
     <string name="series_folder_remove_title">Remove folder?</string>
     <string name="series_folder_remove_message">%s\n\nSeries found only in this folder leave the library. No files are deleted.</string>
+    <string name="pref_cover_folder">Folder for covers and details</string>
+    <string name="pref_cover_folder_default">Inside each series folder</string>
+    <string name="pref_cover_folder_reset">Save inside the series folders</string>
     <string name="pref_create_backup">Create backup</string>
     <string name="pref_restore_backup">Restore backup</string>
     <string name="pref_backup_interval">Automatic backup frequency</string>

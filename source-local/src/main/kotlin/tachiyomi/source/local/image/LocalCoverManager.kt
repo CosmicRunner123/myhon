@@ -22,10 +22,10 @@ class LocalCoverManager(
 ) {
 
     /**
-     * The cover in the first of [mangaDirectories] that has one.
+     * The cover in the first of [directories] that has one.
      */
-    fun find(mangaDirectories: List<UniFile>): UniFile? {
-        return mangaDirectories.firstNotNullOfOrNull { directory ->
+    fun find(directories: List<UniFile>): UniFile? {
+        return directories.firstNotNullOfOrNull { directory ->
             directory.listFiles().orEmpty()
                 // Get all file whose names start with "cover"
                 .filter { it.isFile && it.nameWithoutExtension.equals("cover", ignoreCase = true) }
@@ -38,8 +38,8 @@ class LocalCoverManager(
         manga: SManga,
         inputStream: InputStream,
     ): UniFile? {
-        // Written to the first folder of the series, where it takes precedence over a cover in a later one
-        val directory = fileSystem.getMangaDirectories(manga.url).firstOrNull()
+        // Read first, so the cover written there takes precedence over one in another folder
+        val directory = fileSystem.getMangaWriteDirectory(manga.url)
         if (directory == null) {
             inputStream.close()
             return null
@@ -53,7 +53,8 @@ class LocalCoverManager(
             }
         }
 
-        DiskUtil.createNoMediaFile(directory, context)
+        // .nomedia also hides subfolders, so the cover folder needs only one, at its root
+        DiskUtil.createNoMediaFile(fileSystem.getCoverDirectory() ?: directory, context)
 
         manga.thumbnail_url = targetFile.uri.toString()
         return targetFile

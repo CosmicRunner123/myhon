@@ -83,35 +83,48 @@ class LocalSource(
     ): SMangaUpdate = supervisorScope {
         val baseDirs = withContext(Dispatchers.IO) { fileSystem.getBaseDirectories() }
         val mangaDirs = withContext(Dispatchers.IO) { fileSystem.getMangaDirectories(manga.url, baseDirs) }
-        val asyncManga = if (fetchDetails) async { getMangaDetails(manga, mangaDirs) } else null
-        val asyncChapters = if (fetchChapters) async { getChapterList(manga, baseDirs, mangaDirs) } else null
+        val mangaCoverDir = withContext(Dispatchers.IO) {
+            fileSystem.getMangaCoverDirectory(manga.url, create = false)
+        }
+        val asyncManga = if (fetchDetails) async { getMangaDetails(manga, mangaCoverDir, mangaDirs) } else null
+        val asyncChapters = if (fetchChapters) {
+            async { getChapterList(manga, baseDirs, mangaCoverDir, mangaDirs) }
+        } else {
+            null
+        }
         SMangaUpdate(asyncManga?.await() ?: manga, asyncChapters?.await() ?: chapters)
     }
 
     // Manga details related
-    private suspend fun getMangaDetails(manga: SManga, mangaDirs: List<UniFile>): SManga = withContext(Dispatchers.IO) {
-        coverManager.find(mangaDirs)?.let {
+    private suspend fun getMangaDetails(
+        manga: SManga,
+        mangaCoverDir: UniFile?,
+        mangaDirs: List<UniFile>,
+    ): SManga = withContext(Dispatchers.IO) {
+        coverManager.find(listOfNotNull(mangaCoverDir) + mangaDirs)?.let {
             manga.thumbnail_url = it.uri.toString()
         }
 
         // Augment manga details based on metadata files
         try {
-            // The app's own files go to the first folder of the series
-            val mangaDir = mangaDirs.firstOrNull() ?: error("${manga.url} is not a valid directory")
-            // In precedence order, so a file is taken from the first folder that has it
+            check(mangaDirs.isNotEmpty()) { "${manga.url} is not a valid directory" }
+            val coverDirFiles = mangaCoverDir?.listFiles().orEmpty().asList()
             val mangaDirFiles = mangaDirs.flatMap { it.listFiles().orEmpty().asList() }
+            // In precedence order, so a file is taken from the first folder that has it
+            val files = coverDirFiles + mangaDirFiles
+            val deletableFiles = if (fileSystem.hasCoverDirectory()) coverDirFiles else mangaDirFiles
 
-            val comicInfoFile = mangaDirFiles
+            val comicInfoFile = files
                 .firstOrNull { it.name == COMIC_INFO_FILE }
-            val noXmlFile = mangaDirFiles
+            val noXmlFile = files
                 .firstOrNull { it.name == ".noxml" }
-            val legacyJsonDetailsFile = mangaDirFiles
+            val legacyJsonDetailsFile = files
                 .firstOrNull { it.extension == "json" }
 
             when {
                 // Top level ComicInfo.xml
                 comicInfoFile != null -> {
-                    noXmlFile?.delete()
+                    noXmlFile?.takeIf { it in deletableFiles }?.delete()
                     setMangaDetailsFromComicInfoFile(comicInfoFile.openInputStream(), manga)
                 }
 
@@ -128,26 +141,31 @@ class LocalSource(
                     }
                     // Replace with ComicInfo.xml file
                     val comicInfo = manga.getComicInfo()
-                    mangaDir
-                        .createFile(COMIC_INFO_FILE)
+                    fileSystem.getMangaWriteDirectory(manga.url)
+                        ?.createFile(COMIC_INFO_FILE)
                         ?.openOutputStream()
                         ?.use {
                             val comicInfoString = xml.encodeToString(ComicInfo.serializer(), comicInfo)
                             it.write(comicInfoString.toByteArray())
-                            legacyJsonDetailsFile.delete()
+                            if (legacyJsonDetailsFile in deletableFiles) legacyJsonDetailsFile.delete()
                         }
                 }
 
                 // Copy ComicInfo.xml from chapter archive to top level if found
                 noXmlFile == null -> {
-                    val chapterArchives = mangaDirFiles.filter(Archive::isSupported)
+                    val comicInfo = mangaDirFiles
+                        .filter(Archive::isSupported)
+                        .firstNotNullOfOrNull { chapter -> getComicInfoForChapter(chapter) { it.readBytes() } }
 
-                    val copiedFile = copyComicInfoFileFromChapters(chapterArchives, mangaDir)
-                    if (copiedFile != null) {
-                        setMangaDetailsFromComicInfoFile(copiedFile.openInputStream(), manga)
+                    if (comicInfo != null) {
+                        fileSystem.getMangaWriteDirectory(manga.url)
+                            ?.createFile(COMIC_INFO_FILE)
+                            ?.openOutputStream()
+                            ?.use { it.write(comicInfo) }
+                        setMangaDetailsFromComicInfoFile(comicInfo.inputStream(), manga)
                     } else {
                         // Avoid re-scanning
-                        mangaDir.createFile(".noxml")
+                        fileSystem.getMangaWriteDirectory(manga.url)?.createFile(".noxml")
                     }
                 }
             }
@@ -164,24 +182,6 @@ class LocalSource(
         } else {
             chapter.archiveReader(context).use { reader ->
                 reader.getInputStream(COMIC_INFO_FILE)?.use(block)
-            }
-        }
-    }
-
-    private fun copyComicInfoFileFromChapters(chapterArchives: List<UniFile>, folder: UniFile): UniFile? {
-        for (chapter in chapterArchives) {
-            val file = getComicInfoForChapter(chapter) f@{ stream ->
-                return@f copyComicInfoFile(stream, folder)
-            }
-            if (file != null) return file
-        }
-        return null
-    }
-
-    private fun copyComicInfoFile(comicInfoFileStream: InputStream, folder: UniFile): UniFile? {
-        return folder.createFile(COMIC_INFO_FILE)?.apply {
-            openOutputStream().use { outputStream ->
-                comicInfoFileStream.use { it.copyTo(outputStream) }
             }
         }
     }
@@ -221,6 +221,7 @@ class LocalSource(
     private suspend fun getChapterList(
         manga: SManga,
         baseDirs: List<UniFile?>,
+        mangaCoverDir: UniFile?,
         mangaDirs: List<UniFile>,
     ): List<SChapter> = withContext(Dispatchers.IO) {
         val filesByMangaDir = mangaDirs.map { mangaDir ->
@@ -277,8 +278,12 @@ class LocalSource(
                 c2.name.compareToCaseInsensitiveNaturalOrder(c1.name)
             }
 
-        // Copy the cover from the first chapter found if not available
-        if (manga.thumbnail_url.isNullOrBlank()) {
+        // Looked up rather than taken from the stored cover, which can be in a cover folder no longer in use
+        val cover = coverManager.find(listOfNotNull(mangaCoverDir) + mangaDirs)
+        if (cover != null) {
+            manga.thumbnail_url = cover.uri.toString()
+        } else if (!fileSystem.hasCoverDirectory() || fileSystem.getCoverDirectory() != null) {
+            // Copy the cover from the first chapter found, unless the cover folder that may hold it is unreachable
             chapters.lastOrNull()?.let { chapter ->
                 updateCover(chapter, manga)
             }

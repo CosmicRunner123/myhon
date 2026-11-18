@@ -23,4 +23,13 @@ class StoragePreferences(
         Preference.appStateKey("local_source_dirs"),
         emptySet(),
     )
+
+    /**
+     * The folder the app saves the covers and details of series to, so that it writes nothing into series folders.
+     * Empty to save them into the series folders.
+     */
+    val localCoverDirectory: Preference<String> = preferenceStore.getString(
+        Preference.appStateKey("local_cover_dir"),
+        "",
+    )
 }

@@ -79,6 +79,22 @@ class StorageManager(
         return listOf(getChildDirectory(LOCAL_SOURCE_PATH)) + addedDirectories
     }
 
+    /**
+     * Whether a folder is chosen for the covers and details of series. Nothing is then written into series folders,
+     * even while that folder can't be reached.
+     */
+    fun hasLocalCoverDirectory(): Boolean {
+        return storagePreferences.localCoverDirectory.get().isNotEmpty()
+    }
+
+    /**
+     * The folder chosen for the covers and details of series, null when none is chosen or it can't be reached now.
+     */
+    fun getLocalCoverDirectory(): UniFile? {
+        val uri = storagePreferences.localCoverDirectory.get().ifEmpty { return null }
+        return UniFile.fromUri(context, uri.toUri())?.takeIf { it.exists() }
+    }
+
     private fun getChildDirectory(name: String): UniFile? {
         val parent = baseDir ?: return null
         childDirectories[name]

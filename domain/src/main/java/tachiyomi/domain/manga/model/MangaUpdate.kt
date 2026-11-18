@@ -10,6 +10,7 @@ class MangaUpdate(val id: Long, block: MangaUpdate.() -> Unit) : PartialUpdate()
     var fetchInterval: Int? by field(null)
     var viewerFlags: Long? by field(null)
     var chapterFlags: Long? by field(null)
+    var thumbnailUrl: String? by field(null)
     var coverLastModified: Instant? by field(null)
     var notes: String? by field(null)
 

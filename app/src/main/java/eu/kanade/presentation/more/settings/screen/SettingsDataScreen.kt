@@ -62,6 +62,7 @@ import logcat.LogPriority
 import mihon.app.di.appGraph
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.Help
+import mihon.icons.materialsymbols.rounded.Close
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.minusAssign
 import tachiyomi.core.common.preference.plusAssign
@@ -214,9 +215,7 @@ object SettingsDataScreen : SearchableSettings {
                     TextButton(
                         onClick = {
                             foldersPref -= folder
-                            if (folder != storagePreferences.baseStorageDirectory.get()) {
-                                releaseFolderPermission(context, folder)
-                            }
+                            releaseFolderPermission(context, storagePreferences, folder)
                             updateLibrary()
                             folderToRemove = null
                         },
@@ -262,11 +261,65 @@ object SettingsDataScreen : SearchableSettings {
                     ),
                 )
                 add(Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_series_folders_info)))
+                add(getCoverFolderPref(storagePreferences = storagePreferences))
             },
         )
     }
 
-    private fun releaseFolderPermission(context: Context, folder: String) {
+    @Composable
+    private fun getCoverFolderPref(storagePreferences: StoragePreferences): Preference.PreferenceItem.TextPreference {
+        val context = LocalContext.current
+
+        val coverFolderPref = storagePreferences.localCoverDirectory
+        val coverFolder by coverFolderPref.collectAsState()
+        val coverFolderPath = remember(coverFolder) {
+            coverFolder.ifEmpty { null }?.let { UniFile.fromUri(context, it.toUri())?.displayablePath ?: it }
+        }
+
+        val changeCoverFolder = { folder: String ->
+            val previousFolder = coverFolderPref.get()
+            coverFolderPref.set(folder)
+            if (previousFolder.isNotEmpty()) {
+                releaseFolderPermission(context, storagePreferences, previousFolder)
+            }
+        }
+        val pickCoverFolder = folderPicker(changeCoverFolder)
+
+        return Preference.PreferenceItem.TextPreference(
+            title = stringResource(MR.strings.pref_cover_folder),
+            subtitle = coverFolderPath ?: stringResource(MR.strings.pref_cover_folder_default),
+            widget = if (coverFolderPath != null) {
+                {
+                    IconButton(onClick = { changeCoverFolder("") }) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.Close,
+                            contentDescription = stringResource(MR.strings.pref_cover_folder_reset),
+                        )
+                    }
+                }
+            } else {
+                null
+            },
+            onClick = {
+                try {
+                    pickCoverFolder.launch(null)
+                } catch (e: ActivityNotFoundException) {
+                    context.toast(MR.strings.file_picker_error)
+                }
+            },
+        )
+    }
+
+    /**
+     * Releases the permission taken on [folder] when it was picked, unless the storage location, a series folder or
+     * the cover folder is still that folder.
+     */
+    private fun releaseFolderPermission(context: Context, storagePreferences: StoragePreferences, folder: String) {
+        val foldersInUse = storagePreferences.localSourceDirectories.get() +
+            storagePreferences.baseStorageDirectory.get() +
+            storagePreferences.localCoverDirectory.get()
+        if (folder in foldersInUse) return
+
         val uri = folder.toUri()
         val treeUri = DocumentsContract.buildTreeDocumentUri(uri.authority, DocumentsContract.getTreeDocumentId(uri))
         val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
