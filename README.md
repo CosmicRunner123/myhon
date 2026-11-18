@@ -105,8 +105,9 @@ Choose it during setup, or turn on **Settings → Data and storage → Directory
 * To browse the whole device, Myhon needs **All files access** on Android 11 and later (the system folder picker
   refuses the root of internal storage), or the storage permission on Android 8 to 10. Myhon only reads your files.
   Allow it during setup, with **Allow access** in **Folders**, or in **Settings → Data and storage → Access to all
-  files**; on Android 11 and later these open the system setting. Some folders stay hidden from apps even then, such
-  as `Android/data` and `Android/obb`; opening them says the folder couldn't be read.
+  files**; on Android 11 and later these open the system setting. On Android 8 to 10 you can also grant it in
+  **App info → Permissions → Storage**. Some folders stay hidden from apps even then, such as `Android/data` and
+  `Android/obb`; opening them says the folder couldn't be read.
 * A folder shows its subfolders, then its comic files, each by name in natural order (`Chapter 2` before
   `Chapter 10`). Comic files are archives (`zip`, `cbz`, `rar`, `cbr`, `7z`, `cb7`, `tar`, `cbt`) and `epub`.
   Chapters saved as folders of images are not supported: folders are only browsed. Other files, and names that start
