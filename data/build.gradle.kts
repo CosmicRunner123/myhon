@@ -37,4 +37,7 @@ dependencies {
     implementation(libs.sqldelight.androidxDriver)
     implementation(libs.sqldelight.async)
     implementation(libs.sqldelight.coroutines)
+
+    testImplementation(libs.bundles.test)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }

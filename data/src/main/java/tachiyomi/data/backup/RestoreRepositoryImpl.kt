@@ -159,23 +159,7 @@ class RestoreRepositoryImpl(
                     ?: // New chapter
                     return@mapNotNull chapter
 
-                if (chapter.forComparison() == dbChapter.forComparison()) {
-                    // Same state; skip
-                    return@mapNotNull null
-                }
-
-                chapter
-                    .copyFrom(dbChapter)
-                    .copy(
-                        id = dbChapter.id,
-                        read = chapter.read || dbChapter.read,
-                        bookmark = chapter.bookmark || dbChapter.bookmark,
-                        lastPageRead = max(chapter.lastPageRead, dbChapter.lastPageRead),
-                        dateFetch = dbChapter.dateFetch,
-                        sourceOrder = dbChapter.sourceOrder,
-                        // Merge both backup and local data with local winning
-                        memo = JsonObject(chapter.memo + dbChapter.memo),
-                    )
+                mergeChapter(chapter, dbChapter)
             }
             .partition { it.id > 0 }
 
@@ -201,14 +185,12 @@ class RestoreRepositoryImpl(
                 userRead = chapter.read,
                 userBookmark = chapter.bookmark,
                 userLastPageRead = chapter.lastPageRead,
+                stateDateFetch = chapter.dateFetch,
                 id = chapter.id,
                 remoteMemo = chapter.memo,
             )
         }
     }
-
-    private fun Chapter.forComparison() =
-        this.copy(id = 0L, mangaId = 0L, dateFetch = Instant.DISTANT_PAST, dateUpload = null)
 
     private suspend fun restoreHistory(manga: Manga, restoredHistory: List<RestoredHistory>) {
         if (restoredHistory.isEmpty()) return
@@ -291,3 +273,32 @@ class RestoreRepositoryImpl(
         excludedScanlators.forEach { database.excluded_scanlatorQueries.insert(manga.id, it) }
     }
 }
+
+/**
+ * The stored [dbChapter] with the state of its backup copy [chapter] merged in, or null when that changes nothing.
+ */
+internal fun mergeChapter(chapter: Chapter, dbChapter: Chapter): Chapter? {
+    // The entry is restored with the date the backup added it, so the chapters the backup already had keep their
+    // earlier fetch date and aren't shown as its updates
+    val dateFetch = minOf(chapter.dateFetch, dbChapter.dateFetch)
+    if (chapter.forComparison() == dbChapter.forComparison() && dateFetch == dbChapter.dateFetch) {
+        // Same state; skip
+        return null
+    }
+
+    return chapter
+        .copyFrom(dbChapter)
+        .copy(
+            id = dbChapter.id,
+            read = chapter.read || dbChapter.read,
+            bookmark = chapter.bookmark || dbChapter.bookmark,
+            lastPageRead = max(chapter.lastPageRead, dbChapter.lastPageRead),
+            dateFetch = dateFetch,
+            sourceOrder = dbChapter.sourceOrder,
+            // Merge both backup and local data with local winning
+            memo = JsonObject(chapter.memo + dbChapter.memo),
+        )
+}
+
+private fun Chapter.forComparison() =
+    this.copy(id = 0L, mangaId = 0L, dateFetch = Instant.DISTANT_PAST, dateUpload = null)
