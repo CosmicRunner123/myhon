@@ -70,9 +70,12 @@ fun comicFileName(uri: String): String? {
     return name.takeIf(::isComicFile)
 }
 
-// URLDecoder decodes form data, where a + stands for a space, but in a URI it is a plus
-private fun decodeUriPart(part: String): String? {
+/**
+ * [part] of a URI with its escapes decoded, or null when it has a malformed one.
+ */
+fun decodeUriPart(part: String): String? {
     return try {
+        // URLDecoder decodes form data, where a + stands for a space, but in a URI it is a plus
         URLDecoder.decode(part.replace("+", "%2B"), "UTF-8")
     } catch (_: IllegalArgumentException) {
         // A % that doesn't start an escape

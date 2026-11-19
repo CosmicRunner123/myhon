@@ -101,6 +101,16 @@ class DirectoryViewModel(
         load()
     }
 
+    /**
+     * Shows the folder of [State.lastRead] as if it had been browsed to, so going up leads through its parents.
+     */
+    fun openRecent() {
+        val lastRead = state.value.lastRead ?: return
+        val volumes = state.value.volumes as? Volumes.Listed ?: return
+        setPath(recentFolderPath(lastRead.folderUri, lastRead.folderName, volumes.volumes))
+        load()
+    }
+
     fun goUp() {
         if (state.value.path.isEmpty()) return
         setPath(state.value.path.dropLast(1))

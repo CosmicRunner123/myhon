@@ -1,6 +1,9 @@
 package eu.kanade.presentation.directory
 
 import android.text.format.Formatter
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +32,9 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -37,10 +42,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.manga.components.MangaCover
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.coil.ComicThumbnail
 import eu.kanade.tachiyomi.ui.directory.DirectoryViewModel
 import eu.kanade.tachiyomi.ui.directory.DirectoryVolume
 import eu.kanade.tachiyomi.ui.directory.fileName
+import eu.kanade.tachiyomi.ui.directory.recentFolderLocation
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Folder
 import mihon.icons.materialsymbols.rounded.Mobile
@@ -68,6 +75,7 @@ fun DirectoryScreen(
     onClickUp: () -> Unit,
     onRefresh: () -> Unit,
     onClickFolder: (DirectoryViewModel.DirectoryFolder) -> Unit,
+    onClickRecent: () -> Unit,
     onClickComic: (DirectoryEntry) -> Unit,
     onClickAllowAccess: () -> Unit,
     onClickResume: () -> Unit,
@@ -130,9 +138,11 @@ fun DirectoryScreen(
                         DirectoryPullRefresh(state, onRefresh, contentPadding) {
                             VolumeList(
                                 volumes = volumes.volumes,
+                                lastRead = state.lastRead,
                                 listState = rememberLazyListState(),
                                 contentPadding = contentPadding,
                                 onClickFolder = onClickFolder,
+                                onClickRecent = onClickRecent,
                             )
                         }
                     }
@@ -204,9 +214,11 @@ private fun DirectoryPullRefresh(
 @Composable
 private fun VolumeList(
     volumes: List<DirectoryVolume>,
+    lastRead: DirectoryHistory?,
     listState: LazyListState,
     contentPadding: PaddingValues,
     onClickFolder: (DirectoryViewModel.DirectoryFolder) -> Unit,
+    onClickRecent: () -> Unit,
 ) {
     val context = LocalContext.current
     FastScrollLazyColumn(
@@ -214,6 +226,22 @@ private fun VolumeList(
         state = listState,
         contentPadding = contentPadding,
     ) {
+        if (lastRead != null) {
+            item(key = RECENT_KEY) {
+                DirectoryItem(
+                    title = stringResource(MR.strings.directory_recent),
+                    subtitle = remember(lastRead.folderUri, volumes) {
+                        recentFolderLocation(lastRead.folderUri, volumes)
+                    },
+                    onClick = onClickRecent,
+                    dimmed = false,
+                ) {
+                    // The History tab's icon, which only exists animated
+                    val image = AnimatedImageVector.animatedVectorResource(R.drawable.animated_history)
+                    ItemIcon(rememberAnimatedVectorPainter(image, atEnd = false))
+                }
+            }
+        }
         items(items = volumes, key = { it.uri }) { volume ->
             DirectoryItem(
                 title = volume.name,
@@ -339,8 +367,13 @@ private fun DirectoryItem(
 
 @Composable
 private fun ItemIcon(imageVector: ImageVector) {
+    ItemIcon(rememberVectorPainter(imageVector))
+}
+
+@Composable
+private fun ItemIcon(painter: Painter) {
     Icon(
-        imageVector = imageVector,
+        painter = painter,
         contentDescription = null,
         modifier = Modifier.size(32.dp),
         tint = MaterialTheme.colorScheme.primary,
@@ -350,3 +383,5 @@ private fun ItemIcon(imageVector: ImageVector) {
 private val DirectoryItemHeight = 72.dp
 
 private const val VOLUMES_KEY = "volumes"
+
+private const val RECENT_KEY = "recent"

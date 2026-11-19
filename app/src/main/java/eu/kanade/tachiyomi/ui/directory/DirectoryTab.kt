@@ -69,6 +69,7 @@ data object DirectoryTab : Tab {
             onClickUp = viewModel::goUp,
             onRefresh = viewModel::refresh,
             onClickFolder = viewModel::openFolder,
+            onClickRecent = viewModel::openRecent,
             onClickComic = viewModel::openComic,
             onClickAllowAccess = requestAllFilesAccess,
             onClickResume = { scope.launch { viewModel.findResume()?.let { onEvent(context, it) } } },
