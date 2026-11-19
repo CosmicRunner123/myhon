@@ -121,18 +121,24 @@ Choose it during setup, or turn on **Settings → Data and storage → Directory
 * Files you started show the page you stopped on, and finished ones are marked **Read**.
 * There are no series pages. In the reader, the next and previous chapters are the next and previous files of the same
   folder, so you can read on through a folder; files in subfolders are not included. Background music works as in the
-  library.
-* History lists the folders you read from by name, with the thumbnail of the file you read last. Tapping an entry, or
-  its cover, lists the folder again and goes on where you left off; if the folder can't be read or the file is gone,
-  Myhon says so. In the reader, the title doesn't open a series page and **Set as cover** is not offered.
-* At the top level, **Resume** in the bottom right corner goes on with the folder you read last, like tapping it in
-  History. It appears once you have read a file in directory view.
+  library. The title doesn't open a series page, and files can't be bookmarked or set as a cover. The reading mode and
+  orientation you choose in the reader are remembered for each folder.
+* **History** lists the files you read rather than series: newest first and grouped by day, each file once, by its
+  name as **Folders** shows it, with its first page, the name of its folder, the page you stopped on or **Read**, and
+  when you read it. Tapping an entry opens the file where you left off (a finished file from its first page); if the
+  folder can't be read or the file is gone, Myhon says so. Search finds files by name. The delete icon of an entry
+  removes it and **Clear history** removes them all; both also forget how far those files were read, so **Folders**
+  no longer marks them.
+* At the top level, **Resume** in the bottom right corner goes on from the file you read last: that file if you didn't
+  finish it, otherwise the next file of its folder. Tapping **History** again while it is shown does the same. The
+  button is there whenever History lists a file.
+* Directory view's history and the reading modes of folders are not part of backups.
 
 Switching to directory view keeps your library as it is, with its categories and reading progress, but the library is
 no longer shown, updated or matched with your folders: library updates, automatic ones included, don't run, and
 **Categories** in More, the **Series folders** settings with **Folder for covers and details**, and **Refresh library
-covers** are hidden. When you switch back, the library catches up with your folders. Comics read in directory view
-stay in History in both modes.
+covers** are hidden. When you switch back, the library catches up with your folders. Each mode keeps its own History,
+and switching keeps both: files read in directory view are never listed in the library's.
 
 ## Background music
 
