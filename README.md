@@ -124,11 +124,11 @@ Choose it during setup, or turn on **Settings → Data and storage → Directory
   library. The title doesn't open a series page, and files can't be bookmarked or set as a cover. The reading mode and
   orientation you choose in the reader are remembered for each folder.
 * **History** lists the files you read rather than series: newest first and grouped by day, each file once, by its
-  name as **Folders** shows it, with its first page, the name of its folder, the page you stopped on or **Read**, and
-  when you read it. Tapping an entry opens the file where you left off (a finished file from its first page); if the
-  folder can't be read or the file is gone, Myhon says so. Search finds files by name. The delete icon of an entry
-  removes it and **Clear history** removes them all; both also forget how far those files were read, so **Folders**
-  no longer marks them.
+  file name with its extension (`Akira v01.cbz`), with its first page, the page you stopped on or **Read**, and when
+  you read it. No folder, series or chapter is shown. Tapping an entry opens the file where you left off (a finished
+  file from its first page); if the folder can't be read or the file is gone, Myhon says so. Search finds files by
+  name. The delete icon of an entry removes it and **Clear history** removes them all; both also forget how far those
+  files were read, so **Folders** no longer marks them.
 * At the top level, **Resume** in the bottom right corner goes on from the file you read last: that file if you didn't
   finish it, otherwise the next file of its folder. Tapping **History** again while it is shown does the same. The
   button is there whenever History lists a file.

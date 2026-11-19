@@ -11,7 +11,7 @@ interface DirectoryHistoryRepository {
 
     fun getLastAsFlow(): Flow<DirectoryHistory?>
 
-    fun getHistory(query: String): Flow<List<DirectoryHistory>>
+    fun getHistory(): Flow<List<DirectoryHistory>>
 
     suspend fun upsert(history: DirectoryHistory)
 

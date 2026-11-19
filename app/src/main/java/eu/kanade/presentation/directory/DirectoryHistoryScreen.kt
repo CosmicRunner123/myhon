@@ -36,6 +36,7 @@ import eu.kanade.presentation.manga.components.MangaCover
 import eu.kanade.presentation.util.rememberIs24HourSystem
 import eu.kanade.tachiyomi.data.coil.ComicThumbnail
 import eu.kanade.tachiyomi.ui.directory.DirectoryHistoryViewModel
+import eu.kanade.tachiyomi.ui.directory.fileName
 import eu.kanade.tachiyomi.util.lang.toTimestampString
 import kotlinx.datetime.LocalDate
 import mihon.app.di.appGraph
@@ -52,7 +53,6 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.util.collectAsState
-import tachiyomi.presentation.core.util.secondaryItemAlpha
 import java.time.format.DateTimeFormatter
 
 /**
@@ -184,18 +184,11 @@ private fun DirectoryHistoryItem(
                 .padding(start = MaterialTheme.padding.medium, end = MaterialTheme.padding.small),
         ) {
             Text(
-                text = history.name,
+                text = history.fileName,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(
-                text = history.folderName,
-                modifier = Modifier.secondaryItemAlpha(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
             )
             val readAt = remember(timeFormatter, history.lastRead) {
                 history.lastRead.toTimestampString(timeFormatter)
@@ -286,4 +279,4 @@ sealed interface DirectoryHistoryUiModel {
     data class Item(val item: DirectoryHistory) : DirectoryHistoryUiModel
 }
 
-private val DirectoryHistoryItemHeight = 96.dp
+private val DirectoryHistoryItemHeight = 80.dp

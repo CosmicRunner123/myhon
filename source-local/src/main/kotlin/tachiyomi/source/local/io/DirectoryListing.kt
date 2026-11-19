@@ -11,6 +11,7 @@ import logcat.LogPriority
 import tachiyomi.core.common.storage.hasAllFilesAccess
 import tachiyomi.core.common.util.system.logcat
 import java.io.File
+import java.net.URLDecoder
 
 /**
  * A subfolder or comic file of a folder.
@@ -51,6 +52,32 @@ internal fun isComicFile(name: String): Boolean {
 
 internal fun isEpub(name: String): Boolean {
     return name.substringAfterLast('.').equals("epub", ignoreCase = true)
+}
+
+/**
+ * The name, with its extension, of the comic file listed with [uri], or null when [uri] doesn't tell it, as an opaque
+ * document id such as `msf:123` doesn't.
+ */
+fun comicFileName(uri: String): String? {
+    val name = if (uri.startsWith("file://")) {
+        decodeUriPart(uri.substringAfterLast('/')) ?: return null
+    } else {
+        // A readable document id is a path, such as primary:Comics/Akira v01.cbz or primary:Akira v01.cbz at the root
+        val documentId = decodeUriPart(uri.substringAfterLast("/document/", missingDelimiterValue = "")) ?: return null
+        if ('/' in documentId) documentId.substringAfterLast('/') else documentId.substringAfter(':')
+    }
+    // Only comic files are listed, so a name that isn't one comes from an opaque id
+    return name.takeIf(::isComicFile)
+}
+
+// URLDecoder decodes form data, where a + stands for a space, but in a URI it is a plus
+private fun decodeUriPart(part: String): String? {
+    return try {
+        URLDecoder.decode(part.replace("+", "%2B"), "UTF-8")
+    } catch (_: IllegalArgumentException) {
+        // A % that doesn't start an escape
+        null
+    }
 }
 
 /**

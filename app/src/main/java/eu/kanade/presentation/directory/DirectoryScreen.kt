@@ -40,6 +40,7 @@ import eu.kanade.presentation.manga.components.MangaCover
 import eu.kanade.tachiyomi.data.coil.ComicThumbnail
 import eu.kanade.tachiyomi.ui.directory.DirectoryViewModel
 import eu.kanade.tachiyomi.ui.directory.DirectoryVolume
+import eu.kanade.tachiyomi.ui.directory.fileName
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Folder
 import mihon.icons.materialsymbols.rounded.Mobile
@@ -82,7 +83,7 @@ fun DirectoryScreen(
         floatingActionButton = {
             val lastRead = state.lastRead
             if (lastRead != null) {
-                val description = stringResource(MR.strings.directory_resume, lastRead.folderName)
+                val description = stringResource(MR.strings.directory_resume, lastRead.fileName)
                 SmallExtendedFloatingActionButton(
                     text = { Text(text = stringResource(MR.strings.action_resume)) },
                     icon = { Icon(imageVector = MaterialSymbols.RoundedFilled.PlayArrow, contentDescription = null) },

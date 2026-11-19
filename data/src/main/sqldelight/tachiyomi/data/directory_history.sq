@@ -36,7 +36,6 @@ LIMIT 1;
 getHistory:
 SELECT uri, folder_uri, folder_name, name, last_modified, size, last_page_read, read, last_read
 FROM directory_history
-WHERE lower(name) LIKE ('%' || :query || '%')
 ORDER BY last_read DESC;
 
 upsert:

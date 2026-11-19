@@ -137,7 +137,7 @@ class DirectoryReaderSession(
             uri = file.uri,
             folderUri = folderUri,
             folderName = folderName,
-            name = file.title,
+            name = file.name,
             lastModified = file.lastModified,
             size = file.size,
             lastPageRead = lastPageRead,

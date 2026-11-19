@@ -7,7 +7,8 @@ import kotlin.time.Instant
  * folder listed.
  *
  * @param uri the file's URI as its folder listed it.
- * @param name the file's name without its extension, as directory view shows it.
+ * @param name the file's name with its extension, as listed. Older entries can hold its name without extension, or
+ * the name of its chapter from when directory view kept hidden series.
  * @param lastModified as listed, 0 when unknown.
  * @param size in bytes as listed, 0 when unknown.
  */

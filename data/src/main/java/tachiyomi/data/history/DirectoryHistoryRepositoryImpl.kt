@@ -39,9 +39,9 @@ class DirectoryHistoryRepositoryImpl(
             .subscribeToOneOrNull()
     }
 
-    override fun getHistory(query: String): Flow<List<DirectoryHistory>> {
+    override fun getHistory(): Flow<List<DirectoryHistory>> {
         return database.directory_historyQueries
-            .getHistory(query, ::DirectoryHistory)
+            .getHistory(::DirectoryHistory)
             .subscribeToList()
     }
 

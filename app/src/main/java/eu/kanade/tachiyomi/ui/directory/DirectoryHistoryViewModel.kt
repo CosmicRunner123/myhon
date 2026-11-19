@@ -59,13 +59,13 @@ class DirectoryHistoryViewModel(
 
     private val history = searchQuery
         .flatMapLatest { query ->
-            getDirectoryHistory.subscribe(query ?: "")
+            getDirectoryHistory.subscribe()
                 .distinctUntilChanged()
                 .catch { error ->
                     logcat(LogPriority.ERROR, error)
                     _events.send(Event.InternalError)
                 }
-                .map { it.toUiModels() }
+                .map { it.toUiModels(query.orEmpty()) }
                 .flowOn(Dispatchers.Default)
         }
         .stateIn(viewModelScope + subscriberGate, SharingStarted.Eagerly, emptyList())
@@ -79,8 +79,10 @@ class DirectoryHistoryViewModel(
     }
         .stateIn(viewModelScope + subscriberGate, subscriberGate.whileSubscribed(5.seconds), State())
 
-    private fun List<DirectoryHistory>.toUiModels(): List<DirectoryHistoryUiModel> {
-        return map { DirectoryHistoryUiModel.Item(it) }
+    private fun List<DirectoryHistory>.toUiModels(query: String): List<DirectoryHistoryUiModel> {
+        // Here rather than in SQL, as older entries store another name than the one shown
+        return filter { it.fileName.contains(query, ignoreCase = true) }
+            .map { DirectoryHistoryUiModel.Item(it) }
             .insertSeparators { before, after ->
                 val beforeDate = before?.item?.lastRead?.toLocalDate()
                 val afterDate = after?.item?.lastRead?.toLocalDate()

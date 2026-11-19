@@ -1,6 +1,7 @@
 package tachiyomi.source.local.io
 
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
@@ -83,6 +84,55 @@ class DirectoryListingTest {
     fun `a file's title is its name without extension and a folder's is its whole name`() {
         file("Vol. 1.cbz").title shouldBe "Vol. 1"
         folder("Vol. 1").title shouldBe "Vol. 1"
+    }
+
+    @Test
+    fun `the name of a file is the last segment of its file URI, decoded`() {
+        comicFileName("file:///storage/emulated/0/Comics/A%20B/x%201.cbz") shouldBe "x 1.cbz"
+        comicFileName("file:///storage/emulated/0/%E3%81%82%23%25%2B.cbz") shouldBe "あ#%+.cbz"
+        comicFileName("file:///storage/emulated/0/A+B.cbz") shouldBe "A+B.cbz"
+    }
+
+    @Test
+    fun `the name of a document is the last segment of its document id`() {
+        comicFileName(
+            "content://com.android.externalstorage.documents/tree/primary%3AComics" +
+                "/document/primary%3AComics%2FA%2Fx.cbz",
+        ) shouldBe "x.cbz"
+        comicFileName(
+            "content://com.android.externalstorage.documents/tree/primary%3AComics" +
+                "/document/primary%3AComics%2F%E3%81%82%2F%E3%81%82%20%23%25%2B.cbz",
+        ) shouldBe "あ #%+.cbz"
+        comicFileName(
+            "content://com.android.providers.downloads.documents/tree/downloads" +
+                "/document/raw%3A%2Fstorage%2Femulated%2F0%2FDownload%2Fx%201.cbz",
+        ) shouldBe "x 1.cbz"
+    }
+
+    @Test
+    fun `the name of a document at the root of a volume follows its volume`() {
+        comicFileName(
+            "content://com.android.externalstorage.documents/tree/1234-5678%3A/document/1234-5678%3Ax.cbz",
+        ) shouldBe "x.cbz"
+    }
+
+    @Test
+    fun `a URI that doesn't tell the name of a comic file has none`() {
+        comicFileName("content://com.android.providers.downloads.documents/tree/downloads/document/msf%3A42")
+            .shouldBeNull()
+        comicFileName("content://com.android.providers.downloads.documents/document/1234").shouldBeNull()
+        comicFileName("content://media/external/file/12").shouldBeNull()
+        comicFileName("file:///storage/emulated/0/Comics/A").shouldBeNull()
+    }
+
+    @Test
+    fun `a malformed URI has no name`() {
+        comicFileName("file:///storage/emulated/0/100%.cbz").shouldBeNull()
+        comicFileName("file:///storage/emulated/0/%zz.cbz").shouldBeNull()
+        comicFileName("content://com.android.externalstorage.documents/tree/primary%3A/document/primary%3Ax%2.cbz")
+            .shouldBeNull()
+        comicFileName("file://").shouldBeNull()
+        comicFileName("").shouldBeNull()
     }
 
     private fun file(name: String) = DirectoryEntry("file:///Comics/$name", name, false, 1, 1)

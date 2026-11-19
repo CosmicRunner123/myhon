@@ -23,8 +23,8 @@ class GetDirectoryHistory(
         return repository.getLastAsFlow()
     }
 
-    /** The files whose name contains [query], read last first. */
-    fun subscribe(query: String): Flow<List<DirectoryHistory>> {
-        return repository.getHistory(query)
+    /** The files read, read last first. */
+    fun subscribe(): Flow<List<DirectoryHistory>> {
+        return repository.getHistory()
     }
 }
