@@ -174,30 +174,28 @@ class DirectoryViewModel(
     }
 
     /**
-     * Goes on reading where [State.lastRead] was left, see [findFileToResume].
+     * Where to go on reading from [State.lastRead], see [findFileToResume]; null when there is no file read last or a
+     * resume is under way. Runs in the caller's scope, so leaving the tab cancels it instead of opening the reader
+     * later.
      */
-    fun resumeLastRead() {
-        val lastRead = state.value.lastRead ?: return
-        if (state.value.isOpening) return
+    suspend fun findResume(): Event? {
+        val lastRead = state.value.lastRead ?: return null
+        if (state.value.isOpening) return null
         _state.update { it.copy(isOpening = true) }
-        viewModelScope.launch {
-            try {
-                val file = findFileToResume(context, lastRead)
-                _events.send(
-                    if (file != null) {
-                        Event.OpenFile(lastRead.folderUri, lastRead.folderName, file.uri)
-                    } else {
-                        Event.NoNextChapter
-                    },
-                )
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to resume ${lastRead.uri}" }
-                _events.send(Event.OpenFailed(e.message))
-            } finally {
-                _state.update { it.copy(isOpening = false) }
+        return try {
+            val file = findFileToResume(context, lastRead)
+            if (file != null) {
+                Event.OpenFile(lastRead.folderUri, lastRead.folderName, file.uri)
+            } else {
+                Event.NoNextChapter
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to resume ${lastRead.uri}" }
+            Event.OpenFailed(e.message)
+        } finally {
+            _state.update { it.copy(isOpening = false) }
         }
     }
 

@@ -1,10 +1,12 @@
 package eu.kanade.tachiyomi.ui.directory
 
+import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
@@ -60,6 +62,7 @@ data object DirectoryTab : Tab {
         val viewModel = metroViewModel<DirectoryViewModel>()
         val state by viewModel.state.collectAsStateWithLifecycle()
         val requestAllFilesAccess = rememberAllFilesAccessRequest()
+        val scope = rememberCoroutineScope()
 
         DirectoryScreen(
             state = state,
@@ -68,7 +71,7 @@ data object DirectoryTab : Tab {
             onClickFolder = viewModel::openFolder,
             onClickComic = viewModel::openComic,
             onClickAllowAccess = requestAllFilesAccess,
-            onClickResume = viewModel::resumeLastRead,
+            onClickResume = { scope.launch { viewModel.findResume()?.let { onEvent(context, it) } } },
         )
 
         BackHandler(enabled = state.path.isNotEmpty(), onBack = viewModel::goUp)
@@ -85,19 +88,19 @@ data object DirectoryTab : Tab {
 
         LaunchedEffect(Unit) {
             launch { goToTopLevelEvent.receiveAsFlow().collect { viewModel.goToTopLevel() } }
-            launch {
-                viewModel.events.collect { event ->
-                    when (event) {
-                        is DirectoryViewModel.Event.OpenFile -> context.startActivity(
-                            ReaderActivity.newIntent(context, event.folderUri, event.folderName, event.fileUri),
-                        )
-                        is DirectoryViewModel.Event.OpenFailed -> context.toast(
-                            event.message ?: context.stringResource(MR.strings.unknown_error),
-                        )
-                        DirectoryViewModel.Event.NoNextChapter -> context.toast(MR.strings.no_next_chapter)
-                    }
-                }
-            }
+            launch { viewModel.events.collect { onEvent(context, it) } }
+        }
+    }
+
+    private fun onEvent(context: Context, event: DirectoryViewModel.Event) {
+        when (event) {
+            is DirectoryViewModel.Event.OpenFile -> context.startActivity(
+                ReaderActivity.newIntent(context, event.folderUri, event.folderName, event.fileUri),
+            )
+            is DirectoryViewModel.Event.OpenFailed -> context.toast(
+                event.message ?: context.stringResource(MR.strings.unknown_error),
+            )
+            DirectoryViewModel.Event.NoNextChapter -> context.toast(MR.strings.no_next_chapter)
         }
     }
 }

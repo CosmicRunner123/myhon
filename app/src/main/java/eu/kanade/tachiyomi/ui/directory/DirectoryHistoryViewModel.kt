@@ -14,7 +14,6 @@ import eu.kanade.presentation.directory.DirectoryHistoryUiModel
 import eu.kanade.tachiyomi.util.lang.toLocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,8 +57,6 @@ class DirectoryHistoryViewModel(
 
     private val dialog = MutableStateFlow<Dialog?>(null)
 
-    private var resumeJob: Job? = null
-
     private val history = searchQuery
         .flatMapLatest { query ->
             getDirectoryHistory.subscribe(query ?: "")
@@ -92,27 +89,23 @@ class DirectoryHistoryViewModel(
     }
 
     /**
-     * Goes on reading where the file read last was left, like the Resume button of the Folders tab.
+     * Where to go on reading from the file read last, like the Resume button of the Folders tab. Runs in the
+     * caller's scope, so leaving the tab cancels it instead of opening the reader later.
      */
-    fun resumeLastRead() {
-        // A folder is listed first, which can take a while
-        if (resumeJob?.isActive == true) return
-        resumeJob = viewModelScope.launch {
-            val event = try {
-                val lastRead = getDirectoryHistory.subscribeLast().first()
-                val file = lastRead?.let { findFileToResume(context, it) }
-                if (lastRead != null && file != null) {
-                    Event.OpenFile(lastRead.folderUri, lastRead.folderName, file.uri)
-                } else {
-                    Event.NoNextChapter
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to resume the directory history" }
-                Event.OpenFailed(e.message)
+    suspend fun findResume(): Event {
+        return try {
+            val lastRead = getDirectoryHistory.subscribeLast().first()
+            val file = lastRead?.let { findFileToResume(context, it) }
+            if (lastRead != null && file != null) {
+                Event.OpenFile(lastRead.folderUri, lastRead.folderName, file.uri)
+            } else {
+                Event.NoNextChapter
             }
-            _events.send(event)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to resume the directory history" }
+            Event.OpenFailed(e.message)
         }
     }
 

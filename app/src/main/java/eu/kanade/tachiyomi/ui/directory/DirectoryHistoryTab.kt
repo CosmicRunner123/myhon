@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.directory
 
+import android.content.Context
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
@@ -92,26 +93,28 @@ data object DirectoryHistoryTab : Tab {
         }
 
         LaunchedEffect(Unit) {
-            viewModel.events.collectLatest { e ->
-                when (e) {
-                    is DirectoryHistoryViewModel.Event.OpenFile -> context.startActivity(
-                        ReaderActivity.newIntent(context, e.folderUri, e.folderName, e.fileUri),
-                    )
-                    is DirectoryHistoryViewModel.Event.OpenFailed -> snackbarHostState.showSnackbar(
-                        e.message ?: context.stringResource(MR.strings.unknown_error),
-                    )
-                    DirectoryHistoryViewModel.Event.NoNextChapter ->
-                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_chapter))
-                    DirectoryHistoryViewModel.Event.InternalError ->
-                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
-                    DirectoryHistoryViewModel.Event.HistoryCleared ->
-                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.clear_history_completed))
-                }
-            }
+            viewModel.events.collectLatest { onEvent(context, it) }
         }
 
         LaunchedEffect(Unit) {
-            resumeLastReadEvent.receiveAsFlow().collect { viewModel.resumeLastRead() }
+            resumeLastReadEvent.receiveAsFlow().collectLatest { onEvent(context, viewModel.findResume()) }
+        }
+    }
+
+    private suspend fun onEvent(context: Context, event: DirectoryHistoryViewModel.Event) {
+        when (event) {
+            is DirectoryHistoryViewModel.Event.OpenFile -> context.startActivity(
+                ReaderActivity.newIntent(context, event.folderUri, event.folderName, event.fileUri),
+            )
+            is DirectoryHistoryViewModel.Event.OpenFailed -> snackbarHostState.showSnackbar(
+                event.message ?: context.stringResource(MR.strings.unknown_error),
+            )
+            DirectoryHistoryViewModel.Event.NoNextChapter ->
+                snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_chapter))
+            DirectoryHistoryViewModel.Event.InternalError ->
+                snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
+            DirectoryHistoryViewModel.Event.HistoryCleared ->
+                snackbarHostState.showSnackbar(context.stringResource(MR.strings.clear_history_completed))
         }
     }
 }
