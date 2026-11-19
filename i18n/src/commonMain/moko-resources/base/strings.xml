@@ -603,6 +603,7 @@
     <string name="directory_history_page_time">Page %1$d - %2$s</string>
     <string name="directory_history_read_time">Read - %1$s</string>
     <string name="directory_history_remove_description">This will remove the file from History and forget how far it was read. Are you sure?</string>
+    <string name="directory_history_clear_description">This will remove every file from History and forget how far they were read. Are you sure?</string>
 
     <!-- Manga info -->
     <string name="ongoing">Ongoing</string>

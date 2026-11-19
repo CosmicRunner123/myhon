@@ -252,6 +252,35 @@ fun DirectoryHistoryDeleteDialog(
     )
 }
 
+@Composable
+fun DirectoryHistoryDeleteAllDialog(
+    onDismissRequest: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    AlertDialog(
+        title = {
+            Text(text = stringResource(MR.strings.action_remove_everything))
+        },
+        text = {
+            Text(text = stringResource(MR.strings.directory_history_clear_description))
+        },
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(onClick = {
+                onDelete()
+                onDismissRequest()
+            }) {
+                Text(text = stringResource(MR.strings.action_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(MR.strings.action_cancel))
+            }
+        },
+    )
+}
+
 sealed interface DirectoryHistoryUiModel {
     data class Header(val date: LocalDate) : DirectoryHistoryUiModel
     data class Item(val item: DirectoryHistory) : DirectoryHistoryUiModel

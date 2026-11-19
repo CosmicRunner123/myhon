@@ -13,9 +13,9 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import eu.kanade.presentation.directory.DirectoryHistoryDeleteAllDialog
 import eu.kanade.presentation.directory.DirectoryHistoryDeleteDialog
 import eu.kanade.presentation.directory.DirectoryHistoryScreen
-import eu.kanade.presentation.history.components.HistoryDeleteAllDialog
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.main.MainActivity
@@ -77,7 +77,7 @@ data object DirectoryHistoryTab : Tab {
                 )
             }
             is DirectoryHistoryViewModel.Dialog.DeleteAll -> {
-                HistoryDeleteAllDialog(
+                DirectoryHistoryDeleteAllDialog(
                     onDismissRequest = onDismissRequest,
                     onDelete = viewModel::removeAllHistory,
                 )
