@@ -112,9 +112,9 @@ Choose it during setup, or turn on **Settings → Data and storage → Directory
   **App info → Permissions → Storage**. Some folders stay hidden from apps even then, such as `Android/data` and
   `Android/obb`; opening them says the folder couldn't be read.
 * A folder shows its subfolders, then its comic files, each by name in natural order (`Chapter 2` before
-  `Chapter 10`). Comic files are archives (`zip`, `cbz`, `rar`, `cbr`, `7z`, `cb7`, `tar`, `cbt`) and `epub`.
-  Chapters saved as folders of images are not supported: folders are only browsed. Other files, and names that start
-  with a dot, are not shown.
+  `Chapter 10`); files show their extension (`Chapter 2.cbz`). Comic files are archives (`zip`, `cbz`, `rar`, `cbr`,
+  `7z`, `cb7`, `tar`, `cbt`) and `epub`. Chapters saved as folders of images are not supported: folders are only
+  browsed. Other files, and names that start with a dot, are not shown.
 * Back goes up one folder, tapping **Folders** again goes back to the top, and pulling down lists the folder again.
 * Each file shows a thumbnail of its first page. Thumbnails are kept in a cache of the app, never in your folders. The
   cache holds up to 64 MB of them, drops the least recently used ones when it is full, and Android may clear it when

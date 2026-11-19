@@ -28,7 +28,8 @@ data class DirectoryEntry(
     val size: Long,
 ) {
     /**
-     * The name it is shown and ordered by: a file's name without its extension, a folder's whole name.
+     * The name it is ordered by, and a file's title in the reader: a file's name without its extension, a folder's
+     * whole name.
      */
     val title: String
         get() = if (isDirectory) name else name.substringBeforeLast('.')

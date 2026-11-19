@@ -298,7 +298,7 @@ private fun EntryList(
             } else {
                 val progress = history[entry.uri]
                 DirectoryItem(
-                    title = entry.title,
+                    title = entry.name,
                     subtitle = when {
                         progress == null -> null
                         progress.read -> stringResource(MR.strings.directory_comic_read)
