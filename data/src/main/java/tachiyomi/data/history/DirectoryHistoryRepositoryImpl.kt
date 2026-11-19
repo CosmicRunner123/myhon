@@ -94,4 +94,14 @@ class DirectoryHistoryRepositoryImpl(
             logcat(LogPriority.ERROR, throwable = e)
         }
     }
+
+    override suspend fun resetFolderViewerFlags(): Boolean {
+        return try {
+            database.directory_foldersQueries.resetViewerFlags()
+            true
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, throwable = e)
+            false
+        }
+    }
 }

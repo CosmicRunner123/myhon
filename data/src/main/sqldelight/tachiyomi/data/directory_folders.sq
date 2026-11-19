@@ -13,3 +13,6 @@ INSERT INTO directory_folders(uri, viewer_flags)
 VALUES (:uri, :flag & :mask)
 ON CONFLICT(uri) DO UPDATE SET
     viewer_flags = (viewer_flags & ~:mask) | excluded.viewer_flags;
+
+resetViewerFlags:
+DELETE FROM directory_folders;

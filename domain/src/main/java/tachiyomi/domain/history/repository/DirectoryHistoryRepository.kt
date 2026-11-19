@@ -22,4 +22,6 @@ interface DirectoryHistoryRepository {
     suspend fun getFolderViewerFlags(folderUri: String): Long
 
     suspend fun setFolderViewerFlags(folderUri: String, flag: Long, mask: Long)
+
+    suspend fun resetFolderViewerFlags(): Boolean
 }
