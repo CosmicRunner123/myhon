@@ -33,12 +33,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
-import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.storage.hasAllFilesAccess
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.history.interactor.GetDirectoryHistory
 import tachiyomi.domain.history.model.DirectoryHistory
-import tachiyomi.i18n.MR
 import tachiyomi.source.local.io.DirectoryEntry
 import tachiyomi.source.local.io.listDirectory
 
@@ -176,8 +174,7 @@ class DirectoryViewModel(
     }
 
     /**
-     * Goes on reading where [State.lastRead] was left: the file itself if it wasn't read to the end, otherwise the
-     * file after it in its folder.
+     * Goes on reading where [State.lastRead] was left, see [findFileToResume].
      */
     fun resumeLastRead() {
         val lastRead = state.value.lastRead ?: return
@@ -185,12 +182,7 @@ class DirectoryViewModel(
         _state.update { it.copy(isOpening = true) }
         viewModelScope.launch {
             try {
-                val files = listDirectory(context, lastRead.folderUri.toUri())
-                    ?.filterNot { it.isDirectory }
-                    ?: throw Exception(context.stringResource(MR.strings.directory_folder_unreadable))
-                val index = files.indexOfFirst { it.uri == lastRead.uri }
-                if (index == -1) throw Exception(context.stringResource(MR.strings.chapter_not_found))
-                val file = if (lastRead.read) files.getOrNull(index + 1) else files[index]
+                val file = findFileToResume(context, lastRead)
                 _events.send(
                     if (file != null) {
                         Event.OpenFile(lastRead.folderUri, lastRead.folderName, file.uri)

@@ -30,6 +30,7 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
+import eu.kanade.tachiyomi.ui.directory.DirectoryHistoryTab
 import eu.kanade.tachiyomi.ui.directory.DirectoryTab
 import eu.kanade.tachiyomi.ui.history.HistoryTab
 import eu.kanade.tachiyomi.ui.library.LibraryTab
@@ -62,13 +63,18 @@ object HomeScreen : Screen() {
         val context = LocalContext.current
         val directoryView by remember { context.appGraph.storagePreferences.directoryView }.collectAsState()
         val firstTab = if (directoryView) DirectoryTab else LibraryTab
-        val tabs = remember(firstTab) { listOf(firstTab, HistoryTab, MoreTab) }
+        val historyTab = if (directoryView) DirectoryHistoryTab else HistoryTab
+        val tabs = remember(firstTab, historyTab) { listOf(firstTab, historyTab, MoreTab) }
         TabNavigator(
             tab = firstTab,
             key = TabNavigatorKey,
         ) { tabNavigator ->
-            // The first tab of the other view mode, as saved before the mode changed, is replaced without showing it
-            val shownTab = tabNavigator.current.takeUnless { it == LibraryTab || it == DirectoryTab } ?: firstTab
+            // A tab of the other view mode, as saved before the mode changed, is replaced without showing it
+            val shownTab = when (tabNavigator.current) {
+                LibraryTab, DirectoryTab -> firstTab
+                HistoryTab, DirectoryHistoryTab -> historyTab
+                else -> tabNavigator.current
+            }
             LaunchedEffect(shownTab) {
                 if (tabNavigator.current != shownTab) tabNavigator.current = shownTab
             }
@@ -123,6 +129,7 @@ object HomeScreen : Screen() {
             }
 
             val currentFirstTab by rememberUpdatedState(firstTab)
+            val currentHistoryTab by rememberUpdatedState(historyTab)
             val goToFirstTab = { tabNavigator.current = currentFirstTab }
 
             BackHandler(enabled = tabNavigator.current != firstTab, onBack = goToFirstTab)
@@ -138,7 +145,7 @@ object HomeScreen : Screen() {
                     openTabEvent.receiveAsFlow().collectLatest {
                         tabNavigator.current = when (it) {
                             is Tab.Library -> currentFirstTab
-                            Tab.History -> HistoryTab
+                            Tab.History -> currentHistoryTab
                         }
 
                         if (it is Tab.Library && it.mangaIdToOpen != null) {
@@ -203,6 +210,10 @@ object HomeScreen : Screen() {
          * The first tab: the library, or the folders in directory view.
          */
         data class Library(val mangaIdToOpen: Long? = null) : Tab
+
+        /**
+         * The second tab: the history of the library, or of the files read in directory view.
+         */
         data object History : Tab
     }
 }

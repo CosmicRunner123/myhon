@@ -600,6 +600,9 @@
     <string name="directory_volume_space">%1$s free of %2$s</string>
     <string name="directory_comic_read">Read</string>
     <string name="directory_resume">Resume reading %1$s</string>
+    <string name="directory_history_page_time">Page %1$d - %2$s</string>
+    <string name="directory_history_read_time">Read - %1$s</string>
+    <string name="directory_history_remove_description">This will remove the file from History and forget how far it was read. Are you sure?</string>
 
     <!-- Manga info -->
     <string name="ongoing">Ongoing</string>
