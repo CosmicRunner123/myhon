@@ -27,6 +27,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
@@ -221,6 +223,11 @@ private fun VolumeList(
     onClickRecent: () -> Unit,
 ) {
     val context = LocalContext.current
+    val atTop by remember {
+        derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+    }
+    // Recent can be added after the volumes are listed, and the list would keep the first volume in view
+    if (lastRead != null && atTop) listState.requestScrollToItem(0)
     FastScrollLazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
